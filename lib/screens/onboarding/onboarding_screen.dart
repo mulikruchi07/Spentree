@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../questionnaire/questionnaire_screen.dart'; // Adjust path if needed
 
 class OnboardingColors {
   static const Color primaryGreen = Color(0xFF34C759);
@@ -175,7 +176,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     child: ElevatedButton(
                       onPressed: () {
                         if (_currentIndex == _content.length - 1) {
-                          // Navigate to Auth
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const QuestionnaireScreen(),
+                            ),
+                          );
                         } else {
                           _controller.nextPage(
                             duration: const Duration(milliseconds: 300),

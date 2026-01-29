@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/app_style.dart';
+import '../../screens/auth/sign_up_screen.dart';
 
 class QuestionnaireScreen extends StatefulWidget {
   const QuestionnaireScreen({super.key});
@@ -53,7 +54,7 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
               children: [
                 // 1. TOP OFFSET
                 // Moves the whole block "a little down with respect to now"
-                const SizedBox(height: 120),
+                const SizedBox(height: 60),
 
                 // 2. PROGRESS BAR
                 _buildProgressBar(),
@@ -128,7 +129,7 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
           ),
         ),
 
-        const SizedBox(height: 22),
+        const SizedBox(height: 12),
 
         // Description (Text Size Increased)
         Padding(
@@ -136,14 +137,14 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
           child: Text(
             "This is the amount you don't want to cross in a day.",
             textAlign: TextAlign.center,
-            style: AppTextStyles.body.copyWith(
+            style: GoogleFonts.montserrat(
               fontWeight: FontWeight.w600,
               fontSize: 16, // Increased slightly from 14
             ),
           ),
         ),
 
-        const SizedBox(height: 30),
+        const SizedBox(height: 40),
 
         // Input Field
         Padding(
@@ -152,7 +153,7 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
             height: componentHeight,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: const Color(0xFFF1F1F1),
+              color: AppColors.inputFill,
               borderRadius: BorderRadius.circular(cornerRadius),
             ),
             child: TextField(
@@ -211,7 +212,7 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
           ),
         ),
 
-        const SizedBox(height: 22),
+        const SizedBox(height: 24),
 
         // Quick Select Buttons (Increased Height)
         Padding(
@@ -228,7 +229,7 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
                     horizontal: 24,
                   ), // Increased vertical from 12 to 16
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF1F1F1),
+                    color: AppColors.inputFill,
                     borderRadius: BorderRadius.circular(5),
                   ),
                   child: Text(
@@ -245,7 +246,7 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
         ),
 
         // Increased Gap Distance (Boxes <-> Submit)
-        const SizedBox(height: 28), // Increased from 40
+        const SizedBox(height: 56), // Increased from 40
         // Submit Button
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -358,8 +359,15 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
           child: _buildMainButton(
             label: "Done",
             onTap: () {
+              // You can process/save the questionnaire data here
               print(
                 "Data: Limit: ${_amountController.text}, Cat: $_selectedCategory, Goal: $_selectedGoal",
+              );
+              // Navigate to the Sign Up screen
+              // pushReplacement is used so the user can't go back to the questionnaire
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => const SignUpScreen()),
               );
             },
           ),

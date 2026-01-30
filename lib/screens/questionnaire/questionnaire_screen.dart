@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/app_style.dart';
 import '../../screens/auth/sign_up_screen.dart';
+import '../../core/user_data.dart';
 
 class QuestionnaireScreen extends StatefulWidget {
   const QuestionnaireScreen({super.key});
@@ -359,12 +360,13 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
           child: _buildMainButton(
             label: "Done",
             onTap: () {
-              // You can process/save the questionnaire data here
-              print(
-                "Data: Limit: ${_amountController.text}, Cat: $_selectedCategory, Goal: $_selectedGoal",
-              );
-              // Navigate to the Sign Up screen
-              // pushReplacement is used so the user can't go back to the questionnaire
+              // 1. Save the Limit (Remove 'Rs.' and clean it)
+              if (_amountController.text.isNotEmpty) {
+                UserData.dailyLimit = _amountController.text.replaceAll(
+                  RegExp(r'[^0-9]'),
+                  '',
+                );
+              }
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(builder: (context) => const SignUpScreen()),

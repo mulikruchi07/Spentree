@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/app_style.dart';
+import '../dashboard/dashboard_screen.dart';
 
 class VerifyNumberScreen extends StatefulWidget {
   const VerifyNumberScreen({super.key});
@@ -104,6 +105,15 @@ class _VerifyNumberScreenState extends State<VerifyNumberScreen> {
                 height: componentHeight,
                 child: ElevatedButton(
                   onPressed: () {
+                    // Navigate to Dashboard
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const DashboardScreen(),
+                      ),
+                      (route) =>
+                          false, // Clears the back stack so user can't go back to OTP
+                    );
                     setState(() => _hasError = true);
                   },
                   style: ElevatedButton.styleFrom(

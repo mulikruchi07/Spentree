@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../core/app_style.dart';
 import 'verify_number_screen.dart';
 import 'sign_in_screen.dart';
+import '../../core/user_data.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -79,6 +80,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
     }
 
     if (isValid) {
+      // 1. Save Name
+      UserData.userName = _nameController.text;
+      // 2. Navigate
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => const VerifyNumberScreen()),

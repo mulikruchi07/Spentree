@@ -2,6 +2,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:spentree/screens/main_wrapper.dart';
 import '../../core/app_style.dart';
 import '../dashboard/dashboard_screen.dart';
 
@@ -109,10 +110,9 @@ class _VerifyNumberScreenState extends State<VerifyNumberScreen> {
                     Navigator.pushAndRemoveUntil(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const DashboardScreen(),
-                      ),
-                      (route) =>
-                          false, // Clears the back stack so user can't go back to OTP
+                        builder: (context) => const MainWrapper(),
+                      ), // Go to Wrapper
+                      (route) => false,
                     );
                     setState(() => _hasError = true);
                   },

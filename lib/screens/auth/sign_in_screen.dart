@@ -2,9 +2,9 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:spentree/screens/main_wrapper.dart';
 import '../../core/app_style.dart';
 import 'sign_up_screen.dart';
-import '../dashboard/dashboard_screen.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -100,8 +100,8 @@ class _SignInScreenState extends State<SignInScreen> {
                     Navigator.pushAndRemoveUntil(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const DashboardScreen(),
-                      ),
+                        builder: (context) => const MainWrapper(),
+                      ), // Go to Wrapper
                       (route) => false,
                     );
                   },

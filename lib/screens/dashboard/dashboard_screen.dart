@@ -93,7 +93,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: Column(
           children: [
             // Top Margin
-            const SizedBox(height: 56),
+            const SizedBox(height: 70),
 
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -264,7 +264,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
 
                   const SizedBox(
-                    height: 100,
+                    height: 120,
                   ), // "Increase some more space from bottom margin"
                 ],
               ),

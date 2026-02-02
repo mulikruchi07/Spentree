@@ -13,9 +13,12 @@ dependencies:
   another_telephony: ^0.4.1
   flutter_sms_inbox: ^1.0.4
   permission_handler: ^12.0.1
+  local_auth: ^2.3.0
+  shared_preferences: ^2.3.5
 
   cupertino_icons: ^1.0.8
   intl: ^0.20.2
+  url_launcher: ^6.3.2
 
 dev_dependencies:
   flutter_test:
@@ -36,4 +39,3 @@ flutter:
     - assets/icons/forest_filled.png
     - assets/icons/profile.png
     - assets/icons/profile_filled.png
-  

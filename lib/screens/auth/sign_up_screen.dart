@@ -2,6 +2,8 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:spentree/screens/profile/privacy_screen.dart';
+import 'package:spentree/screens/profile/terms_screen.dart';
 import '../../core/app_style.dart';
 import 'verify_number_screen.dart';
 import 'sign_in_screen.dart';
@@ -208,7 +210,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             style: const TextStyle(
                               color: AppColors.primaryGreen,
                             ),
-                            recognizer: TapGestureRecognizer()..onTap = () {},
+                            recognizer: TapGestureRecognizer()
+                              ..onTap = () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const TermsScreen(),
+                                  ), //
+                                );
+                              },
                           ),
                           const TextSpan(text: " and "),
                           TextSpan(
@@ -216,7 +226,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             style: const TextStyle(
                               color: AppColors.primaryGreen,
                             ),
-                            recognizer: TapGestureRecognizer()..onTap = () {},
+                            recognizer: TapGestureRecognizer()
+                              ..onTap = () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const PrivacyScreen(),
+                                  ), //
+                                );
+                              },
                           ),
                         ],
                       ),

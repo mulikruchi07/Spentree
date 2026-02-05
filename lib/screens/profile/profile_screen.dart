@@ -4,9 +4,11 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:spentree/core/biometric_service.dart';
 import 'package:spentree/screens/auth/sign_in_screen.dart';
+import 'package:spentree/screens/profile/account_screen.dart';
 import 'about_screen.dart';
 import 'contact_screen.dart';
 import '../../core/user_data.dart';
+import 'data_privacy_screen.dart';
 import 'helpdesk_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -17,33 +19,23 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  bool _isFaceIdEnabled = false;
-
-  // Colors based on your requirements
   final Color colBlack = const Color(0xFF000000);
   final Color colGrey80 = const Color(0xFF808080);
-  final Color colGreyArrow = const Color(0xFFABABAB); // Figma Arrow Color
+  final Color colGreyArrow = const Color(0xFFABABAB);
   final Color colBoxBg = const Color(0xFFF1F1F1);
-  final Color colIconBg = const Color(0xFFB8F0C9); // Figma Icon Circle Color
+  final Color colIconBg = const Color(0xFFB8F0C9);
 
   @override
   void initState() {
     super.initState();
-    _loadLockPreference(); // Load the saved state when the page opens
   }
 
-  // Fetch the saved value from SharedPreferences
-  Future<void> _loadLockPreference() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _isFaceIdEnabled = prefs.getBool('isFaceIdEnabled') ?? false;
-    });
-  }
-
-  // Confirmation Dialog with Blur
+  // --- NEW FLOATING POPUP WITH BLUR ---
   Future<void> _showConfirmationDialog({
     required String title,
     required String message,
+    required String confirmText,
+    required IconData icon,
     required VoidCallback onConfirm,
   }) async {
     return showDialog(
@@ -51,33 +43,109 @@ class _ProfileScreenState extends State<ProfileScreen> {
       barrierDismissible: true,
       builder: (context) {
         return BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-          child: AlertDialog(
-            backgroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            title: Text(
-              title,
-              style: GoogleFonts.montserrat(fontWeight: FontWeight.bold),
-            ),
-            content: Text(message, style: GoogleFonts.poppins()),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text("Cancel", style: TextStyle(color: Colors.grey)),
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10), // Background Blur
+          child: Dialog(
+            backgroundColor: Colors.transparent,
+            insetPadding: const EdgeInsets.symmetric(horizontal: 40),
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(
+                  28,
+                ), // Floating rounded look
               ),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  onConfirm();
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFF34C759),
-                ),
-                child: Text("Confirm", style: TextStyle(color: Colors.white)),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Red Circular Icon at Top
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFFF4141), // Design Red
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(icon, color: Colors.white, size: 32),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Title
+                  Text(
+                    title,
+                    style: GoogleFonts.poppins(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w600,
+                      color: colBlack,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Subtitle Message
+                  Text(
+                    message,
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                      color: colGrey80,
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+
+                  // Confirm Button (Red)
+                  SizedBox(
+                    width: double.infinity,
+                    height: 54,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        onConfirm();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFFF4141),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      child: Text(
+                        confirmText,
+                        style: GoogleFonts.poppins(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Cancel Button (Grey)
+                  SizedBox(
+                    width: double.infinity,
+                    height: 54,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFF1F1F1),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      child: Text(
+                        "Cancel",
+                        style: GoogleFonts.poppins(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFFFF4141), // Red text for cancel
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         );
       },
@@ -86,7 +154,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Get the first initial of the user's name
     String initial = UserData.userName.isNotEmpty
         ? UserData.userName[0].toUpperCase()
         : "?";
@@ -101,12 +168,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 70),
-
-              // --- 1. Header (Aligned strictly in line) ---
+              // ... Header Code ...
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment:
-                    CrossAxisAlignment.end, // Align bottom of text/icon
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -140,10 +205,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ],
               ),
-
               const SizedBox(height: 16),
-
-              // --- 2. User Info Card (Increased height) ---
+              // ... User Card ...
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(18),
@@ -153,10 +216,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
                 child: Row(
                   children: [
-                    // Profile Circle with Initial Letter
                     CircleAvatar(
                       radius: 35,
-                      backgroundColor: const Color(0xFF34C759), // Primary Green
+                      backgroundColor: const Color(0xFF34C759),
                       child: Text(
                         initial,
                         style: GoogleFonts.montserrat(
@@ -192,10 +254,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ],
                 ),
               ),
-
               const SizedBox(height: 32),
 
-              // --- 3. Settings List ---
+              // Settings List
               Container(
                 padding: const EdgeInsets.symmetric(
                   vertical: 10,
@@ -211,70 +272,56 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       Icons.person_2_outlined,
                       "My Account",
                       "Make changes to your account",
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const AccountScreen(),
+                          ),
+                        );
+                      },
                     ),
+
                     _buildSettingsItem(
-                      Icons.fingerprint,
-                      "Face ID / Touch ID",
-                      "Manage your device security",
-                      trailing: Switch.adaptive(
-                        value: _isFaceIdEnabled,
-                        activeColor: const Color(0xFF34C759),
-                        onChanged: (val) async {
-                          if (val) {
-                            // Single verification to enable
-                            bool auth =
-                                await BiometricService.authenticateUser();
-                            if (auth) {
-                              final prefs =
-                                  await SharedPreferences.getInstance();
-                              await prefs.setBool('isFaceIdEnabled', true);
-                              setState(() => _isFaceIdEnabled = true);
-                            }
-                          } else {
-                            // Show blur dialog to disable
-                            _showConfirmationDialog(
-                              title: "Disable Lock?",
-                              message:
-                                  "Are you sure you want to remove app security?",
-                              onConfirm: () async {
-                                final prefs =
-                                    await SharedPreferences.getInstance();
-                                await prefs.setBool('isFaceIdEnabled', false);
-                                setState(() => _isFaceIdEnabled = false);
-                              },
-                            );
-                          }
-                        },
-                      ),
+                      Icons.privacy_tip_outlined,
+                      "Data & Privacy",
+                      "Manage your data & privacy",
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const DataPrivacyScreen(),
+                          ),
+                        );
+                      },
                     ),
+                    // Logout Item
                     _buildSettingsItem(
                       Icons.logout_rounded,
                       "Log out",
                       "Further secure your account for safety",
-                      onTap: () => _showConfirmationDialog(
-                        title: "Log Out",
-                        message: "Do you really want to sign out?",
-                        onConfirm: () async {
-                          // 1. Clear the login state so the app doesn't auto-login next time
-                          final prefs = await SharedPreferences.getInstance();
-                          await prefs.setBool(
-                            'isLoggedIn',
-                            false,
-                          ); // Or your specific login key
-
-                          // 2. Redirect to Sign-in and clear the entire navigation stack
-                          if (mounted) {
-                            Navigator.pushAndRemoveUntil(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const SignInScreen(),
-                              ), // Replace with your actual Sign-in class
-                              (route) =>
-                                  false, // This removes all previous routes from memory
-                            );
-                          }
-                        },
-                      ),
+                      onTap: () {
+                        // SHOW CUSTOM LOGOUT DIALOG
+                        _showConfirmationDialog(
+                          title: "Logout",
+                          message: "Are you sure you want to logout?",
+                          confirmText: "Yes, Logout",
+                          icon: Icons.logout,
+                          onConfirm: () async {
+                            final prefs = await SharedPreferences.getInstance();
+                            await prefs.setBool('isLoggedIn', false);
+                            if (mounted) {
+                              Navigator.pushAndRemoveUntil(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const SignInScreen(),
+                                ),
+                                (route) => false,
+                              );
+                            }
+                          },
+                        );
+                      },
                     ),
                     _buildSettingsItem(
                       Icons.help_outline,
@@ -291,36 +338,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       Icons.info_outline,
                       "About Us",
                       null,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const AboutScreen(),
-                          ),
-                        );
-                      },
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const AboutScreen(),
+                        ),
+                      ),
                     ),
                     _buildSettingsItem(
                       Icons.mail_outline,
                       "Contact Us",
                       null,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const ContactScreen(),
-                          ),
-                        );
-                      },
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ContactScreen(),
+                        ),
+                      ),
                     ),
                   ],
                 ),
               ),
-
               const SizedBox(height: 32),
               Divider(color: colBlack, thickness: 0.5),
               const SizedBox(height: 20),
-
               Center(
                 child: Text(
                   "Planted with love in Mumbai, India",
@@ -331,7 +372,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 120),
             ],
           ),
@@ -349,9 +389,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(
-        15,
-      ), // Optional: adds a ripple effect inside the box radius
+      borderRadius: BorderRadius.circular(15),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 12.0),
         child: Row(
@@ -359,7 +397,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: colIconBg, // B8F0C9
+                color: colIconBg,
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, size: 24, color: colBlack),
@@ -389,7 +427,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ],
               ),
             ),
-            // Figma styled arrow
             trailing ??
                 Icon(Icons.chevron_right, color: colGreyArrow, size: 24),
           ],

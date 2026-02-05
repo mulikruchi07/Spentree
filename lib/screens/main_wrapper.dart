@@ -1,10 +1,10 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'dashboard/dashboard_screen.dart';
-import 'profile/profile_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../core/biometric_service.dart';
+import 'dashboard/dashboard_screen.dart';
+import 'profile/profile_screen.dart';
 
 class MainWrapper extends StatefulWidget {
   const MainWrapper({super.key});
@@ -15,13 +15,15 @@ class MainWrapper extends StatefulWidget {
 
 class _MainWrapperState extends State<MainWrapper> with WidgetsBindingObserver {
   int _selectedIndex = 0;
-  bool _isAuthenticating = false; // Prevents the infinite popup loop
-  bool _showPrivacyBlur = false; // Controls the immediate blur overlay
+  bool _isAuthenticating = false;
+  bool _showPrivacyBlur = false;
+  bool _lockCache = false; // Synchronous cache to prevent UI leaks
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _syncLockState(); // Initial cache load
   }
 
   @override
@@ -30,55 +32,52 @@ class _MainWrapperState extends State<MainWrapper> with WidgetsBindingObserver {
     super.dispose();
   }
 
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    // Immediate Lock: Blur the screen as soon as the app starts to move to background
-    if (state == AppLifecycleState.inactive ||
-        state == AppLifecycleState.paused) {
-      _enablePrivacyBlur();
-    }
-
-    // Trigger authentication when the app comes back to focus
-    if (state == AppLifecycleState.resumed && !_isAuthenticating) {
-      _enforceLockOnResume();
-    }
+  // Updates the local boolean instantly for zero-latency checks
+  Future<void> _syncLockState() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _lockCache = prefs.getBool('isFaceIdEnabled') ?? false;
+    });
   }
 
-  Future<void> _enablePrivacyBlur() async {
-    final prefs = await SharedPreferences.getInstance();
-    bool isLockEnabled = prefs.getBool('isFaceIdEnabled') ?? false;
-    if (isLockEnabled) {
-      setState(() => _showPrivacyBlur = true);
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // 1. IMMEDIATE BLUR: Triggers on 'inactive' (swiping up or biometric popup)
+    // This happens BEFORE SharedPreferences could even be read.
+    if (state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.paused) {
+      if (_lockCache) {
+        setState(() => _showPrivacyBlur = true);
+      }
+    }
+
+    // 2. ENFORCE LOCK: Triggered when user returns to app
+    if (state == AppLifecycleState.resumed) {
+      _syncLockState(); // Refresh cache for next time
+      if (!_isAuthenticating && _lockCache) {
+        _enforceLockOnResume();
+      }
     }
   }
 
   Future<void> _enforceLockOnResume() async {
-    final prefs = await SharedPreferences.getInstance();
-    bool isLockEnabled = prefs.getBool('isFaceIdEnabled') ?? false;
+    setState(() {
+      _isAuthenticating = true;
+      _showPrivacyBlur = true;
+    });
 
-    if (isLockEnabled) {
-      if (isLockEnabled) {
-        setState(() {
-          _isAuthenticating = true;
-          _showPrivacyBlur = true; // Ensure UI is hidden while popup shows
-        });
+    bool authenticated = await BiometricService.authenticateUser();
 
-        // Local auth allows Fingerprint/Face/PIN based on device settings
-        bool authenticated = await BiometricService.authenticateUser();
-
-        if (authenticated) {
-          await Future.delayed(const Duration(milliseconds: 200));
-          setState(() {
-            _isAuthenticating = false;
-            _showPrivacyBlur = false; // Reveal UI only on success
-          });
-        } else {
-          // Keep gate open for retry but keep UI blurred
-          setState(() => _isAuthenticating = false);
-        }
-      } else {
-        setState(() => _showPrivacyBlur = false);
-      }
+    if (authenticated) {
+      // Small delay to let the OS-level dialog clear the screen
+      await Future.delayed(const Duration(milliseconds: 150));
+      setState(() {
+        _isAuthenticating = false;
+        _showPrivacyBlur = false;
+      });
+    } else {
+      setState(() => _isAuthenticating = false);
+      // Privacy blur remains true; data is still hidden on failure
     }
   }
 
@@ -92,13 +91,11 @@ class _MainWrapperState extends State<MainWrapper> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      canPop: false, // Intercept back button
+      canPop: false,
       onPopInvokedWithResult: (didPop, result) {
         if (_selectedIndex != 0) {
-          // If on Profile/Forest, go back to Dashboard first
           setState(() => _selectedIndex = 0);
         } else {
-          // If on Dashboard, close the app properly
           SystemNavigator.pop();
         }
       },
@@ -111,17 +108,17 @@ class _MainWrapperState extends State<MainWrapper> with WidgetsBindingObserver {
             bottomNavigationBar: _buildBottomNavbar(),
           ),
 
-          // Privacy Overlay: Heavy blur that hides content when locked/standby
+          // Privacy Overlay: High sigma blur
           if (_showPrivacyBlur)
             Positioned.fill(
               child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 30.0, sigmaY: 30.0),
+                filter: ImageFilter.blur(sigmaX: 35.0, sigmaY: 35.0),
                 child: Container(
-                  color: Colors.white.withValues(alpha: 0.8),
+                  color: Colors.white.withOpacity(0.85),
                   child: const Center(
                     child: Icon(
                       Icons.lock_outline,
-                      size: 50,
+                      size: 60,
                       color: Color(0xFF34C759),
                     ),
                   ),

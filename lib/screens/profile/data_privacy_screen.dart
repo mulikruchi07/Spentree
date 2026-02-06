@@ -1,0 +1,767 @@
+import 'dart:ui';
+import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
+import 'privacy_screen.dart';
+
+class DataPrivacyScreen extends StatefulWidget {
+  const DataPrivacyScreen({super.key});
+
+  @override
+  State<DataPrivacyScreen> createState() => _DataPrivacyScreenState();
+}
+
+class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
+  final Color colBlack = const Color(0xFF000000);
+  final Color colSub = const Color(0xFF9B9B9B);
+  final Color colDateText = const Color(0xFF666666);
+  final Color colBoxBg = const Color(0xFFF1F1F1);
+  final Color colIconBg = const Color(0xFFB8F0C9);
+  final Color colDestructiveRed = const Color(0xFFFF4141);
+  final Color colPrimaryGreen = const Color(0xFF34C759);
+  final Color colDisabled = const Color(0xFFBABABA);
+
+  get colGrey80 => null;
+
+  Future<void> _showSquarePopup({required Widget content}) async {
+    return showDialog(
+      context: context,
+      builder: (context) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 40),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(28),
+            ),
+            child: content,
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _handleChangeLimit() {
+    _showSquarePopup(
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "Change limit",
+                style: GoogleFonts.montserrat(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: const Icon(Icons.close, size: 24),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            "Current Limit : Rs. 0,000",
+            style: GoogleFonts.montserrat(
+              fontSize: 22,
+              fontWeight: FontWeight.w600,
+              color: colDateText,
+            ),
+          ),
+          const SizedBox(height: 20),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            decoration: BoxDecoration(
+              color: colBoxBg,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    keyboardType: TextInputType.number,
+                    style: GoogleFonts.montserrat(
+                      fontSize: 16,
+                      color: colBlack,
+                    ),
+                    decoration: InputDecoration(
+                      hintText: "Enter new limit",
+                      hintStyle: GoogleFonts.montserrat(
+                        color: const Color(0xFF9EA3AE),
+                      ),
+                      border: InputBorder.none,
+                    ),
+                  ),
+                ),
+                Text(
+                  "INR",
+                  style: GoogleFonts.montserrat(
+                    color: colGrey80,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Container(
+                width: 20,
+                height: 20,
+                decoration: BoxDecoration(
+                  color: colBoxBg,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                "Limit can be changed only once a week",
+                style: GoogleFonts.montserrat(fontSize: 11, color: colGrey80),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          _buildActionBtn(
+            "Change",
+            colPrimaryGreen,
+            Colors.white,
+            () => Navigator.pop(context),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _handleExportFlow() {
+    _showSquarePopup(
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildIconCircle(Icons.calendar_month_outlined, colPrimaryGreen),
+          const SizedBox(height: 20),
+          Text(
+            "Select Dates",
+            style: GoogleFonts.montserrat(
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 20),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            child: Text(
+              "Select the date range to export data",
+              textAlign: TextAlign.center,
+              style: GoogleFonts.montserrat(
+                fontSize: 14,
+                color: colSub,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          const SizedBox(height: 32),
+          _buildActionBtn("Select Dates", colPrimaryGreen, Colors.white, () {
+            Navigator.pop(context);
+            _showCalendarPopup();
+          }),
+          const SizedBox(height: 12),
+          _buildActionBtn(
+            "Cancel",
+            colBoxBg,
+            colDestructiveRed,
+            () => Navigator.pop(context),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showCalendarPopup() {
+    showDialog(
+      context: context,
+      builder: (context) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(horizontal: 30),
+          child: _CustomRangeCalendar(
+            onConfirm: (start, end) {
+              Navigator.pop(context);
+              _showFinalExportPopup(start, end);
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showFinalExportPopup(DateTime start, DateTime? end) {
+    bool isSingle =
+        end == null ||
+        (start.year == end.year &&
+            start.month == end.month &&
+            start.day == end.day);
+    String dateDisplay = isSingle
+        ? DateFormat('d MMMM y').format(start)
+        : "${DateFormat('d MMM y').format(start)}  →  ${DateFormat('d MMM y').format(end!)}";
+
+    _showSquarePopup(
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildIconCircle(Icons.upload_outlined, colPrimaryGreen),
+          const SizedBox(height: 20),
+          Text(
+            "Export Data",
+            style: GoogleFonts.montserrat(
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            "Only data from this period will be exported",
+            textAlign: TextAlign.center,
+            style: GoogleFonts.montserrat(
+              fontSize: 14,
+              color: colSub,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 24),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              dateDisplay,
+              style: GoogleFonts.montserrat(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: colDateText,
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          _buildActionBtn(
+            "Yes, Export",
+            colPrimaryGreen,
+            Colors.white,
+            () => Navigator.pop(context),
+          ),
+          const SizedBox(height: 12),
+          _buildActionBtn(
+            "Cancel",
+            colBoxBg,
+            colDestructiveRed,
+            () => Navigator.pop(context),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 40),
+                    Text(
+                      "Data &",
+                      style: GoogleFonts.montserrat(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    Text(
+                      "Privacy",
+                      style: GoogleFonts.montserrat(
+                        fontSize: 36,
+                        fontWeight: FontWeight.w600,
+                        height: 1.1,
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                    _buildTile(
+                      Icons.upload_outlined,
+                      "Export Data",
+                      "Export your account data",
+                      _handleExportFlow,
+                    ),
+                    _buildTile(
+                      Icons.refresh_rounded,
+                      "Reset App Data",
+                      "Reset your account data",
+                      () {
+                        _showSquarePopup(content: _buildResetContent());
+                      },
+                    ),
+                    _buildTile(
+                      Icons.delete_outline_rounded,
+                      "Delete Transactions",
+                      "Manage your transactions",
+                      () {},
+                    ),
+                    _buildTile(
+                      Icons.speed_rounded,
+                      "Change Limit",
+                      "Manage your transactions",
+                      () {},
+                    ),
+                    _buildTile(
+                      Icons.lock_outline_rounded,
+                      "Privacy Policy",
+                      "Further secure your account for safety",
+                      () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const PrivacyScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const Divider(
+              color: Colors.black,
+              thickness: 1.2,
+              indent: 24,
+              endIndent: 24,
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 20),
+              child: Text(
+                "Planted with love in Mumbai, India",
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  color: const Color(0xFF808080),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildResetContent() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _buildIconCircle(Icons.refresh, colDestructiveRed),
+        const SizedBox(height: 20),
+        Text(
+          "Reset App-data",
+          style: GoogleFonts.montserrat(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 20),
+        Text(
+          "This will clear your spending history and progress.",
+          textAlign: TextAlign.center,
+          style: GoogleFonts.montserrat(
+            fontSize: 14,
+            color: colSub,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 32),
+        _buildActionBtn(
+          "Yes, Reset",
+          colDestructiveRed,
+          Colors.white,
+          () => Navigator.pop(context),
+        ),
+        const SizedBox(height: 12),
+        _buildActionBtn(
+          "Cancel",
+          colBoxBg,
+          colDestructiveRed,
+          () => Navigator.pop(context),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildIconCircle(IconData icon, Color bg) => Container(
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
+    child: Icon(icon, color: Colors.white, size: 32),
+  );
+
+  Widget _buildActionBtn(String text, Color bg, Color tx, VoidCallback? tap) =>
+      SizedBox(
+        width: double.infinity,
+        height: 50,
+        child: ElevatedButton(
+          onPressed: tap,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: bg,
+            elevation: 0,
+            disabledBackgroundColor: colDisabled, // Fixed BABABA color
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+          child: Text(
+            text,
+            style: GoogleFonts.montserrat(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: tx,
+            ),
+          ),
+        ),
+      );
+
+  Widget _buildTile(IconData icon, String t, String s, VoidCallback tap) =>
+      Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        decoration: BoxDecoration(
+          color: colBoxBg,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: InkWell(
+          onTap: tap,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: colIconBg,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(icon, size: 24),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        t,
+                        style: GoogleFonts.poppins(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        s,
+                        style: GoogleFonts.poppins(
+                          fontSize: 11,
+                          color: const Color(0xFF808080),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.chevron_right, color: Color(0xFFABABAB)),
+              ],
+            ),
+          ),
+        ),
+      );
+}
+
+class _CustomRangeCalendar extends StatefulWidget {
+  final Function(DateTime, DateTime?) onConfirm;
+  const _CustomRangeCalendar({required this.onConfirm});
+
+  @override
+  State<_CustomRangeCalendar> createState() => _CustomRangeCalendarState();
+}
+
+class _CustomRangeCalendarState extends State<_CustomRangeCalendar> {
+  DateTime _viewDate = DateTime.now();
+  DateTime? _start;
+  DateTime? _end;
+  bool _showPicker = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final days = DateUtils.getDaysInMonth(_viewDate.year, _viewDate.month);
+    final offset = DateTime(_viewDate.year, _viewDate.month, 1).weekday - 1;
+
+    return Container(
+      constraints: const BoxConstraints(
+        maxHeight: 460,
+      ), // Static height to prevent jitter
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              GestureDetector(
+                onTap: () => setState(() => _showPicker = !_showPicker),
+                child: Text(
+                  DateFormat('MMMM yyyy').format(_viewDate),
+                  style: GoogleFonts.montserrat(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 18,
+                  ),
+                ),
+              ),
+              if (!_showPicker)
+                Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(
+                        Icons.chevron_left,
+                        color: Color(0xFF333333),
+                      ),
+                      onPressed: () => setState(
+                        () => _viewDate = DateTime(
+                          _viewDate.year,
+                          _viewDate.month - 1,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(
+                        Icons.chevron_right,
+                        color: Color(0xFF333333),
+                      ),
+                      onPressed: () => setState(
+                        () => _viewDate = DateTime(
+                          _viewDate.year,
+                          _viewDate.month + 1,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+            ],
+          ),
+          const SizedBox(height: 15),
+          Flexible(
+            // Dynamic adjustment to screen size to prevent pixel errors
+            child: _showPicker
+                ? _buildSeparatePickers()
+                : _buildCalendarGrid(days, offset),
+          ),
+          const SizedBox(height: 15),
+          Row(
+            children: [
+              Expanded(
+                child: _btn(
+                  "Cancel",
+                  const Color(0xFFF1F1F1),
+                  const Color(0xFFFF4141),
+                  () => Navigator.pop(context),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _btn(
+                  "Confirm",
+                  _start == null
+                      ? const Color(0xFFBABABA)
+                      : const Color(0xFF34C759),
+                  Colors.white,
+                  _start == null ? null : () => widget.onConfirm(_start!, _end),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSeparatePickers() {
+    return Row(
+      children: [
+        // Month Picker
+        Expanded(
+          child: CupertinoPicker(
+            itemExtent: 40,
+            scrollController: FixedExtentScrollController(
+              initialItem: _viewDate.month - 1,
+            ),
+            onSelectedItemChanged: (i) =>
+                setState(() => _viewDate = DateTime(_viewDate.year, i + 1)),
+            children: List.generate(
+              12,
+              (i) => Center(
+                child: Text(
+                  DateFormat('MMMM').format(DateTime(2026, i + 1)),
+                  style: GoogleFonts.montserrat(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        // Year Picker
+        Expanded(
+          child: CupertinoPicker(
+            itemExtent: 40,
+            scrollController: FixedExtentScrollController(
+              initialItem: _viewDate.year - 2026,
+            ),
+            onSelectedItemChanged: (i) =>
+                setState(() => _viewDate = DateTime(2026 + i, _viewDate.month)),
+            children: List.generate(
+              11,
+              (i) => Center(
+                child: Text(
+                  "${2026 + i}",
+                  style: GoogleFonts.montserrat(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCalendarGrid(int days, int offset) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]
+              .map(
+                (e) => Text(
+                  e,
+                  style: GoogleFonts.montserrat(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              )
+              .toList(),
+        ),
+        const SizedBox(height: 10),
+        GridView.builder(
+          shrinkWrap: true,
+          physics:
+              const NeverScrollableScrollPhysics(), // Prevent grid from handling its own scroll
+          itemCount: 42,
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 7,
+            childAspectRatio: 1.1,
+          ),
+          itemBuilder: (context, i) {
+            if (i < offset || i >= days + offset) return const SizedBox();
+            final date = DateTime(
+              _viewDate.year,
+              _viewDate.month,
+              i - offset + 1,
+            );
+            bool isSelected = (date == _start || date == _end);
+            bool inRange =
+                _start != null &&
+                _end != null &&
+                date.isAfter(_start!) &&
+                date.isBefore(_end!);
+
+            return GestureDetector(
+              onTap: () => setState(() {
+                if (_start == null || _end != null) {
+                  _start = date;
+                  _end = null;
+                } else {
+                  if (date.isBefore(_start!)) {
+                    _end = _start;
+                    _start = date;
+                  } else {
+                    _end = date;
+                  }
+                }
+              }),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: (isSelected || inRange)
+                      ? const Color(0xFF34C759)
+                      : Colors.transparent,
+                  borderRadius: isSelected
+                      ? (date == _start
+                            ? const BorderRadius.horizontal(
+                                left: Radius.circular(8),
+                              )
+                            : const BorderRadius.horizontal(
+                                right: Radius.circular(8),
+                              ))
+                      : BorderRadius.zero,
+                ),
+                child: Center(
+                  child: Text(
+                    "${date.day}",
+                    style: GoogleFonts.montserrat(
+                      color: (isSelected || inRange)
+                          ? Colors.white
+                          : const Color(0xFF666666),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _btn(String t, Color bg, Color tx, VoidCallback? tap) => SizedBox(
+    height: 50,
+    child: ElevatedButton(
+      onPressed: tap,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: bg,
+        elevation: 0,
+        disabledBackgroundColor: const Color(0xFFBABABA), // Locked color
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+      child: Text(
+        t,
+        style: GoogleFonts.montserrat(
+          fontSize: 16,
+          fontWeight: FontWeight.w500,
+          color: tx,
+        ),
+      ),
+    ),
+  );
+}

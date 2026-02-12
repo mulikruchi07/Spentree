@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'delete_transactions_screen.dart';
 import 'privacy_screen.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class DataPrivacyScreen extends StatefulWidget {
   const DataPrivacyScreen({super.key});
@@ -13,7 +15,9 @@ class DataPrivacyScreen extends StatefulWidget {
 }
 
 class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
+  // --- UI Constants ---
   final Color colBlack = const Color(0xFF000000);
+  final Color colGrey80 = const Color(0xFF808080);
   final Color colSub = const Color(0xFF9B9B9B);
   final Color colDateText = const Color(0xFF666666);
   final Color colBoxBg = const Color(0xFFF1F1F1);
@@ -22,8 +26,13 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
   final Color colPrimaryGreen = const Color(0xFF34C759);
   final Color colDisabled = const Color(0xFFBABABA);
 
-  get colGrey80 => null;
+  // --- Logic Helpers ---
+  Future<void> _launchURL(String url) async {
+    final Uri uri = Uri.parse(url);
+    if (!await launchUrl(uri)) throw 'Could not launch $url';
+  }
 
+  // --- Popups ---
   Future<void> _showSquarePopup({required Widget content}) async {
     return showDialog(
       context: context,
@@ -211,9 +220,11 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
         (start.year == end.year &&
             start.month == end.month &&
             start.day == end.day);
+
+    // Removed unnecessary '!' non-null assertion
     String dateDisplay = isSingle
         ? DateFormat('d MMMM y').format(start)
-        : "${DateFormat('d MMM y').format(start)}  →  ${DateFormat('d MMM y').format(end!)}";
+        : "${DateFormat('d MMM y').format(start)}  →  ${DateFormat('d MMM y').format(end)}";
 
     _showSquarePopup(
       content: Column(
@@ -274,93 +285,148 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 40),
-                    Text(
-                      "Data &",
-                      style: GoogleFonts.montserrat(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    Text(
-                      "Privacy",
-                      style: GoogleFonts.montserrat(
-                        fontSize: 36,
-                        fontWeight: FontWeight.w600,
-                        height: 1.1,
-                      ),
-                    ),
-                    const SizedBox(height: 32),
-                    _buildTile(
-                      Icons.upload_outlined,
-                      "Export Data",
-                      "Export your account data",
-                      _handleExportFlow,
-                    ),
-                    _buildTile(
-                      Icons.refresh_rounded,
-                      "Reset App Data",
-                      "Reset your account data",
-                      () {
-                        _showSquarePopup(content: _buildResetContent());
-                      },
-                    ),
-                    _buildTile(
-                      Icons.delete_outline_rounded,
-                      "Delete Transactions",
-                      "Manage your transactions",
-                      () {},
-                    ),
-                    _buildTile(
-                      Icons.speed_rounded,
-                      "Change Limit",
-                      "Manage your transactions",
-                      () {},
-                    ),
-                    _buildTile(
-                      Icons.lock_outline_rounded,
-                      "Privacy Policy",
-                      "Further secure your account for safety",
-                      () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const PrivacyScreen(),
-                          ),
-                        );
-                      },
-                    ),
-                  ],
+        top: false,
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 70),
+              Text(
+                "Data &",
+                style: GoogleFonts.montserrat(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
-            ),
-            const Divider(
-              color: Colors.black,
-              thickness: 1.2,
-              indent: 24,
-              endIndent: 24,
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 20),
-              child: Text(
-                "Planted with love in Mumbai, India",
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  color: const Color(0xFF808080),
+              Text(
+                "Privacy",
+                style: GoogleFonts.montserrat(
+                  fontSize: 36,
+                  fontWeight: FontWeight.w600,
+                  height: 1.1,
                 ),
               ),
-            ),
-          ],
+              const SizedBox(height: 32),
+              _buildTile(
+                Icons.upload_outlined,
+                "Export Data",
+                "Export your account data",
+                _handleExportFlow,
+              ),
+              _buildTile(
+                Icons.refresh_rounded,
+                "Reset App Data",
+                "Reset your account data",
+                () {
+                  _showSquarePopup(content: _buildResetContent());
+                },
+              ),
+              _buildTile(
+                Icons.delete_outline_rounded,
+                "Delete Transactions",
+                "Manage your transactions",
+                () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const DeleteTransactionsScreen(),
+                    ),
+                  );
+                },
+              ),
+              _buildTile(
+                Icons.speed_rounded,
+                "Change Limit",
+                "Manage your transactions",
+                _handleChangeLimit,
+              ),
+              _buildTile(
+                Icons.lock_outline_rounded,
+                "Privacy Policy",
+                "Further secure your account for safety",
+                () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const PrivacyScreen(),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 16),
+              _buildFooter(context),
+              const SizedBox(height: 50),
+            ],
+          ),
         ),
       ),
+    );
+  }
+
+  // Footer moved into State class to access _launchURL
+  Widget _buildFooter(BuildContext context) {
+    const Color colGrey80 = Color(0xFF808080);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          "Planted with love in Mumbai, India",
+          style: GoogleFonts.poppins(
+            fontSize: 14,
+            fontWeight: FontWeight.w400,
+            color: colGrey80,
+          ),
+        ),
+        const SizedBox(height: 4),
+
+        GestureDetector(
+          onTap: () => _launchURL("https://linkedin.com/in/designer"),
+          child: RichText(
+            text: TextSpan(
+              style: GoogleFonts.poppins(fontSize: 14, color: colGrey80),
+              children: [
+                const TextSpan(
+                  text: "Designed by ",
+                  style: TextStyle(fontWeight: FontWeight.w400),
+                ),
+                TextSpan(
+                  text: "Designer",
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w200,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 4),
+
+        GestureDetector(
+          onTap: () => _launchURL("https://linkedin.com/in/developer"),
+          child: RichText(
+            text: TextSpan(
+              style: GoogleFonts.poppins(fontSize: 14, color: colGrey80),
+              children: [
+                const TextSpan(
+                  text: "Developed by ",
+                  style: TextStyle(fontWeight: FontWeight.w400),
+                ),
+                TextSpan(
+                  text: "Developer",
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w200,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -420,7 +486,7 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
           style: ElevatedButton.styleFrom(
             backgroundColor: bg,
             elevation: 0,
-            disabledBackgroundColor: colDisabled, // Fixed BABABA color
+            disabledBackgroundColor: colDisabled,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
@@ -509,9 +575,7 @@ class _CustomRangeCalendarState extends State<_CustomRangeCalendar> {
     final offset = DateTime(_viewDate.year, _viewDate.month, 1).weekday - 1;
 
     return Container(
-      constraints: const BoxConstraints(
-        maxHeight: 460,
-      ), // Static height to prevent jitter
+      constraints: const BoxConstraints(maxHeight: 460),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -566,7 +630,6 @@ class _CustomRangeCalendarState extends State<_CustomRangeCalendar> {
           ),
           const SizedBox(height: 15),
           Flexible(
-            // Dynamic adjustment to screen size to prevent pixel errors
             child: _showPicker
                 ? _buildSeparatePickers()
                 : _buildCalendarGrid(days, offset),
@@ -603,7 +666,6 @@ class _CustomRangeCalendarState extends State<_CustomRangeCalendar> {
   Widget _buildSeparatePickers() {
     return Row(
       children: [
-        // Month Picker
         Expanded(
           child: CupertinoPicker(
             itemExtent: 40,
@@ -626,7 +688,6 @@ class _CustomRangeCalendarState extends State<_CustomRangeCalendar> {
             ),
           ),
         ),
-        // Year Picker
         Expanded(
           child: CupertinoPicker(
             itemExtent: 40,
@@ -674,8 +735,7 @@ class _CustomRangeCalendarState extends State<_CustomRangeCalendar> {
         const SizedBox(height: 10),
         GridView.builder(
           shrinkWrap: true,
-          physics:
-              const NeverScrollableScrollPhysics(), // Prevent grid from handling its own scroll
+          physics: const NeverScrollableScrollPhysics(),
           itemCount: 42,
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 7,
@@ -751,7 +811,7 @@ class _CustomRangeCalendarState extends State<_CustomRangeCalendar> {
       style: ElevatedButton.styleFrom(
         backgroundColor: bg,
         elevation: 0,
-        disabledBackgroundColor: const Color(0xFFBABABA), // Locked color
+        disabledBackgroundColor: const Color(0xFFBABABA),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
       child: Text(

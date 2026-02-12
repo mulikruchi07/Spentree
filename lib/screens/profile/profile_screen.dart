@@ -257,114 +257,113 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 32),
 
               // Settings List
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 10,
-                  horizontal: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: colBoxBg,
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: Column(
-                  children: [
-                    _buildSettingsItem(
-                      Icons.person_2_outlined,
-                      "My Account",
-                      "Make changes to your account",
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const AccountScreen(),
-                          ),
-                        );
-                      },
+              _buildSettingsItem(
+                Icons.person_2_outlined,
+                "My Account",
+                "Make changes to your account",
+                () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const AccountScreen(),
                     ),
-
-                    _buildSettingsItem(
-                      Icons.privacy_tip_outlined,
-                      "Data & Privacy",
-                      "Manage your data & privacy",
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const DataPrivacyScreen(),
-                          ),
-                        );
-                      },
-                    ),
-                    // Logout Item
-                    _buildSettingsItem(
-                      Icons.logout_rounded,
-                      "Log out",
-                      "Further secure your account for safety",
-                      onTap: () {
-                        // SHOW CUSTOM LOGOUT DIALOG
-                        _showConfirmationDialog(
-                          title: "Logout",
-                          message: "Are you sure you want to logout?",
-                          confirmText: "Yes, Logout",
-                          icon: Icons.logout,
-                          onConfirm: () async {
-                            final prefs = await SharedPreferences.getInstance();
-                            await prefs.setBool('isLoggedIn', false);
-                            if (mounted) {
-                              Navigator.pushAndRemoveUntil(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const SignInScreen(),
-                                ),
-                                (route) => false,
-                              );
-                            }
-                          },
-                        );
-                      },
-                    ),
-                    _buildSettingsItem(
-                      Icons.help_outline,
-                      "Helpdesk & FAQ",
-                      null,
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const HelpdeskScreen(),
-                        ),
-                      ),
-                    ),
-                    _buildSettingsItem(
-                      Icons.info_outline,
-                      "About Us",
-                      null,
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const AboutScreen(),
-                        ),
-                      ),
-                    ),
-                    _buildSettingsItem(
-                      Icons.mail_outline,
-                      "Contact Us",
-                      null,
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const ContactScreen(),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                  );
+                },
               ),
-              const SizedBox(height: 32),
+
+              _buildSettingsItem(
+                Icons.privacy_tip_outlined,
+                "Data & Privacy",
+                "Manage your data & privacy",
+                () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const DataPrivacyScreen(),
+                    ),
+                  );
+                },
+              ),
+              // Logout Item
+              _buildSettingsItem(
+                Icons.logout_rounded,
+                "Log out",
+                "Further secure your account for safety",
+                () {
+                  // SHOW CUSTOM LOGOUT DIALOG
+                  _showConfirmationDialog(
+                    title: "Logout",
+                    message: "Are you sure you want to logout?",
+                    confirmText: "Yes, Logout",
+                    icon: Icons.logout,
+                    onConfirm: () async {
+                      final prefs = await SharedPreferences.getInstance();
+                      await prefs.setBool('isLoggedIn', false);
+                      if (mounted) {
+                        Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const SignInScreen(),
+                          ),
+                          (route) => false,
+                        );
+                      }
+                    },
+                  );
+                },
+              ),
+              _buildSettingsItem(
+                Icons.help_outline,
+                "Helpdesk & FAQ",
+                "Further secure your account for safety",
+                () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const HelpdeskScreen(),
+                    ),
+                  );
+                },
+              ),
+              _buildSettingsItem(
+                Icons.info_outline,
+                "About Us",
+                "Further secure your account for safety",
+                () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const AboutScreen(),
+                    ),
+                  );
+                },
+              ),
+              _buildSettingsItem(
+                Icons.mail_outline,
+                "Contact Us",
+                "Further secure your account for safety",
+                () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ContactScreen(),
+                    ),
+                  );
+                },
+              ),
+
+              const SizedBox(
+                height: 20,
+              ), // "Reduce gap distance between tip and divide line"
               Divider(color: colBlack, thickness: 0.5),
+
               const SizedBox(height: 20),
+
+              // --- 7. Footer ---
               Center(
                 child: Text(
                   "Planted with love in Mumbai, India",
+                  // Poppins, Medium 13
                   style: GoogleFonts.poppins(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
@@ -372,6 +371,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
               ),
+
               const SizedBox(height: 120),
             ],
           ),
@@ -382,16 +382,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _buildSettingsItem(
     IconData icon,
-    String title,
-    String? subtitle, {
-    Widget? trailing,
-    VoidCallback? onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(15),
+    String t,
+    String s,
+    VoidCallback tap,
+  ) => Container(
+    margin: const EdgeInsets.only(bottom: 16),
+    decoration: BoxDecoration(
+      color: colBoxBg,
+      borderRadius: BorderRadius.circular(16),
+    ),
+    child: InkWell(
+      onTap: tap,
+      borderRadius: BorderRadius.circular(16),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 12.0),
+        padding: const EdgeInsets.all(16),
         child: Row(
           children: [
             Container(
@@ -400,7 +404,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 color: colIconBg,
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, size: 24, color: colBlack),
+              child: Icon(icon, size: 24),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -408,30 +412,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    title,
+                    t,
                     style: GoogleFonts.poppins(
-                      fontSize: 14,
+                      fontSize: 15,
                       fontWeight: FontWeight.w500,
-                      color: colBlack,
                     ),
                   ),
-                  if (subtitle != null)
-                    Text(
-                      subtitle,
-                      style: GoogleFonts.poppins(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w300,
-                        color: colGrey80,
-                      ),
+                  const SizedBox(height: 4),
+                  Text(
+                    s,
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      color: const Color(0xFF808080),
                     ),
+                  ),
                 ],
               ),
             ),
-            trailing ??
-                Icon(Icons.chevron_right, color: colGreyArrow, size: 24),
+            const Icon(Icons.chevron_right, color: Color(0xFFABABAB)),
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
 }

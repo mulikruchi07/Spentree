@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:spentree/screens/forest/forest_screen.dart';
 import '../core/biometric_service.dart';
 import 'analytics/analytics_screen.dart';
 import 'dashboard/dashboard_screen.dart';
@@ -85,7 +86,7 @@ class _MainWrapperState extends State<MainWrapper> with WidgetsBindingObserver {
   final List<Widget> _pages = [
     const DashboardScreen(),
     const AnalyticsScreen(),
-    const Center(child: Text("Forest")),
+    const ForestScreen(),
     const ProfileScreen(),
   ];
 

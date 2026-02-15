@@ -872,12 +872,12 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
       children: data
           .map(
             (cat) => Padding(
-              padding: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.only(bottom: 17),
               child: Row(
                 children: [
                   Container(
-                    width: 14,
-                    height: 14,
+                    width: 20,
+                    height: 20,
                     decoration: BoxDecoration(
                       color: cat['color'] as Color,
                       shape: BoxShape.circle,

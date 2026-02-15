@@ -31,6 +31,7 @@ flutter:
 
   assets:
     - assets/images/
+    - assets/images/forest/
     - assets/icons/home.png
     - assets/icons/home_filled.png
     - assets/icons/analytics.png

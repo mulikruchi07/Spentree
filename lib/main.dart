@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'screens/onboarding/onboarding_screen.dart';
+import 'screens/onboarding/splash_onboarding_screen.dart'; // UPDATED IMPORT
 import 'screens/main_wrapper.dart';
 import 'core/biometric_service.dart';
 
@@ -8,25 +8,34 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   final prefs = await SharedPreferences.getInstance();
-  // Retrieve the saved toggle state; default to false if not found
+
+  // 1. Check if it's the first time launch
+  bool isOnboarded = prefs.getBool('isOnboarded') ?? false;
+
+  // 2. Retrieve the saved lock state
   bool isLockEnabled = prefs.getBool('isFaceIdEnabled') ?? false;
 
-  // Decide the starting screen
-  Widget startScreen = const OnboardingScreen();
+  Widget startScreen;
 
-  if (isLockEnabled) {
-    // 4. Force biometric popup before the app even opens
-    bool authenticated = await BiometricService.authenticateUser();
-
-    if (authenticated) {
-      startScreen = const MainWrapper();
-    } else {
-      // Show a fallback screen if they cancel or fail verification
-      startScreen = const AppLockedScreen();
-    }
+  if (!isOnboarded) {
+    // CONDITION 1: New User -> Show Green Splash Animation
+    startScreen = const SplashOnboardingScreen();
   } else {
-    // If lock is disabled, proceed as normal
-    startScreen = const MainWrapper();
+    // CONDITION 2: Returning User -> Check Biometrics
+    if (isLockEnabled) {
+      // Force biometric popup before the app opens
+      bool authenticated = await BiometricService.authenticateUser();
+
+      if (authenticated) {
+        startScreen = const MainWrapper();
+      } else {
+        // Show fallback if they cancel/fail verification
+        startScreen = const AppLockedScreen();
+      }
+    } else {
+      // If lock is disabled, proceed to Dashboard
+      startScreen = const MainWrapper();
+    }
   }
 
   runApp(MyApp(startScreen: startScreen));
@@ -42,7 +51,8 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'SpenTree',
       theme: ThemeData(
-        primarySwatch: Colors.green,
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF34C759)),
+        useMaterial3: true,
         scaffoldBackgroundColor: Colors.white,
       ),
       home: startScreen,
@@ -61,7 +71,7 @@ class AppLockedScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.lock_outline, size: 64, color: Colors.green),
+            const Icon(Icons.lock_outline, size: 64, color: Color(0xFF34C759)),
             const SizedBox(height: 20),
             const Text(
               "SpenTree is Locked",
@@ -69,7 +79,10 @@ class AppLockedScreen extends StatelessWidget {
             ),
             TextButton(
               onPressed: () => main(), // Restart the auth process
-              child: const Text("Tap to Unlock"),
+              child: const Text(
+                "Tap to Unlock",
+                style: TextStyle(color: Color(0xFF34C759)),
+              ),
             ),
           ],
         ),

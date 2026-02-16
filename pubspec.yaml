@@ -30,6 +30,9 @@ flutter:
   uses-material-design: true
 
   assets:
+    - assets/logo.png
+    - assets/appname.png
+    - assets/logo-name.png
     - assets/images/
     - assets/images/forest/
     - assets/icons/home.png

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../questionnaire/questionnaire_screen.dart'; // Adjust path if needed
 
 class OnboardingColors {
   static const Color primaryGreen = Color(0xFF34C759);
   static const Color textMain = Color(0xFF2D2B2E);
   static const Color inactiveGrey = Color(0xFFE5E5EA);
+  static const Color textDesc = Color(0xFF818082);
 }
 
 class OnboardingScreen extends StatefulWidget {
@@ -15,23 +15,20 @@ class OnboardingScreen extends StatefulWidget {
   State<OnboardingScreen> createState() => _OnboardingScreenState();
 }
 
-class _OnboardingScreenState extends State<OnboardingScreen> {
-  final PageController _controller = PageController();
+class _OnboardingScreenState extends State<OnboardingScreen>
+    with SingleTickerProviderStateMixin {
+  final PageController _pageController = PageController();
   int _currentIndex = 0;
 
-  // --- 1. SPACING CONFIGURATION (UPDATED) ---
+  late AnimationController _animController;
+  late Animation<Offset> _slideUpRoomAnim;
+  late Animation<Offset> _slideDownDescAnim;
+  late Animation<double> _fadeTreeAnim;
+  late Animation<double> _fadeControlsAnim;
 
-  // GAP: Distance between Image and Title Text
   final double imageTitleGap = 30.0;
-
-  // GAP: Distance between Desc Text and Progress Bar
-  // UPDATED: Increased massively to 100.0 to ensure the gap is visible
-  final double descProgressGap = 100.0;
-
-  // GAP: Distance between Progress Bar and Next Button
+  final double descProgressGap = 60.0;
   final double buttonGap = 46.0;
-
-  // PADDING: Text horizontal padding
   final double textPadding = 52.0;
 
   final List<Map<String, String>> _content = [
@@ -56,6 +53,51 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    );
+
+    // 1. BG ROOM: Slides UP (From Bottom to Top)
+    // Offset(0, 1.0) means it starts shifted DOWN by its full height
+    // Offset.zero means it ends at its natural position
+    _slideUpRoomAnim =
+        Tween<Offset>(begin: const Offset(0, 1.0), end: Offset.zero).animate(
+          CurvedAnimation(parent: _animController, curve: Curves.easeOutQuart),
+        );
+
+    // 2. DESC: Slides DOWN
+    _slideDownDescAnim =
+        Tween<Offset>(begin: const Offset(0, -1.0), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _animController,
+            curve: const Interval(0.2, 1.0, curve: Curves.easeOut),
+          ),
+        );
+
+    // 3. Fades
+    _fadeTreeAnim = CurvedAnimation(
+      parent: _animController,
+      curve: const Interval(0.4, 1.0, curve: Curves.easeIn),
+    );
+    _fadeControlsAnim = CurvedAnimation(
+      parent: _animController,
+      curve: const Interval(0.5, 1.0, curve: Curves.easeIn),
+    );
+
+    _animController.forward();
+  }
+
+  @override
+  void dispose() {
+    _animController.dispose();
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     double width = MediaQuery.of(context).size.width;
 
@@ -64,15 +106,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // --- 1. TOP MARGIN ---
-            // Adjusted flex to 2 to balance the layout
             const Spacer(flex: 2),
 
-            // --- 2. SWIPEABLE CONTENT AREA ---
             SizedBox(
               height: width * 1.35,
               child: PageView.builder(
-                controller: _controller,
+                controller: _pageController,
                 onPageChanged: (index) => setState(() => _currentIndex = index),
                 itemCount: _content.length,
                 itemBuilder: (context, index) {
@@ -87,55 +126,86 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           alignment: Alignment.bottomCenter,
                           clipBehavior: Clip.none,
                           children: [
-                            // Static Background Room
+                            // 1. BG ROOM (Slides UP)
                             Positioned(
                               bottom: 30,
-                              child: Image.asset(
-                                "assets/images/bg_room.png",
-                                width: width * 0.75,
-                                fit: BoxFit.contain,
+                              child: SlideTransition(
+                                position: _slideUpRoomAnim,
+                                child: Image.asset(
+                                  "assets/images/bg_room.png",
+                                  width: width * 0.75,
+                                  fit: BoxFit.contain,
+                                ),
                               ),
                             ),
-                            // Dynamic Tree (UPDATED)
-                            // Changed to 25 to move it visibly UP relative to BG
+
+                            // 2. HERO LOGO
+                            // The flight starts at Splash size (220) and shrinks to this width (width * 0.45)
                             Positioned(
-                              bottom: -5,
-                              child: Image.asset(
-                                _content[index]["tree"]!,
-                                width: width * 0.65,
-                                fit: BoxFit.contain,
+                              top: -60,
+                              child: Hero(
+                                tag: 'logo-image',
+                                child: Image.asset(
+                                  "assets/logo-name.png",
+                                  width: width * 0.45,
+                                  fit: BoxFit.contain,
+                                ),
+                              ),
+                            ),
+
+                            // 3. TREE (Fades in)
+                            Positioned(
+                              bottom: 25,
+                              child: FadeTransition(
+                                opacity: _fadeTreeAnim,
+                                child: Image.asset(
+                                  _content[index]["tree"]!,
+                                  width: width * 0.55,
+                                  fit: BoxFit.contain,
+                                ),
                               ),
                             ),
                           ],
                         ),
                       ),
 
-                      // B. GAP (Image <-> Title)
                       SizedBox(height: imageTitleGap),
 
-                      // C. TEXT SECTION
+                      // B. TEXT SECTION
                       Padding(
                         padding: EdgeInsets.symmetric(horizontal: textPadding),
                         child: Column(
                           children: [
-                            Text(
-                              _content[index]["title"]!,
-                              textAlign: TextAlign.center,
-                              style: GoogleFonts.montserrat(
-                                fontSize: 24,
-                                fontWeight: FontWeight.w600,
-                                color: OnboardingColors.textMain,
+                            Hero(
+                              tag: 'welcome-text',
+                              child: Material(
+                                type: MaterialType.transparency,
+                                child: Text(
+                                  _content[index]["title"]!,
+                                  textAlign: TextAlign.center,
+                                  style: GoogleFonts.montserrat(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.w600,
+                                    color: OnboardingColors.textMain,
+                                  ),
+                                ),
                               ),
                             ),
-                            const SizedBox(height: 16),
-                            Text(
-                              _content[index]["desc"]!,
-                              textAlign: TextAlign.center,
-                              style: GoogleFonts.montserrat(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w400,
-                                color: OnboardingColors.textMain,
-                                height: 1.5,
+                            const SizedBox(height: 32),
+                            SlideTransition(
+                              position: _slideDownDescAnim,
+                              child: FadeTransition(
+                                opacity: _fadeTreeAnim,
+                                child: Text(
+                                  _content[index]["desc"]!,
+                                  textAlign: TextAlign.center,
+                                  style: GoogleFonts.montserrat(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w400,
+                                    color: OnboardingColors.textDesc,
+                                    height: 1.5,
+                                  ),
+                                ),
                               ),
                             ),
                           ],
@@ -147,71 +217,59 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
             ),
 
-            // --- 3. CONTROLS AREA ---
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // D. GAP (Desc Text <-> Progress Bar)
-                // Using the new massive gap variable (100.0)
-                SizedBox(height: descProgressGap),
-
-                // PROGRESS BAR
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(
-                    _content.length,
-                    (index) => buildDot(index),
+            FadeTransition(
+              opacity: _fadeControlsAnim,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(height: descProgressGap),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(
+                      _content.length,
+                      (index) => buildDot(index),
+                    ),
                   ),
-                ),
-
-                // E. GAP (Progress Bar <-> Button)
-                SizedBox(height: buttonGap),
-
-                // NEXT BUTTON
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                  child: SizedBox(
-                    width: double.infinity,
-                    height: 64,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        if (_currentIndex == _content.length - 1) {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const QuestionnaireScreen(),
-                            ),
-                          );
-                        } else {
-                          _controller.nextPage(
-                            duration: const Duration(milliseconds: 300),
-                            curve: Curves.easeIn,
-                          );
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: OnboardingColors.primaryGreen,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
+                  SizedBox(height: buttonGap),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                    child: SizedBox(
+                      width: double.infinity,
+                      height: 64,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          if (_currentIndex < _content.length - 1) {
+                            _pageController.nextPage(
+                              duration: const Duration(milliseconds: 300),
+                              curve: Curves.easeIn,
+                            );
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: OnboardingColors.primaryGreen,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
                         ),
-                      ),
-                      child: Text(
-                        _currentIndex == _content.length - 1 ? "Done" : "Next",
-                        style: GoogleFonts.montserrat(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.white,
+                        child: Text(
+                          _currentIndex == _content.length - 1
+                              ? "Done"
+                              : "Next",
+                          style: GoogleFonts.montserrat(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
 
-            // --- 4. BOTTOM MARGIN ---
-            const Spacer(flex: 3),
+            const Spacer(flex: 2),
           ],
         ),
       ),

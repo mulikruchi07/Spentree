@@ -25,24 +25,26 @@ class _SplashOnboardingScreenState extends State<SplashOnboardingScreen>
       duration: const Duration(seconds: 2),
     );
 
-    _scaleAnimation = Tween<double>(begin: 0.0, end: 30.0).animate(
+    // Green Dot expands to cover entire screen (150x scale is safe for tablets)
+    _scaleAnimation = Tween<double>(begin: 0.0, end: 150.0).animate(
       CurvedAnimation(
         parent: _controller,
         curve: const Interval(0.0, 0.7, curve: Curves.easeInOut),
       ),
     );
 
-    _textAlignmentAnimation =
-        Tween<Alignment>(
-          begin: const Alignment(0.0, 0.15),
-          end: Alignment.center,
-        ).animate(
-          CurvedAnimation(
-            parent: _controller,
-            curve: const Interval(0.2, 0.6, curve: Curves.easeOutCubic),
-          ),
-        );
+    // Text Alignment
+    _textAlignmentAnimation = Tween<Alignment>(
+      begin: const Alignment(0.0, 0.11),
+      end: Alignment.center,
+    ).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.2, 0.6, curve: Curves.easeOutCubic),
+      ),
+    );
 
+    // Text Fade
     _textFadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
@@ -64,7 +66,7 @@ class _SplashOnboardingScreenState extends State<SplashOnboardingScreen>
     await Future.delayed(const Duration(seconds: 2));
     if (mounted) await _controller.forward();
 
-    Timer(const Duration(milliseconds: 800), () {
+    Timer(const Duration(milliseconds: 600), () {
       if (mounted) {
         Navigator.pushReplacement(
           context,
@@ -92,6 +94,7 @@ class _SplashOnboardingScreenState extends State<SplashOnboardingScreen>
       backgroundColor: Colors.white,
       body: Stack(
         children: [
+          // LAYER 1: CONTENT
           SafeArea(
             child: SizedBox(
               width: double.infinity,
@@ -107,25 +110,24 @@ class _SplashOnboardingScreenState extends State<SplashOnboardingScreen>
                   Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // HERO: Logo Flight Start
+                      // HERO: Flying Logo
                       Hero(
                         tag: 'logo-image',
-                        flightShuttleBuilder:
-                            (
-                              flightContext,
-                              animation,
-                              direction,
-                              fromContext,
-                              toContext,
-                            ) {
-                              return Material(
-                                color: Colors.transparent,
-                                child: Image.asset(
-                                  "assets/logo-name.png",
-                                  fit: BoxFit.contain,
-                                ),
-                              );
-                            },
+                        flightShuttleBuilder: (
+                          flightContext,
+                          animation,
+                          direction,
+                          fromContext,
+                          toContext,
+                        ) {
+                          return Material(
+                            color: Colors.transparent,
+                            child: Image.asset(
+                              "assets/logo-name.png",
+                              fit: BoxFit.contain,
+                            ),
+                          );
+                        },
                         child: Image.asset(
                           "assets/appname.png",
                           width: 220,
@@ -149,7 +151,8 @@ class _SplashOnboardingScreenState extends State<SplashOnboardingScreen>
               ),
             ),
           ),
-          // Green Dot Layer
+
+          // LAYER 2: EXPANDING GREEN DOT
           SafeArea(
             child: Column(
               children: [
@@ -161,8 +164,7 @@ class _SplashOnboardingScreenState extends State<SplashOnboardingScreen>
                     child: AnimatedBuilder(
                       animation: _scaleAnimation,
                       builder: (context, child) {
-                        if (_scaleAnimation.value == 0)
-                          return const SizedBox.shrink();
+                        if (_scaleAnimation.value == 0) return const SizedBox.shrink();
                         return Transform.scale(
                           scale: _scaleAnimation.value,
                           child: Container(
@@ -182,7 +184,8 @@ class _SplashOnboardingScreenState extends State<SplashOnboardingScreen>
               ],
             ),
           ),
-          // Welcome Text Layer
+
+          // LAYER 3: WELCOME TEXT
           AnimatedBuilder(
             animation: _controller,
             builder: (context, child) {

@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'delete_transactions_screen.dart';
 import 'privacy_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../core/app_style.dart';
 
 class DataPrivacyScreen extends StatefulWidget {
   const DataPrivacyScreen({super.key});
@@ -16,14 +17,6 @@ class DataPrivacyScreen extends StatefulWidget {
 
 class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
   // --- UI Constants ---
-  final Color colBlack = const Color(0xFF000000);
-  final Color colGrey80 = const Color(0xFF808080);
-  final Color colSub = const Color(0xFF9B9B9B);
-  final Color colDateText = const Color(0xFF666666);
-  final Color colBoxBg = const Color(0xFFF1F1F1);
-  final Color colIconBg = const Color(0xFFB8F0C9);
-  final Color colDestructiveRed = const Color(0xFFFF4141);
-  final Color colPrimaryGreen = const Color(0xFF34C759);
   final Color colDisabled = const Color(0xFFBABABA);
 
   // --- Logic Helpers ---
@@ -69,11 +62,16 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
                 style: GoogleFonts.montserrat(
                   fontSize: 20,
                   fontWeight: FontWeight.w500,
+                  color: AppColors.colblack,
                 ),
               ),
               GestureDetector(
                 onTap: () => Navigator.pop(context),
-                child: const Icon(Icons.close, size: 24),
+                child: const Icon(
+                  Icons.close,
+                  size: 24,
+                  color: AppColors.colblack,
+                ),
               ),
             ],
           ),
@@ -83,14 +81,14 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
             style: GoogleFonts.montserrat(
               fontSize: 22,
               fontWeight: FontWeight.w600,
-              color: colDateText,
+              color: AppColors.white600,
             ),
           ),
           const SizedBox(height: 20),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             decoration: BoxDecoration(
-              color: colBoxBg,
+              color: AppColors.inputFill,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
@@ -100,12 +98,12 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
                     keyboardType: TextInputType.number,
                     style: GoogleFonts.montserrat(
                       fontSize: 16,
-                      color: colBlack,
+                      color: AppColors.colblack,
                     ),
                     decoration: InputDecoration(
                       hintText: "Enter new limit",
                       hintStyle: GoogleFonts.montserrat(
-                        color: const Color(0xFF9EA3AE),
+                        color: AppColors.grey600,
                       ),
                       border: InputBorder.none,
                     ),
@@ -114,7 +112,7 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
                 Text(
                   "INR",
                   style: GoogleFonts.montserrat(
-                    color: colGrey80,
+                    color: AppColors.grey600,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -128,22 +126,25 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
                 width: 20,
                 height: 20,
                 decoration: BoxDecoration(
-                  color: colBoxBg,
+                  color: AppColors.inputFill,
                   borderRadius: BorderRadius.circular(4),
                 ),
               ),
               const SizedBox(width: 12),
               Text(
                 "Limit can be changed only once a week",
-                style: GoogleFonts.montserrat(fontSize: 11, color: colGrey80),
+                style: GoogleFonts.montserrat(
+                  fontSize: 11,
+                  color: AppColors.white500,
+                ),
               ),
             ],
           ),
           const SizedBox(height: 24),
           _buildActionBtn(
             "Change",
-            colPrimaryGreen,
-            Colors.white,
+            AppColors.primaryGreen,
+            AppColors.colwhite,
             () => Navigator.pop(context),
           ),
         ],
@@ -156,13 +157,17 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _buildIconCircle(Icons.calendar_month_outlined, colPrimaryGreen),
+          _buildIconCircle(
+            Icons.calendar_month_outlined,
+            AppColors.primaryGreen,
+          ),
           const SizedBox(height: 20),
           Text(
             "Select Dates",
             style: GoogleFonts.montserrat(
               fontSize: 20,
               fontWeight: FontWeight.w600,
+              color: AppColors.colblack,
             ),
           ),
           const SizedBox(height: 20),
@@ -173,21 +178,26 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
               textAlign: TextAlign.center,
               style: GoogleFonts.montserrat(
                 fontSize: 14,
-                color: colSub,
+                color: AppColors.desctext,
                 fontWeight: FontWeight.w500,
               ),
             ),
           ),
           const SizedBox(height: 32),
-          _buildActionBtn("Select Dates", colPrimaryGreen, Colors.white, () {
-            Navigator.pop(context);
-            _showCalendarPopup();
-          }),
+          _buildActionBtn(
+            "Select Dates",
+            AppColors.primaryGreen,
+            AppColors.colwhite,
+            () {
+              Navigator.pop(context);
+              _showCalendarPopup();
+            },
+          ),
           const SizedBox(height: 12),
           _buildActionBtn(
             "Cancel",
-            colBoxBg,
-            colDestructiveRed,
+            AppColors.inactiveGrey,
+            AppColors.destructiveRed,
             () => Navigator.pop(context),
           ),
         ],
@@ -230,13 +240,14 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _buildIconCircle(Icons.upload_outlined, colPrimaryGreen),
+          _buildIconCircle(Icons.upload_outlined, AppColors.primaryGreen),
           const SizedBox(height: 20),
           Text(
             "Export Data",
             style: GoogleFonts.montserrat(
               fontSize: 20,
               fontWeight: FontWeight.w600,
+              color: AppColors.colblack,
             ),
           ),
           const SizedBox(height: 20),
@@ -245,7 +256,7 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
             textAlign: TextAlign.center,
             style: GoogleFonts.montserrat(
               fontSize: 14,
-              color: colSub,
+              color: AppColors.desctext,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -257,22 +268,22 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
               style: GoogleFonts.montserrat(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: colDateText,
+                color: AppColors.white600,
               ),
             ),
           ),
           const SizedBox(height: 24),
           _buildActionBtn(
             "Yes, Export",
-            colPrimaryGreen,
-            Colors.white,
+            AppColors.primaryGreen,
+            AppColors.colwhite,
             () => Navigator.pop(context),
           ),
           const SizedBox(height: 12),
           _buildActionBtn(
             "Cancel",
-            colBoxBg,
-            colDestructiveRed,
+            AppColors.inputFill,
+            AppColors.destructiveRed,
             () => Navigator.pop(context),
           ),
         ],
@@ -283,7 +294,7 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.bgWhite,
       body: SafeArea(
         top: false,
         child: SingleChildScrollView(
@@ -298,6 +309,7 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
                 style: GoogleFonts.montserrat(
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
+                  color: AppColors.colblack,
                 ),
               ),
               Text(
@@ -305,6 +317,7 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
                 style: GoogleFonts.montserrat(
                   fontSize: 36,
                   fontWeight: FontWeight.w600,
+                  color: AppColors.colblack,
                   height: 1.1,
                 ),
               ),
@@ -365,10 +378,7 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
     );
   }
 
-  // Footer moved into State class to access _launchURL
   Widget _buildFooter(BuildContext context) {
-    const Color colGrey80 = Color(0xFF808080);
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -377,7 +387,7 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
           style: GoogleFonts.poppins(
             fontSize: 14,
             fontWeight: FontWeight.w400,
-            color: colGrey80,
+            color: AppColors.white500,
           ),
         ),
         const SizedBox(height: 4),
@@ -386,17 +396,24 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
           onTap: () => _launchURL("https://linkedin.com/in/designer"),
           child: RichText(
             text: TextSpan(
-              style: GoogleFonts.poppins(fontSize: 14, color: colGrey80),
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                color: AppColors.white500,
+              ),
               children: [
                 const TextSpan(
                   text: "Designed by ",
-                  style: TextStyle(fontWeight: FontWeight.w400),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w400,
+                    color: AppColors.white500,
+                  ),
                 ),
                 TextSpan(
                   text: "Designer",
                   style: GoogleFonts.poppins(
                     fontWeight: FontWeight.w200,
                     fontStyle: FontStyle.italic,
+                    color: AppColors.white500,
                   ),
                 ),
               ],
@@ -409,17 +426,24 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
           onTap: () => _launchURL("https://linkedin.com/in/developer"),
           child: RichText(
             text: TextSpan(
-              style: GoogleFonts.poppins(fontSize: 14, color: colGrey80),
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                color: AppColors.white500,
+              ),
               children: [
                 const TextSpan(
                   text: "Developed by ",
-                  style: TextStyle(fontWeight: FontWeight.w400),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w400,
+                    color: AppColors.white500,
+                  ),
                 ),
                 TextSpan(
                   text: "Developer",
                   style: GoogleFonts.poppins(
                     fontWeight: FontWeight.w200,
                     fontStyle: FontStyle.italic,
+                    color: AppColors.white500,
                   ),
                 ),
               ],
@@ -434,13 +458,14 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        _buildIconCircle(Icons.refresh, colDestructiveRed),
+        _buildIconCircle(Icons.refresh, AppColors.destructiveRed),
         const SizedBox(height: 20),
         Text(
           "Reset App-data",
           style: GoogleFonts.montserrat(
             fontSize: 20,
             fontWeight: FontWeight.w600,
+            color: AppColors.colblack,
           ),
         ),
         const SizedBox(height: 20),
@@ -449,22 +474,22 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
           textAlign: TextAlign.center,
           style: GoogleFonts.montserrat(
             fontSize: 14,
-            color: colSub,
+            color: AppColors.desctext,
             fontWeight: FontWeight.w500,
           ),
         ),
         const SizedBox(height: 32),
         _buildActionBtn(
           "Yes, Reset",
-          colDestructiveRed,
-          Colors.white,
+          AppColors.destructiveRed,
+          AppColors.colblack,
           () => Navigator.pop(context),
         ),
         const SizedBox(height: 12),
         _buildActionBtn(
           "Cancel",
-          colBoxBg,
-          colDestructiveRed,
+          AppColors.inputFill,
+          AppColors.destructiveRed,
           () => Navigator.pop(context),
         ),
       ],
@@ -474,7 +499,7 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
   Widget _buildIconCircle(IconData icon, Color bg) => Container(
     padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
-    child: Icon(icon, color: Colors.white, size: 32),
+    child: Icon(icon, color: AppColors.colwhite, size: 32),
   );
 
   Widget _buildActionBtn(String text, Color bg, Color tx, VoidCallback? tap) =>
@@ -506,7 +531,7 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
       Container(
         margin: const EdgeInsets.only(bottom: 16),
         decoration: BoxDecoration(
-          color: colBoxBg,
+          color: AppColors.inputFill,
           borderRadius: BorderRadius.circular(16),
         ),
         child: InkWell(
@@ -519,10 +544,10 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: colIconBg,
+                    color: AppColors.colIconBg,
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(icon, size: 24),
+                  child: Icon(icon, size: 24, color: AppColors.colblack),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -534,6 +559,7 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
                         style: GoogleFonts.poppins(
                           fontSize: 15,
                           fontWeight: FontWeight.w500,
+                          color: AppColors.colblack,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -541,7 +567,7 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
                         s,
                         style: GoogleFonts.poppins(
                           fontSize: 11,
-                          color: const Color(0xFF808080),
+                          color: AppColors.desctext,
                         ),
                       ),
                     ],
@@ -578,7 +604,7 @@ class _CustomRangeCalendarState extends State<_CustomRangeCalendar> {
       constraints: const BoxConstraints(maxHeight: 460),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.colwhite,
         borderRadius: BorderRadius.circular(24),
       ),
       child: Column(
@@ -594,6 +620,7 @@ class _CustomRangeCalendarState extends State<_CustomRangeCalendar> {
                   style: GoogleFonts.montserrat(
                     fontWeight: FontWeight.w600,
                     fontSize: 18,
+                    color: AppColors.colblack,
                   ),
                 ),
               ),
@@ -603,7 +630,7 @@ class _CustomRangeCalendarState extends State<_CustomRangeCalendar> {
                     IconButton(
                       icon: const Icon(
                         Icons.chevron_left,
-                        color: Color(0xFF333333),
+                        color: AppColors.colblack,
                       ),
                       onPressed: () => setState(
                         () => _viewDate = DateTime(
@@ -615,7 +642,7 @@ class _CustomRangeCalendarState extends State<_CustomRangeCalendar> {
                     IconButton(
                       icon: const Icon(
                         Icons.chevron_right,
-                        color: Color(0xFF333333),
+                        color: AppColors.colblack,
                       ),
                       onPressed: () => setState(
                         () => _viewDate = DateTime(
@@ -640,7 +667,7 @@ class _CustomRangeCalendarState extends State<_CustomRangeCalendar> {
               Expanded(
                 child: _btn(
                   "Cancel",
-                  const Color(0xFFF1F1F1),
+                  AppColors.inputFill,
                   const Color(0xFFFF4141),
                   () => Navigator.pop(context),
                 ),
@@ -651,8 +678,8 @@ class _CustomRangeCalendarState extends State<_CustomRangeCalendar> {
                   "Confirm",
                   _start == null
                       ? const Color(0xFFBABABA)
-                      : const Color(0xFF34C759),
-                  Colors.white,
+                      : AppColors.primaryGreen,
+                  AppColors.colwhite,
                   _start == null ? null : () => widget.onConfirm(_start!, _end),
                 ),
               ),
@@ -727,6 +754,7 @@ class _CustomRangeCalendarState extends State<_CustomRangeCalendar> {
                   style: GoogleFonts.montserrat(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
+                    color: AppColors.colblack,
                   ),
                 ),
               )
@@ -789,7 +817,7 @@ class _CustomRangeCalendarState extends State<_CustomRangeCalendar> {
                     "${date.day}",
                     style: GoogleFonts.montserrat(
                       color: (isSelected || inRange)
-                          ? Colors.white
+                          ? AppColors.colblack
                           : const Color(0xFF666666),
                       fontSize: 14,
                       fontWeight: FontWeight.w500,

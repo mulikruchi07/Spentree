@@ -27,13 +27,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final double cardRadius = 15.0;
   final double boxHeight = 76.0; // Reduced height "a bit"
 
-  // Colors
-  final Color colBlack = const Color(0xFF000000);
-  final Color colGrey80 = const Color(0xFF808080); // Tip, Divider, Week chars
-  final Color colGrey60 = const Color(0xFF606060); // Labels
-  final Color colGreen = const Color(0xFF34C759);
-  final Color colBoxBg = const Color(0xFFF4F4F4);
-
   @override
   void initState() {
     super.initState();
@@ -88,7 +81,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.bgWhite,
       body: SingleChildScrollView(
         child: Column(
           children: [
@@ -135,7 +128,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               style: GoogleFonts.montserrat(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w500,
-                                color: colGrey60,
+                                color: AppColors.white600,
                               ),
                             ),
                             const SizedBox(height: 2),
@@ -145,7 +138,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               style: GoogleFonts.montserrat(
                                 fontSize: 22,
                                 fontWeight: FontWeight.w700,
-                                color: colBlack,
+                                color: AppColors.colblack,
                               ),
                             ),
                           ],
@@ -167,7 +160,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           style: GoogleFonts.montserrat(
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
-                            color: colGrey60,
+                            color: AppColors.white600,
                           ),
                         ),
                         const SizedBox(height: 2),
@@ -180,7 +173,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 style: GoogleFonts.montserrat(
                                   fontSize: 22,
                                   fontWeight: FontWeight.w700,
-                                  color: colBlack,
+                                  color: AppColors.colblack,
                                 ),
                               ),
                               TextSpan(
@@ -190,7 +183,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 style: GoogleFonts.montserrat(
                                   fontSize: 22,
                                   fontWeight: FontWeight.w700,
-                                  color: colBlack,
+                                  color: AppColors.colblack,
                                 ),
                               ),
                             ],
@@ -215,7 +208,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       style: GoogleFonts.poppins(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
-                        color: colGrey80,
+                        color: AppColors.white500,
                       ),
                     ),
                   ),
@@ -228,7 +221,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     style: GoogleFonts.poppins(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
-                      color: colBlack,
+                      color: AppColors.colblack,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -238,7 +231,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     style: GoogleFonts.poppins(
                       fontSize: 21,
                       fontWeight: FontWeight.w500,
-                      color: colGrey80,
+                      color: AppColors.white500,
                       height: 1.3,
                     ),
                   ),
@@ -246,7 +239,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   const SizedBox(
                     height: 20,
                   ), // "Reduce gap distance between tip and divide line"
-                  Divider(color: colBlack, thickness: 0.5),
+                  Divider(color: AppColors.divider, thickness: 1),
 
                   const SizedBox(height: 20),
 
@@ -258,7 +251,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       style: GoogleFonts.poppins(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
-                        color: colGrey80,
+                        color: AppColors.white500,
                       ),
                     ),
                   ),
@@ -290,7 +283,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               style: GoogleFonts.montserrat(
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
-                color: colBlack,
+                color: AppColors.colblack,
               ),
             ),
             Text(
@@ -299,14 +292,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
               style: GoogleFonts.montserrat(
                 fontSize: 36,
                 fontWeight: FontWeight.w600,
-                color: colBlack,
+                color: AppColors.colblack,
                 height: 1.0,
               ),
             ),
           ],
         ),
         // Trophy Icon - No Circle
-        Icon(Icons.emoji_events_outlined, size: 32, color: colBlack),
+        Icon(Icons.emoji_events_outlined, size: 32, color: AppColors.colblack),
       ],
     );
   }
@@ -315,7 +308,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
       decoration: BoxDecoration(
-        color: colBoxBg,
+        color: AppColors.inputFill,
         borderRadius: BorderRadius.circular(cardRadius),
       ),
       child: Column(
@@ -328,7 +321,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 // LEFT ARROW (Restored functionality)
                 GestureDetector(
                   onTap: () => _moveWeek(-7),
-                  child: Icon(Icons.chevron_left, size: 24, color: colBlack),
+                  child: Icon(
+                    Icons.chevron_left,
+                    size: 24,
+                    color: AppColors.colblack,
+                  ),
                 ),
 
                 Row(
@@ -338,7 +335,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       style: GoogleFonts.montserrat(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
-                        color: colBlack,
+                        color: AppColors.colblack,
                       ),
                     ),
                     const SizedBox(width: 4),
@@ -347,7 +344,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       style: GoogleFonts.montserrat(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
-                        color: colBlack,
+                        color: AppColors.colblack,
                       ),
                     ),
                   ],
@@ -356,7 +353,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 // RIGHT ARROW (Restored functionality)
                 GestureDetector(
                   onTap: () => _moveWeek(7),
-                  child: Icon(Icons.chevron_right, size: 24, color: colBlack),
+                  child: Icon(
+                    Icons.chevron_right,
+                    size: 24,
+                    color: AppColors.colblack,
+                  ),
                 ),
               ],
             ),
@@ -403,7 +404,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 style: GoogleFonts.montserrat(
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
-                  color: colGrey80,
+                  color: AppColors.white500,
                 ),
               ),
               const SizedBox(height: 12),
@@ -427,7 +428,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         height: 5,
                         margin: const EdgeInsets.only(bottom: 4),
                         decoration: BoxDecoration(
-                          color: colBlack,
+                          color: AppColors.colblack,
                           shape: BoxShape.circle,
                         ),
                       )
@@ -439,7 +440,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       style: GoogleFonts.montserrat(
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
-                        color: colGrey80, // Numbers are Grey
+                        color: AppColors.white500, // Numbers are Grey
                       ),
                     ),
                   ],
@@ -513,7 +514,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 height: 160,
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: colGreen,
+                  color: AppColors.primaryGreen,
                   borderRadius: BorderRadius.circular(15),
                 ),
               ),
@@ -535,7 +536,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         Container(
           padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 24),
           decoration: BoxDecoration(
-            color: colGreen,
+            color: AppColors.primaryGreen,
             borderRadius: BorderRadius.circular(30),
           ),
           child: Text(
@@ -561,7 +562,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           style: GoogleFonts.poppins(
             fontSize: 18,
             fontWeight: FontWeight.w600,
-            color: colBlack,
+            color: AppColors.colblack,
           ),
         ),
         Text(
@@ -570,7 +571,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           style: GoogleFonts.poppins(
             fontSize: 15,
             fontWeight: FontWeight.w500,
-            color: colGrey80,
+            color: AppColors.white500,
           ),
         ),
       ],
@@ -583,7 +584,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       height: boxHeight,
       padding: const EdgeInsets.symmetric(horizontal: 20),
       decoration: BoxDecoration(
-        color: colBoxBg,
+        color: AppColors.inputFill,
         borderRadius: BorderRadius.circular(cardRadius),
       ),
       child: child,
@@ -595,7 +596,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       // Reduced height to hug text
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
       decoration: BoxDecoration(
-        color: colGreen,
+        color: AppColors.primaryGreen,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
@@ -649,7 +650,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           height: boxHeight,
           padding: const EdgeInsets.symmetric(horizontal: 10),
           decoration: BoxDecoration(
-            color: colBoxBg,
+            color: AppColors.inputFill,
             borderRadius: BorderRadius.circular(cardRadius),
           ),
           child: Row(
@@ -669,7 +670,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ],
                 ),
-                child: Icon(tx['icon'] as IconData, color: colBlack, size: 28),
+                child: Icon(
+                  tx['icon'] as IconData,
+                  color: AppColors.colblack,
+                  size: 28,
+                ),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -682,7 +687,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       style: GoogleFonts.montserrat(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
-                        color: colBlack,
+                        color: AppColors.colblack,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -691,7 +696,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       style: GoogleFonts.montserrat(
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
-                        color: colGrey80,
+                        color: AppColors.white500,
                       ),
                     ),
                   ],
@@ -706,7 +711,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     style: GoogleFonts.montserrat(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: colBlack,
+                      color: AppColors.colblack,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -715,7 +720,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     style: GoogleFonts.montserrat(
                       fontSize: 11,
                       fontWeight: FontWeight.w500,
-                      color: colGrey80,
+                      color: AppColors.white500,
                     ),
                   ),
                 ],

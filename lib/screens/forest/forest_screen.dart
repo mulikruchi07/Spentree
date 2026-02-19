@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:spentree/core/app_style.dart';
 
 class ForestScreen extends StatefulWidget {
   const ForestScreen({super.key});
@@ -18,20 +19,15 @@ class _ForestScreenState extends State<ForestScreen> {
   // --- UI CONSTANTS ---
   final double cardRadius = 15.0;
   final double boxHeight = 76.0;
-  final Color colBlack = const Color(0xFF000000);
-  final Color colGrey80 = const Color(0xFF808080);
-  final Color colGrey60 = const Color(0xFF606060);
-  final Color colGreen = const Color(0xFF34C759);
-  final Color colBoxBg = const Color(0xFFF1F1F1);
 
   // Dynamic Palette (Darkest to Lightest)
   final List<Color> _greenPalette = [
-    const Color(0xFF1B5E20), // Darkest
-    const Color(0xFF2E7D32),
-    const Color(0xFF43A047),
-    const Color(0xFF66BB6A),
-    const Color(0xFF81C784),
-    const Color(0xFFA5D6A7), // Lightest
+    const Color(0xFF005A32),
+    const Color(0xFF238B45),
+    const Color(0xFF41AB5D),
+    const Color(0xFF74C476),
+    const Color(0xFFA1D99B),
+    const Color(0xFFC7E9C0),
   ];
 
   // Data
@@ -102,7 +98,7 @@ class _ForestScreenState extends State<ForestScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.bgWhite,
       body: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
         child: Column(
@@ -131,6 +127,7 @@ class _ForestScreenState extends State<ForestScreen> {
                     style: GoogleFonts.poppins(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
+                      color: AppColors.colblack,
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -153,6 +150,7 @@ class _ForestScreenState extends State<ForestScreen> {
                     style: GoogleFonts.poppins(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
+                      color: AppColors.colblack,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -168,6 +166,7 @@ class _ForestScreenState extends State<ForestScreen> {
                     style: GoogleFonts.poppins(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
+                      color: AppColors.colblack,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -178,7 +177,7 @@ class _ForestScreenState extends State<ForestScreen> {
                   // 7. Tip & Footer
                   _buildTipSection(),
                   const SizedBox(height: 20),
-                  Divider(color: colBlack, thickness: 0.5),
+                  Divider(color: AppColors.divider, thickness: 1),
                   const SizedBox(height: 20),
                   Center(
                     child: Text(
@@ -186,7 +185,7 @@ class _ForestScreenState extends State<ForestScreen> {
                       style: GoogleFonts.poppins(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
-                        color: colGrey80,
+                        color: AppColors.white500,
                       ),
                     ),
                   ),
@@ -214,6 +213,7 @@ class _ForestScreenState extends State<ForestScreen> {
               style: GoogleFonts.montserrat(
                 fontSize: 18,
                 fontWeight: FontWeight.w500,
+                color: AppColors.colblack,
               ),
             ),
             Text(
@@ -222,11 +222,16 @@ class _ForestScreenState extends State<ForestScreen> {
                 fontSize: 36,
                 fontWeight: FontWeight.w600,
                 height: 1.0,
+                color: AppColors.colblack,
               ),
             ),
           ],
         ),
-        const Icon(Icons.emoji_events_outlined, size: 32),
+        const Icon(
+          Icons.emoji_events_outlined,
+          size: 32,
+          color: AppColors.colblack,
+        ),
       ],
     );
   }
@@ -236,7 +241,7 @@ class _ForestScreenState extends State<ForestScreen> {
       // Compact height
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
-        color: colBoxBg,
+        color: AppColors.inputFill,
         borderRadius: BorderRadius.circular(cardRadius),
       ),
       child: Column(
@@ -248,18 +253,27 @@ class _ForestScreenState extends State<ForestScreen> {
               children: [
                 GestureDetector(
                   onTap: () => _moveMonth(-1),
-                  child: const Icon(Icons.chevron_left, size: 24),
+                  child: const Icon(
+                    Icons.chevron_left,
+                    size: 24,
+                    color: AppColors.colblack,
+                  ),
                 ),
                 Text(
                   DateFormat('MMMM yyyy').format(_focusedDate),
                   style: GoogleFonts.montserrat(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
+                    color: AppColors.colblack,
                   ),
                 ),
                 GestureDetector(
                   onTap: () => _moveMonth(1),
-                  child: const Icon(Icons.chevron_right, size: 24),
+                  child: const Icon(
+                    Icons.chevron_right,
+                    size: 24,
+                    color: AppColors.colblack,
+                  ),
                 ),
               ],
             ),
@@ -330,7 +344,11 @@ class _ForestScreenState extends State<ForestScreen> {
       children: [
         Text(
           "April's Forest",
-          style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w600),
+          style: GoogleFonts.poppins(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: AppColors.colblack,
+          ),
         ),
         const SizedBox(height: 16),
 
@@ -350,7 +368,7 @@ class _ForestScreenState extends State<ForestScreen> {
           child: Container(
             padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 24),
             decoration: BoxDecoration(
-              color: colGreen,
+              color: AppColors.primaryGreen,
               borderRadius: BorderRadius.circular(30),
             ),
             child: Text(
@@ -368,8 +386,12 @@ class _ForestScreenState extends State<ForestScreen> {
 
         // Tree Stats
         Text(
-          "Total trees planted : 31",
-          style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w600),
+          "Total trees grown : 31",
+          style: GoogleFonts.poppins(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: AppColors.colblack,
+          ),
         ),
         const SizedBox(height: 16),
 
@@ -394,6 +416,7 @@ class _ForestScreenState extends State<ForestScreen> {
                           style: GoogleFonts.poppins(
                             fontSize: 16,
                             fontWeight: FontWeight.w500,
+                            color: AppColors.colblack,
                           ),
                         ),
                       ),
@@ -402,7 +425,7 @@ class _ForestScreenState extends State<ForestScreen> {
                         style: GoogleFonts.montserrat(
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
-                          color: colBlack,
+                          color: AppColors.colblack,
                         ),
                       ),
                     ],
@@ -425,7 +448,7 @@ class _ForestScreenState extends State<ForestScreen> {
       height: boxHeight,
       padding: const EdgeInsets.symmetric(horizontal: 20),
       decoration: BoxDecoration(
-        color: colBoxBg,
+        color: AppColors.inputFill,
         borderRadius: BorderRadius.circular(cardRadius),
       ),
       child: Row(
@@ -440,7 +463,7 @@ class _ForestScreenState extends State<ForestScreen> {
                 style: GoogleFonts.montserrat(
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
-                  color: colGrey60,
+                  color: AppColors.white600,
                 ),
               ),
               const SizedBox(height: 2),
@@ -449,7 +472,7 @@ class _ForestScreenState extends State<ForestScreen> {
                 style: GoogleFonts.montserrat(
                   fontSize: 22,
                   fontWeight: FontWeight.w700,
-                  color: colBlack,
+                  color: AppColors.colblack,
                 ),
               ),
             ],
@@ -458,7 +481,7 @@ class _ForestScreenState extends State<ForestScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               decoration: BoxDecoration(
-                color: colGreen,
+                color: AppColors.primaryGreen,
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Row(
@@ -518,7 +541,7 @@ class _ForestScreenState extends State<ForestScreen> {
         height: 24, // Fixed height for the progress bar
         width: double.infinity,
         decoration: BoxDecoration(
-          color: colBoxBg, // Background color in case total < 100%
+          color: AppColors.inputFill, // Background color in case total < 100%
         ),
         child: Stack(children: barLayers),
       ),
@@ -548,6 +571,7 @@ class _ForestScreenState extends State<ForestScreen> {
                       style: GoogleFonts.poppins(
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
+                        color: AppColors.colblack,
                       ),
                     ),
                   ),
@@ -556,6 +580,7 @@ class _ForestScreenState extends State<ForestScreen> {
                     style: GoogleFonts.montserrat(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
+                      color: AppColors.colblack,
                     ),
                   ),
                 ],
@@ -593,7 +618,7 @@ class _ForestScreenState extends State<ForestScreen> {
               height: boxHeight,
               padding: const EdgeInsets.symmetric(horizontal: 10),
               decoration: BoxDecoration(
-                color: colBoxBg,
+                color: AppColors.inputFill,
                 borderRadius: BorderRadius.circular(cardRadius),
               ),
               child: Row(
@@ -615,7 +640,7 @@ class _ForestScreenState extends State<ForestScreen> {
                     child: Icon(
                       ex['icon'] as IconData,
                       size: 28,
-                      color: colBlack,
+                      color: AppColors.colblack,
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -629,14 +654,14 @@ class _ForestScreenState extends State<ForestScreen> {
                           style: GoogleFonts.montserrat(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
-                            color: colBlack,
+                            color: AppColors.colblack,
                           ),
                         ),
                         Text(
                           "Bank account",
                           style: GoogleFonts.montserrat(
                             fontSize: 12,
-                            color: colGrey80,
+                            color: AppColors.white500,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -652,14 +677,14 @@ class _ForestScreenState extends State<ForestScreen> {
                         style: GoogleFonts.montserrat(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color: colBlack,
+                          color: AppColors.colblack,
                         ),
                       ),
                       Text(
                         "Fri, 11 April 2025",
                         style: GoogleFonts.montserrat(
                           fontSize: 11,
-                          color: colGrey80,
+                          color: AppColors.white500,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -682,7 +707,7 @@ class _ForestScreenState extends State<ForestScreen> {
           style: GoogleFonts.poppins(
             fontSize: 16,
             fontWeight: FontWeight.w500,
-            color: colBlack,
+            color: AppColors.colblack,
           ),
         ),
         const SizedBox(height: 8),
@@ -691,7 +716,7 @@ class _ForestScreenState extends State<ForestScreen> {
           style: GoogleFonts.poppins(
             fontSize: 21,
             fontWeight: FontWeight.w500,
-            color: colGrey80,
+            color: AppColors.white500,
             height: 1.3,
           ),
         ),

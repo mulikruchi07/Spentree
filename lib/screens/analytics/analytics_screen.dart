@@ -4,6 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:spentree/core/app_style.dart';
 
 // --- DATA MODEL ---
 class Transaction {
@@ -58,21 +59,17 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
   final List<Transaction> _transactions = [];
 
   // UI Constants
-  final Color colBlack = const Color(0xFF000000);
-  final Color colGrey80 = const Color(0xFF808080);
-  final Color colBoxBg = const Color(0xFFF4F4F4);
-  final Color colGreen = const Color(0xFF34C759);
   final double cardRadius = 15.0;
   final double boxHeight = 76.0;
 
   // Dynamic Green Palette
   final List<Color> _greenPalette = [
-    const Color(0xFF1B5E20),
-    const Color(0xFF2E7D32),
-    const Color(0xFF43A047),
-    const Color(0xFF66BB6A),
-    const Color(0xFF81C784),
-    const Color(0xFFA5D6A7),
+    const Color(0xFF005A32),
+    const Color(0xFF238B45),
+    const Color(0xFF41AB5D),
+    const Color(0xFF74C476),
+    const Color(0xFFA1D99B),
+    const Color(0xFFC7E9C0),
   ];
 
   @override
@@ -251,7 +248,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
     final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.bgWhite,
       resizeToAvoidBottomInset: false,
       body: SingleChildScrollView(
         controller: _scrollController,
@@ -311,16 +308,16 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                                       style: GoogleFonts.montserrat(
                                         fontSize: 14,
                                         fontWeight: FontWeight.w500,
-                                        color: colBlack,
+                                        color: AppColors.colblack,
                                       ),
                                     ),
-                                    const SizedBox(height: 2),
+                                    const SizedBox(height: 1),
                                     Text(
                                       "Rs. ${NumberFormat('#,##0').format(totalCalc)}",
                                       style: GoogleFonts.montserrat(
-                                        fontSize: 20,
+                                        fontSize: 16,
                                         fontWeight: FontWeight.w600,
-                                        color: colBlack,
+                                        color: AppColors.colblack,
                                       ),
                                     ),
                                   ],
@@ -351,6 +348,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                         style: GoogleFonts.poppins(
                           fontSize: 18,
                           fontWeight: FontWeight.w600,
+                          color: AppColors.colblack,
                         ),
                       ),
                       GestureDetector(
@@ -360,7 +358,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                           style: GoogleFonts.poppins(
                             fontSize: 14,
                             fontWeight: FontWeight.w500,
-                            color: colGrey80,
+                            color: AppColors.white500,
                           ),
                         ),
                       ),
@@ -368,7 +366,10 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                   ),
                   Text(
                     "Tap on the expense you want to edit",
-                    style: GoogleFonts.poppins(fontSize: 12, color: colGrey80),
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      color: AppColors.white500,
+                    ),
                   ),
                   const SizedBox(height: 16),
                   GestureDetector(
@@ -376,19 +377,19 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                     child: Container(
                       height: 50,
                       decoration: BoxDecoration(
-                        color: colGreen,
+                        color: AppColors.primaryGreen,
                         borderRadius: BorderRadius.circular(15),
                       ),
                       child: Center(
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.add, color: Colors.white),
+                            const Icon(Icons.add, color: AppColors.colwhite),
                             const SizedBox(width: 8),
                             Text(
                               "Add Expense",
                               style: GoogleFonts.poppins(
-                                color: Colors.white,
+                                color: AppColors.colwhite,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -408,6 +409,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                     style: GoogleFonts.poppins(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
+                      color: AppColors.colblack,
                     ),
                   ),
                   GestureDetector(
@@ -423,7 +425,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                       style: GoogleFonts.poppins(
                         fontSize: 15,
                         fontWeight: FontWeight.w500,
-                        color: colGrey80,
+                        color: AppColors.white500,
                       ),
                     ),
                   ),
@@ -462,6 +464,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                     fontSize: 21,
                     fontWeight: FontWeight.w500,
                     height: 1.3,
+                    color: AppColors.colblack,
                   ),
                 ),
               )
@@ -514,7 +517,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                   style: GoogleFonts.poppins(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
-                    color: colGrey80,
+                    color: AppColors.white500,
                   ),
                 ),
               ),
@@ -523,7 +526,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
             const SizedBox(height: 32),
             _buildTipSection(),
             const SizedBox(height: 20),
-            Divider(color: colBlack, thickness: 0.5),
+            Divider(color: AppColors.divider, thickness: 1),
             const SizedBox(height: 20),
             Center(
               child: Text(
@@ -531,7 +534,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                 style: GoogleFonts.poppins(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
-                  color: colGrey80,
+                  color: AppColors.white500,
                 ),
               ),
             ),
@@ -558,7 +561,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
         height: 76,
         padding: const EdgeInsets.symmetric(horizontal: 10),
         decoration: BoxDecoration(
-          color: colBoxBg,
+          color: AppColors.inputFill,
           borderRadius: BorderRadius.circular(cardRadius),
         ),
         child: Row(
@@ -567,17 +570,17 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
               width: 55,
               height: 55,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.colwhite,
                 borderRadius: BorderRadius.circular(9.63),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: AppColors.colblack.withOpacity(0.05),
                     blurRadius: 4,
                     offset: const Offset(0, 2),
                   ),
                 ],
               ),
-              child: Icon(tx.icon, color: colBlack, size: 28),
+              child: Icon(tx.icon, color: AppColors.colblack, size: 28),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -590,7 +593,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                     style: GoogleFonts.montserrat(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: colBlack,
+                      color: AppColors.colblack,
                     ),
                   ),
                   Text(
@@ -598,7 +601,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                     style: GoogleFonts.montserrat(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
-                      color: colGrey80,
+                      color: AppColors.white500,
                     ),
                   ),
                 ],
@@ -613,7 +616,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                   style: GoogleFonts.montserrat(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: colBlack,
+                    color: AppColors.colblack,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -622,7 +625,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                   style: GoogleFonts.montserrat(
                     fontSize: 11,
                     fontWeight: FontWeight.w500,
-                    color: colGrey80,
+                    color: AppColors.white500,
                   ),
                 ),
               ],
@@ -645,6 +648,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
               style: GoogleFonts.montserrat(
                 fontSize: 18,
                 fontWeight: FontWeight.w500,
+                color: AppColors.colblack,
               ),
             ),
             Text(
@@ -653,11 +657,16 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                 fontSize: 36,
                 fontWeight: FontWeight.w600,
                 height: 1.0,
+                color: AppColors.colblack,
               ),
             ),
           ],
         ),
-        const Icon(Icons.emoji_events_outlined, size: 32),
+        const Icon(
+          Icons.emoji_events_outlined,
+          size: 32,
+          color: AppColors.colblack,
+        ),
       ],
     );
   }
@@ -666,7 +675,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
       decoration: BoxDecoration(
-        color: colBoxBg,
+        color: AppColors.inputFill,
         borderRadius: BorderRadius.circular(cardRadius),
       ),
       child: Column(
@@ -678,7 +687,11 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
               children: [
                 GestureDetector(
                   onTap: () => _moveWeek(-7),
-                  child: Icon(Icons.chevron_left, size: 24, color: colBlack),
+                  child: Icon(
+                    Icons.chevron_left,
+                    size: 24,
+                    color: AppColors.colblack,
+                  ),
                 ),
                 Row(
                   children: [
@@ -687,7 +700,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                       style: GoogleFonts.montserrat(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
-                        color: colBlack,
+                        color: AppColors.colblack,
                       ),
                     ),
                     const SizedBox(width: 4),
@@ -696,14 +709,18 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                       style: GoogleFonts.montserrat(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
-                        color: colBlack,
+                        color: AppColors.colblack,
                       ),
                     ),
                   ],
                 ),
                 GestureDetector(
                   onTap: () => _moveWeek(7),
-                  child: Icon(Icons.chevron_right, size: 24, color: colBlack),
+                  child: Icon(
+                    Icons.chevron_right,
+                    size: 24,
+                    color: AppColors.colblack,
+                  ),
                 ),
               ],
             ),
@@ -739,7 +756,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                 style: GoogleFonts.montserrat(
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
-                  color: colGrey80,
+                  color: AppColors.white500,
                 ),
               ),
               const SizedBox(height: 12),
@@ -761,7 +778,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                         height: 5,
                         margin: const EdgeInsets.only(bottom: 4),
                         decoration: BoxDecoration(
-                          color: colBlack,
+                          color: AppColors.colblack,
                           shape: BoxShape.circle,
                         ),
                       )
@@ -772,7 +789,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                       style: GoogleFonts.montserrat(
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
-                        color: colGrey80,
+                        color: AppColors.white500,
                       ),
                     ),
                   ],
@@ -810,7 +827,10 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                 (index) => Center(
                   child: Text(
                     DateFormat('MMMM').format(DateTime(2025, index + 1)),
-                    style: GoogleFonts.montserrat(fontSize: 16),
+                    style: GoogleFonts.montserrat(
+                      fontSize: 16,
+                      color: AppColors.colblack,
+                    ),
                   ),
                 ),
               ),
@@ -836,7 +856,10 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                 (index) => Center(
                   child: Text(
                     "${2025 + index}",
-                    style: GoogleFonts.montserrat(fontSize: 16),
+                    style: GoogleFonts.montserrat(
+                      fontSize: 16,
+                      color: AppColors.colblack,
+                    ),
                   ),
                 ),
               ),
@@ -853,14 +876,18 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
       children: [
         Text(
           title,
-          style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w600),
+          style: GoogleFonts.poppins(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: AppColors.colblack,
+          ),
         ),
         Text(
           action,
           style: GoogleFonts.poppins(
             fontSize: 15,
             fontWeight: FontWeight.w500,
-            color: colGrey80,
+            color: AppColors.white500,
           ),
         ),
       ],
@@ -890,6 +917,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                       style: GoogleFonts.poppins(
                         fontSize: 17,
                         fontWeight: FontWeight.w500,
+                        color: AppColors.colblack,
                       ),
                     ),
                   ),
@@ -898,6 +926,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                     style: GoogleFonts.montserrat(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
+                      color: AppColors.colblack,
                     ),
                   ),
                 ],
@@ -914,7 +943,11 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
       children: [
         Text(
           "Tip of the day",
-          style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w500),
+          style: GoogleFonts.poppins(
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+            color: AppColors.colblack,
+          ),
         ),
         const SizedBox(height: 8),
         Text(
@@ -922,7 +955,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
           style: GoogleFonts.poppins(
             fontSize: 21,
             fontWeight: FontWeight.w500,
-            color: colGrey80,
+            color: AppColors.white500,
             height: 1.3,
           ),
         ),
@@ -1074,9 +1107,9 @@ class _ExpenseFormState extends State<ExpenseForm> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF1F1F1), // Form background
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: const Color(0xFF34C759), width: 1.0),
+        color: AppColors.inputFill, // Form background
+        borderRadius: BorderRadius.circular(9.63),
+        border: Border.all(color: AppColors.primaryGreen, width: 1.0),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1088,17 +1121,21 @@ class _ExpenseFormState extends State<ExpenseForm> {
                 width: 50,
                 height: 50,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.colwhite,
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: AppColors.colblack.withOpacity(0.05),
                       blurRadius: 4,
                       offset: const Offset(0, 2),
                     ),
                   ],
                 ),
-                child: Icon(_getIcon(_selectedCategory), size: 28),
+                child: Icon(
+                  _getIcon(_selectedCategory),
+                  size: 28,
+                  color: AppColors.colblack,
+                ),
               ),
               const SizedBox(width: 12),
               Column(
@@ -1115,7 +1152,7 @@ class _ExpenseFormState extends State<ExpenseForm> {
                     widget.isEditing ? "Bank account" : "Cash",
                     style: GoogleFonts.poppins(
                       fontSize: 12,
-                      color: const Color(0xFF808080),
+                      color: AppColors.white500,
                     ),
                   ),
                 ],
@@ -1137,7 +1174,7 @@ class _ExpenseFormState extends State<ExpenseForm> {
                     ).format(widget.initialDate ?? DateTime.now()),
                     style: GoogleFonts.poppins(
                       fontSize: 10,
-                      color: const Color(0xFF808080),
+                      color: AppColors.white500,
                     ),
                   ),
                 ],
@@ -1155,7 +1192,7 @@ class _ExpenseFormState extends State<ExpenseForm> {
               decoration: InputDecoration(
                 hintText: "Enter receiver name",
                 hintStyle: GoogleFonts.poppins(
-                  color: const Color(0xFF9EA3AE),
+                  color: AppColors.grey600,
                   fontSize: 14,
                 ),
                 border: InputBorder.none,
@@ -1181,7 +1218,7 @@ class _ExpenseFormState extends State<ExpenseForm> {
               height: 44, // Reduced Height
               padding: const EdgeInsets.symmetric(horizontal: 14),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.colwhite,
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: Colors.transparent),
               ),
@@ -1196,7 +1233,7 @@ class _ExpenseFormState extends State<ExpenseForm> {
                     _isCategoryListVisible
                         ? Icons.keyboard_arrow_up
                         : Icons.keyboard_arrow_down,
-                    color: const Color(0xFF9EA3AE),
+                    color: AppColors.grey600,
                   ),
                 ],
               ),
@@ -1210,11 +1247,11 @@ class _ExpenseFormState extends State<ExpenseForm> {
                 ? Container(
                     margin: const EdgeInsets.only(top: 6),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppColors.colwhite,
                       borderRadius: BorderRadius.circular(10),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black12,
+                          color: AppColors.colblack.withOpacity(0.12),
                           blurRadius: 4,
                           offset: const Offset(0, 2),
                         ),
@@ -1240,7 +1277,7 @@ class _ExpenseFormState extends State<ExpenseForm> {
                                   border: cat != _categories.last
                                       ? const Border(
                                           bottom: BorderSide(
-                                            color: Color(0xFFF1F1F1),
+                                            color: AppColors.inputFill,
                                           ),
                                         )
                                       : null,
@@ -1279,7 +1316,7 @@ class _ExpenseFormState extends State<ExpenseForm> {
                     height: 44, // Reduced Height
                     padding: const EdgeInsets.symmetric(horizontal: 14),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppColors.colwhite,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Row(
@@ -1295,14 +1332,14 @@ class _ExpenseFormState extends State<ExpenseForm> {
                             color:
                                 _isTimePickerVisible ||
                                     _selectedTime != widget.initialTime
-                                ? Colors.black
-                                : const Color(0xFF9EA3AE),
+                                ? AppColors.colblack
+                                : AppColors.grey600,
                           ),
                         ),
                         const Icon(
                           Icons.access_time,
                           size: 18,
-                          color: Color(0xFF9EA3AE),
+                          color: AppColors.grey600,
                         ),
                       ],
                     ),
@@ -1323,7 +1360,7 @@ class _ExpenseFormState extends State<ExpenseForm> {
                     decoration: InputDecoration(
                       hintText: "Enter amount",
                       hintStyle: GoogleFonts.poppins(
-                        color: const Color(0xFF9EA3AE),
+                        color: AppColors.grey600,
                         fontSize: 14,
                       ),
                       border: InputBorder.none,
@@ -1346,7 +1383,7 @@ class _ExpenseFormState extends State<ExpenseForm> {
                     height: 150,
                     margin: const EdgeInsets.only(top: 10),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppColors.colwhite,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: CupertinoDatePicker(
@@ -1388,7 +1425,7 @@ class _ExpenseFormState extends State<ExpenseForm> {
                     child: Text(
                       "Cancel",
                       style: GoogleFonts.poppins(
-                        color: const Color(0xFFFF4141),
+                        color: const Color(0xFFFF383C),
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -1402,7 +1439,7 @@ class _ExpenseFormState extends State<ExpenseForm> {
                   child: ElevatedButton(
                     onPressed: _trySave,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF34C759),
+                      backgroundColor: AppColors.primaryGreen,
                       elevation: 0,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -1411,7 +1448,7 @@ class _ExpenseFormState extends State<ExpenseForm> {
                     child: Text(
                       widget.isEditing ? "Save Expense" : "Add Expense",
                       style: GoogleFonts.poppins(
-                        color: Colors.white,
+                        color: AppColors.colwhite,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -1438,10 +1475,10 @@ class _ExpenseFormState extends State<ExpenseForm> {
           alignment: Alignment.centerLeft,
           padding: const EdgeInsets.symmetric(horizontal: 14),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.colwhite,
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
-              color: hasError ? Colors.red : Colors.transparent,
+              color: hasError ? AppColors.errorRed : Colors.transparent,
             ),
           ),
           child: child,
@@ -1451,7 +1488,10 @@ class _ExpenseFormState extends State<ExpenseForm> {
             padding: const EdgeInsets.only(left: 4, top: 2),
             child: Text(
               errorText,
-              style: GoogleFonts.poppins(fontSize: 10, color: Colors.red),
+              style: GoogleFonts.poppins(
+                fontSize: 10,
+                color: AppColors.errorRed,
+              ),
             ),
           ),
       ],
@@ -1481,7 +1521,7 @@ class RingChartPainter extends CustomPainter {
         Size(size.width - strokeWidth, size.height - strokeWidth);
 
     Paint bgPaint = Paint()
-      ..color = const Color(0xFFF1F1F1)
+      ..color = const Color(0xFFD9D9D9)
       ..strokeWidth = strokeWidth
       ..style = PaintingStyle.stroke;
     canvas.drawCircle(

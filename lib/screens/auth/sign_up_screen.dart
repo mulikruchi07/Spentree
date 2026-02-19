@@ -88,7 +88,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.bgWhite,
       resizeToAvoidBottomInset: true,
       body: SafeArea(
         child: CustomScrollView(
@@ -100,7 +100,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 child: Column(
                   children: [
                     // --- TOP MARGIN ---
-                    const Spacer(flex: 1), 
+                    const Spacer(flex: 1),
                     const SizedBox(height: 20),
 
                     Text(
@@ -131,7 +131,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     const SizedBox(height: 24),
 
                     // --- INPUTS ---
-                    _buildTextField(_nameController, "Name", errorText: _nameError),
+                    _buildTextField(
+                      _nameController,
+                      "Name",
+                      errorText: _nameError,
+                    ),
                     SizedBox(height: inputGap),
 
                     _buildTextField(
@@ -147,8 +151,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       "New Password",
                       isPassword: true,
                       isVisible: _isPasswordVisible,
-                      onVisibilityChanged: () =>
-                          setState(() => _isPasswordVisible = !_isPasswordVisible),
+                      onVisibilityChanged: () => setState(
+                        () => _isPasswordVisible = !_isPasswordVisible,
+                      ),
                       errorText: _passwordError,
                     ),
                     SizedBox(height: inputGap),
@@ -159,7 +164,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       isPassword: true,
                       isVisible: _isConfirmPasswordVisible,
                       onVisibilityChanged: () => setState(
-                        () => _isConfirmPasswordVisible = !_isConfirmPasswordVisible,
+                        () => _isConfirmPasswordVisible =
+                            !_isConfirmPasswordVisible,
                       ),
                       errorText: _confirmPasswordError,
                     ),
@@ -226,7 +232,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                               Navigator.push(
                                                 context,
                                                 MaterialPageRoute(
-                                                  builder: (context) => const TermsScreen(),
+                                                  builder: (context) =>
+                                                      const TermsScreen(),
                                                 ),
                                               );
                                             },
@@ -242,7 +249,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                               Navigator.push(
                                                 context,
                                                 MaterialPageRoute(
-                                                  builder: (context) => const PrivacyScreen(),
+                                                  builder: (context) =>
+                                                      const PrivacyScreen(),
                                                 ),
                                               );
                                             },
@@ -265,7 +273,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppColors.primaryGreen,
                                   shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(cornerRadius),
+                                    borderRadius: BorderRadius.circular(
+                                      cornerRadius,
+                                    ),
                                   ),
                                   elevation: 0,
                                 ),
@@ -298,11 +308,18 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   ),
                                 ),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 8,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: Colors.white,
                                     borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(color: Colors.orangeAccent.withOpacity(0.5)),
+                                    border: Border.all(
+                                      color: Colors.orangeAccent.withOpacity(
+                                        0.5,
+                                      ),
+                                    ),
                                     boxShadow: [
                                       BoxShadow(
                                         color: Colors.black.withOpacity(0.1),
@@ -314,7 +331,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      const Icon(Icons.info_outline, size: 16, color: Colors.orange),
+                                      const Icon(
+                                        Icons.info_outline,
+                                        size: 16,
+                                        color: Colors.orange,
+                                      ),
                                       const SizedBox(width: 8),
                                       Text(
                                         "Please check this box to proceed.",
@@ -357,7 +378,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   Navigator.pushReplacement(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) => const SignInScreen(),
+                                      builder: (context) =>
+                                          const SignInScreen(),
                                     ),
                                   );
                                 },
@@ -464,7 +486,7 @@ class _ArrowPainter extends CustomPainter {
     final paint = Paint()
       ..color = Colors.white
       ..style = PaintingStyle.fill;
-    
+
     final borderPaint = Paint()
       ..color = Colors.orangeAccent.withOpacity(0.5)
       ..style = PaintingStyle.stroke
@@ -477,9 +499,17 @@ class _ArrowPainter extends CustomPainter {
     path.close();
 
     canvas.drawPath(path, paint);
-    
-    canvas.drawLine(Offset(0, size.height), Offset(size.width / 2, 0), borderPaint);
-    canvas.drawLine(Offset(size.width / 2, 0), Offset(size.width, size.height), borderPaint);
+
+    canvas.drawLine(
+      Offset(0, size.height),
+      Offset(size.width / 2, 0),
+      borderPaint,
+    );
+    canvas.drawLine(
+      Offset(size.width / 2, 0),
+      Offset(size.width, size.height),
+      borderPaint,
+    );
   }
 
   @override

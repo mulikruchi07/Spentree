@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:spentree/screens/questionnaire/questionnaire_screen.dart';
+import '../../core/app_style.dart';
+
 class OnboardingColors {
   static const Color primaryGreen = Color(0xFF34C759);
   static const Color textMain = Color(0xFF2D2B2E);
@@ -30,17 +32,20 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     {
       "tree": "assets/images/tree_1.png",
       "title": "Welcome to SpenTree",
-      "desc": "Spentree turns your daily spending into a living tree. The better you manage your limit, the more your forest grows.",
+      "desc":
+          "Spentree turns your daily spending into a living tree. The better you manage your limit, the more your forest grows.",
     },
     {
       "tree": "assets/images/tree_2.png",
       "title": "Your spending affects your tree.",
-      "desc": "Stay within your daily limit and your tree stays green. Overspend, and it starts to dry.",
+      "desc":
+          "Stay within your daily limit and your tree stays green. Overspend, and it starts to dry.",
     },
     {
       "tree": "assets/images/tree_3.png",
       "title": "Every good day grows your forest.",
-      "desc": "Each day you control your spending, you plant a tree. Build a forest that shows your financial discipline.",
+      "desc":
+          "Each day you control your spending, you plant a tree. Build a forest that shows your financial discipline.",
     },
   ];
 
@@ -52,22 +57,18 @@ class _OnboardingScreenState extends State<OnboardingScreen>
       duration: const Duration(milliseconds: 1200),
     );
 
-    _slideUpRoomAnim = Tween<Offset>(
-      begin: const Offset(0, 1.0), 
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(parent: _animController, curve: Curves.easeOutQuart),
-    );
+    _slideUpRoomAnim =
+        Tween<Offset>(begin: const Offset(0, 1.0), end: Offset.zero).animate(
+          CurvedAnimation(parent: _animController, curve: Curves.easeOutQuart),
+        );
 
-    _slideDownDescAnim = Tween<Offset>(
-      begin: const Offset(0, -1.0),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(
-        parent: _animController,
-        curve: const Interval(0.2, 1.0, curve: Curves.easeOut),
-      ),
-    );
+    _slideDownDescAnim =
+        Tween<Offset>(begin: const Offset(0, -1.0), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _animController,
+            curve: const Interval(0.2, 1.0, curve: Curves.easeOut),
+          ),
+        );
 
     _fadeTreeAnim = CurvedAnimation(
       parent: _animController,
@@ -103,26 +104,26 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 
     // Gaps (Kept exactly as you liked them)
     final double gapImageToTitle = 20.0;
-    final double gapDescToProgress = 20.0; 
+    final double gapDescToProgress = 20.0;
     final double gapProgressToButton = 38.0;
-    final double gapLogoToImage = height * 0.01; 
+    final double gapLogoToImage = height * 0.01;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.bgWhite,
       body: SafeArea(
         child: SizedBox(
-          width: double.infinity, 
+          width: double.infinity,
           child: Column(
             children: [
               // -----------------------------------------------------------
               // 1. TOP MARGIN (Dynamic)
               // -----------------------------------------------------------
               SizedBox(height: symmetricMargin),
-              
+
               // LOGO (Static & Scaled)
               ConstrainedBox(
                 constraints: BoxConstraints(
-                  maxHeight: height * 0.06, 
+                  maxHeight: height * 0.06,
                   maxWidth: 220,
                 ),
                 child: Hero(
@@ -140,30 +141,31 @@ class _OnboardingScreenState extends State<OnboardingScreen>
               Expanded(
                 child: PageView.builder(
                   controller: _pageController,
-                  onPageChanged: (index) => setState(() => _currentIndex = index),
+                  onPageChanged: (index) =>
+                      setState(() => _currentIndex = index),
                   itemCount: _content.length,
                   itemBuilder: (context, index) {
                     return Column(
-                      mainAxisAlignment: MainAxisAlignment.center, 
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         SizedBox(height: gapLogoToImage),
 
                         // A. IMAGE STACK (Original Proportions)
                         SizedBox(
-                          height: width * 0.8, 
-                          width: width * 0.8, 
+                          height: width * 0.8,
+                          width: width * 0.8,
                           child: Stack(
                             alignment: Alignment.bottomCenter,
                             clipBehavior: Clip.none,
                             children: [
                               // Room (Slides Up)
                               Positioned(
-                                bottom: 30, 
+                                bottom: 30,
                                 child: SlideTransition(
                                   position: _slideUpRoomAnim,
                                   child: Image.asset(
                                     "assets/images/bg_room.png",
-                                    width: width * 0.75, 
+                                    width: width * 0.75,
                                     fit: BoxFit.contain,
                                   ),
                                 ),
@@ -171,12 +173,12 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 
                               // Tree (Fades In)
                               Positioned(
-                                bottom: 25, 
+                                bottom: 25,
                                 child: FadeTransition(
                                   opacity: _fadeTreeAnim,
                                   child: Image.asset(
                                     _content[index]["tree"]!,
-                                    width: width * 0.55, 
+                                    width: width * 0.55,
                                     fit: BoxFit.contain,
                                   ),
                                 ),
@@ -193,32 +195,34 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                           child: Column(
                             children: [
                               // Title
-                              index == 0 ? Hero(
-                                tag: 'welcome-text',
-                                child: Material(
-                                  type: MaterialType.transparency,
-                                  child: Text(
-                                    _content[index]["title"]!,
-                                    textAlign: TextAlign.center,
-                                    style: GoogleFonts.montserrat(
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.w600,
-                                      color: OnboardingColors.textMain,
+                              index == 0
+                                  ? Hero(
+                                      tag: 'welcome-text',
+                                      child: Material(
+                                        type: MaterialType.transparency,
+                                        child: Text(
+                                          _content[index]["title"]!,
+                                          textAlign: TextAlign.center,
+                                          style: GoogleFonts.montserrat(
+                                            fontSize: 24,
+                                            fontWeight: FontWeight.w600,
+                                            color: OnboardingColors.textMain,
+                                          ),
+                                        ),
+                                      ),
+                                    )
+                                  : Text(
+                                      _content[index]["title"]!,
+                                      textAlign: TextAlign.center,
+                                      style: GoogleFonts.montserrat(
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.w600,
+                                        color: OnboardingColors.textMain,
+                                      ),
                                     ),
-                                  ),
-                                ),
-                              ) : Text(
-                                _content[index]["title"]!,
-                                textAlign: TextAlign.center,
-                                style: GoogleFonts.montserrat(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.w600,
-                                  color: OnboardingColors.textMain,
-                                ),
-                              ),
-                              
+
                               const SizedBox(height: 16),
-                              
+
                               // Description
                               SlideTransition(
                                 position: _slideDownDescAnim,
@@ -251,7 +255,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     SizedBox(height: gapDescToProgress),
-                    
+
                     // Dots
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -260,9 +264,9 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                         (index) => buildDot(index),
                       ),
                     ),
-                    
+
                     SizedBox(height: gapProgressToButton),
-                    
+
                     // Button
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -271,23 +275,24 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                         height: 64, // Original Height
                         child: ElevatedButton(
                           onPressed: () {
-  if (_currentIndex == _content.length - 1) {
-    // 1. User is on the last slide ("Done") -> Navigate away
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        // Replace 'QuestionnaireScreen' with your actual next screen widget
-        builder: (context) => const QuestionnaireScreen(), 
-      ),
-    );
-  } else {
-    // 2. User is on earlier slides ("Next") -> Slide to next page
-    _pageController.nextPage(
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeIn,
-    );
-  }
-},
+                            if (_currentIndex == _content.length - 1) {
+                              // 1. User is on the last slide ("Done") -> Navigate away
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  // Replace 'QuestionnaireScreen' with your actual next screen widget
+                                  builder: (context) =>
+                                      const QuestionnaireScreen(),
+                                ),
+                              );
+                            } else {
+                              // 2. User is on earlier slides ("Next") -> Slide to next page
+                              _pageController.nextPage(
+                                duration: const Duration(milliseconds: 300),
+                                curve: Curves.easeIn,
+                              );
+                            }
+                          },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: OnboardingColors.primaryGreen,
                             elevation: 0,
@@ -296,7 +301,9 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                             ),
                           ),
                           child: Text(
-                            _currentIndex == _content.length - 1 ? "Done" : "Next",
+                            _currentIndex == _content.length - 1
+                                ? "Done"
+                                : "Next",
                             style: GoogleFonts.montserrat(
                               fontSize: 18,
                               fontWeight: FontWeight.w500,

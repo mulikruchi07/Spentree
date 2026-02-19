@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart'; // Add url_launcher to pubspec.yaml
+import '../../core/app_style.dart';
 
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
@@ -16,7 +17,7 @@ class AboutScreen extends StatelessWidget {
     return PopScope(
       canPop: true, // Allows hardware back button to return to Profile
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.bgWhite,
         body: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24.0),
           child: Column(

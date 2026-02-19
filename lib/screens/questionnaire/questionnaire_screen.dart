@@ -31,10 +31,16 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
 
   // Data Lists
   final List<String> _categories = [
-    "Food & Drinks", "Shopping", "Entertainment", "Other"
+    "Food & Drinks",
+    "Shopping",
+    "Entertainment",
+    "Other",
   ];
   final List<String> _goals = [
-    "Save more money", "Control daily spending", "Understand where my money goes", "Build better money habits"
+    "Save more money",
+    "Control daily spending",
+    "Understand where my money goes",
+    "Build better money habits",
   ];
 
   // --- VALIDATION ---
@@ -82,19 +88,21 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
     final double scale = (height / 820.0).clamp(0.85, 1.0);
 
     // --- PRECISE FIXED GAPS ---
-    final double topMargin = 90.0 * scale; 
-    final double stepToBarGap = 20.0 * scale; 
+    final double topMargin = 90.0 * scale;
+    final double stepToBarGap = 20.0 * scale;
     final double barToQuestionGap = 24.0 * scale; // Fixed Gap
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.bgWhite,
       resizeToAvoidBottomInset: true,
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
             // Calculate header height to determine remaining space for PageView
-            double headerHeight = topMargin + (30 * scale) + stepToBarGap + 6 + barToQuestionGap;
-            double availableContentHeight = constraints.maxHeight - headerHeight - topMargin;
+            double headerHeight =
+                topMargin + (30 * scale) + stepToBarGap + 6 + barToQuestionGap;
+            double availableContentHeight =
+                constraints.maxHeight - headerHeight - topMargin;
 
             // Ensure a minimum height for PageView to prevent layout collapse
             double finalPageViewHeight = max(300.0, availableContentHeight);
@@ -110,8 +118,8 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
                     _currentIndex == 0
                         ? "Step 1"
                         : _currentIndex == 1
-                            ? "Step 2"
-                            : "We’re almost ready!",
+                        ? "Step 2"
+                        : "We’re almost ready!",
                     style: GoogleFonts.montserrat(
                       fontSize: 20 * scale,
                       fontWeight: FontWeight.w600,
@@ -140,7 +148,7 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
                       ],
                     ),
                   ),
-                  
+
                   // Bottom spacing
                   SizedBox(height: topMargin),
                 ],
@@ -161,7 +169,8 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
         return SingleChildScrollView(
           child: ConstrainedBox(
             constraints: BoxConstraints(
-              minHeight: constraints.maxHeight, // Forces minimum height to match container
+              minHeight: constraints
+                  .maxHeight, // Forces minimum height to match container
             ),
             child: IntrinsicHeight(
               child: content, // The actual question content
@@ -195,13 +204,13 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
 
   // --- PAGE 1: DAILY LIMIT ---
   Widget _buildQuestionOne(double scale) {
-    final double subTextToInputGap = 25.0 * scale; 
-    final double quickToSubmitGap = 23.0 * scale; 
+    final double subTextToInputGap = 25.0 * scale;
+    final double quickToSubmitGap = 23.0 * scale;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.start, 
+        mainAxisAlignment: MainAxisAlignment.start,
         children: [
           Padding(
             padding: EdgeInsets.symmetric(horizontal: textPadding * scale),
@@ -224,7 +233,7 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
               ),
             ),
           ),
-          
+
           SizedBox(height: subTextToInputGap),
 
           // Input Field
@@ -240,9 +249,7 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
               child: TextField(
                 controller: _amountController,
                 keyboardType: TextInputType.number,
-                inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly, 
-                ],
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 textAlignVertical: TextAlignVertical.center,
                 style: GoogleFonts.montserrat(
                   fontSize: 16 * scale,
@@ -253,7 +260,9 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
                   isCollapsed: true,
                   hintText: "Enter the amount",
                   hintStyle: GoogleFonts.montserrat(
-                      color: AppColors.grey600, fontSize: 16 * scale),
+                    color: AppColors.grey600,
+                    fontSize: 16 * scale,
+                  ),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(horizontal: 20),
                   suffixIcon: Padding(
@@ -269,7 +278,10 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
                             fontSize: 16 * scale,
                           ),
                         ),
-                        const Icon(Icons.keyboard_arrow_down, color: AppColors.textMain),
+                        const Icon(
+                          Icons.keyboard_arrow_down,
+                          color: AppColors.textMain,
+                        ),
                       ],
                     ),
                   ),
@@ -291,7 +303,7 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Text(
-                    "Or", 
+                    "Or",
                     style: AppTextStyles.body.copyWith(fontSize: 14 * scale),
                   ),
                 ),
@@ -321,7 +333,10 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
               padding: const EdgeInsets.only(top: 12.0),
               child: Text(
                 _inlineError!,
-                style: GoogleFonts.poppins(color: Colors.redAccent, fontSize: 13 * scale),
+                style: GoogleFonts.poppins(
+                  color: Colors.redAccent,
+                  fontSize: 13 * scale,
+                ),
               ),
             ),
 
@@ -331,9 +346,9 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24.0),
             child: _buildMainButton(
-                label: "Submit", 
-                onTap: () => _nextPage(), 
-                scale: scale
+              label: "Submit",
+              onTap: () => _nextPage(),
+              scale: scale,
             ),
           ),
         ],
@@ -354,7 +369,7 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.start, 
+        mainAxisAlignment: MainAxisAlignment.start,
         children: [
           Padding(
             padding: EdgeInsets.symmetric(horizontal: textPadding * scale),
@@ -377,7 +392,7 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
               ),
             ),
           ),
-          
+
           SizedBox(height: 25 * scale),
 
           Padding(
@@ -405,7 +420,10 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
               padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
               child: Text(
                 _inlineError!,
-                style: GoogleFonts.poppins(color: Colors.redAccent, fontSize: 13 * scale),
+                style: GoogleFonts.poppins(
+                  color: Colors.redAccent,
+                  fontSize: 13 * scale,
+                ),
               ),
             ),
 
@@ -421,11 +439,16 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
                 if (isDone) {
                   if (_validateCurrentPage()) {
                     if (_amountController.text.isNotEmpty) {
-                      UserData.dailyLimit = _amountController.text.replaceAll(RegExp(r'[^0-9]'), '');
+                      UserData.dailyLimit = _amountController.text.replaceAll(
+                        RegExp(r'[^0-9]'),
+                        '',
+                      );
                     }
                     Navigator.pushReplacement(
                       context,
-                      MaterialPageRoute(builder: (context) => const LoadingScreen()),
+                      MaterialPageRoute(
+                        builder: (context) => const LoadingScreen(),
+                      ),
                     );
                   }
                 } else {
@@ -441,8 +464,8 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24.0),
             child: _buildPreviousButton(
-              onTap: () => _previousPage(), 
-              scale: scale
+              onTap: () => _previousPage(),
+              scale: scale,
             ),
           ),
         ],
@@ -597,8 +620,8 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
       child: ElevatedButton(
         onPressed: onTap,
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.white,
-          side: BorderSide.none, 
+          backgroundColor: AppColors.bgWhite,
+          side: BorderSide.none,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(cornerRadius),
           ),

@@ -107,7 +107,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.bgWhite,
       resizeToAvoidBottomInset: true,
       body: SafeArea(
         child: CustomScrollView(
@@ -166,7 +166,8 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                       isPassword: true,
                       isVisible: _isConfirmPasswordVisible,
                       onVisibilityChanged: () => setState(
-                        () => _isConfirmPasswordVisible = !_isConfirmPasswordVisible,
+                        () => _isConfirmPasswordVisible =
+                            !_isConfirmPasswordVisible,
                       ),
                       errorText: _confirmPasswordError,
                     ),
@@ -175,7 +176,11 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                     Align(
                       alignment: Alignment.centerLeft,
                       child: Padding(
-                        padding: const EdgeInsets.only(top: 16.0, left: 4, right: 4),
+                        padding: const EdgeInsets.only(
+                          top: 16.0,
+                          left: 4,
+                          right: 4,
+                        ),
                         child: Text(
                           "Min. 8 Characters, 1 lowercase, 1 uppercase, 1 number and at least 1 special character.",
                           textAlign: TextAlign.left,
@@ -213,7 +218,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                         ),
                       ),
                     ),
-                    
+
                     const Spacer(flex: 3),
                     const SizedBox(height: 20),
                   ],

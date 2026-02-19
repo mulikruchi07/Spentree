@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'onboarding_screen.dart';
+import '../../core/app_style.dart';
 
 class SplashOnboardingScreen extends StatefulWidget {
   const SplashOnboardingScreen({super.key});
@@ -34,15 +35,16 @@ class _SplashOnboardingScreenState extends State<SplashOnboardingScreen>
     );
 
     // Text Alignment
-    _textAlignmentAnimation = Tween<Alignment>(
-      begin: const Alignment(0.0, 0.11),
-      end: Alignment.center,
-    ).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: const Interval(0.2, 0.6, curve: Curves.easeOutCubic),
-      ),
-    );
+    _textAlignmentAnimation =
+        Tween<Alignment>(
+          begin: const Alignment(0.0, 0.11),
+          end: Alignment.center,
+        ).animate(
+          CurvedAnimation(
+            parent: _controller,
+            curve: const Interval(0.2, 0.6, curve: Curves.easeOutCubic),
+          ),
+        );
 
     // Text Fade
     _textFadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
@@ -91,7 +93,7 @@ class _SplashOnboardingScreenState extends State<SplashOnboardingScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.bgWhite,
       body: Stack(
         children: [
           // LAYER 1: CONTENT
@@ -113,21 +115,22 @@ class _SplashOnboardingScreenState extends State<SplashOnboardingScreen>
                       // HERO: Flying Logo
                       Hero(
                         tag: 'logo-image',
-                        flightShuttleBuilder: (
-                          flightContext,
-                          animation,
-                          direction,
-                          fromContext,
-                          toContext,
-                        ) {
-                          return Material(
-                            color: Colors.transparent,
-                            child: Image.asset(
-                              "assets/logo-name.png",
-                              fit: BoxFit.contain,
-                            ),
-                          );
-                        },
+                        flightShuttleBuilder:
+                            (
+                              flightContext,
+                              animation,
+                              direction,
+                              fromContext,
+                              toContext,
+                            ) {
+                              return Material(
+                                color: Colors.transparent,
+                                child: Image.asset(
+                                  "assets/logo-name.png",
+                                  fit: BoxFit.contain,
+                                ),
+                              );
+                            },
                         child: Image.asset(
                           "assets/appname.png",
                           width: 220,
@@ -164,7 +167,8 @@ class _SplashOnboardingScreenState extends State<SplashOnboardingScreen>
                     child: AnimatedBuilder(
                       animation: _scaleAnimation,
                       builder: (context, child) {
-                        if (_scaleAnimation.value == 0) return const SizedBox.shrink();
+                        if (_scaleAnimation.value == 0)
+                          return const SizedBox.shrink();
                         return Transform.scale(
                           scale: _scaleAnimation.value,
                           child: Container(

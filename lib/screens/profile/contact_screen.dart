@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../core/app_style.dart';
 
 class ContactScreen extends StatelessWidget {
   const ContactScreen({super.key});
@@ -15,7 +16,7 @@ class ContactScreen extends StatelessWidget {
     return PopScope(
       canPop: true,
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.bgWhite,
         body: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24.0),
           child: Column(

@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/app_style.dart';
-import '../auth/sign_up_screen.dart'; 
+import '../auth/sign_up_screen.dart';
 
 class LoadingScreen extends StatefulWidget {
   const LoadingScreen({super.key});
@@ -11,7 +11,8 @@ class LoadingScreen extends StatefulWidget {
   State<LoadingScreen> createState() => _LoadingScreenState();
 }
 
-class _LoadingScreenState extends State<LoadingScreen> with SingleTickerProviderStateMixin {
+class _LoadingScreenState extends State<LoadingScreen>
+    with SingleTickerProviderStateMixin {
   int _textIndex = 0;
   late Timer _timer;
   late AnimationController _rotationController;
@@ -27,11 +28,13 @@ class _LoadingScreenState extends State<LoadingScreen> with SingleTickerProvider
   @override
   void initState() {
     super.initState();
-    
+
     // 1. Setup Rotation Animation (Slower & Smoother)
     _rotationController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2000), // 2 Seconds for full rotation
+      duration: const Duration(
+        milliseconds: 2000,
+      ), // 2 Seconds for full rotation
     )..repeat(); // Loop forever
 
     // 2. Start Text Sequence
@@ -72,7 +75,7 @@ class _LoadingScreenState extends State<LoadingScreen> with SingleTickerProvider
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.bgWhite,
       body: SafeArea(
         child: SizedBox(
           width: double.infinity,
@@ -90,7 +93,8 @@ class _LoadingScreenState extends State<LoadingScreen> with SingleTickerProvider
                     strokeWidth: 8, // Thicker stroke
                     strokeCap: StrokeCap.round, // Curved edges
                     color: AppColors.primaryGreen,
-                    backgroundColor: AppColors.inputFill, // Light grey track behind
+                    backgroundColor:
+                        AppColors.inputFill, // Light grey track behind
                   ),
                 ),
               ),
@@ -105,7 +109,7 @@ class _LoadingScreenState extends State<LoadingScreen> with SingleTickerProvider
                 },
                 child: Text(
                   _loadingTexts[_textIndex],
-                  key: ValueKey<String>(_loadingTexts[_textIndex]), 
+                  key: ValueKey<String>(_loadingTexts[_textIndex]),
                   textAlign: TextAlign.center,
                   style: GoogleFonts.montserrat(
                     fontSize: 16,

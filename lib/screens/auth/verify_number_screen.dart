@@ -41,7 +41,7 @@ class _VerifyNumberScreenState extends State<VerifyNumberScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.bgWhite,
       resizeToAvoidBottomInset: true,
       body: SafeArea(
         child: CustomScrollView(
@@ -91,7 +91,9 @@ class _VerifyNumberScreenState extends State<VerifyNumberScreen> {
                         children: List.generate(
                           otpLength,
                           (index) => Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 4.0,
+                            ),
                             child: _buildOtpDigitBox(index),
                           ),
                         ),

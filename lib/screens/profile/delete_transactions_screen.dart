@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:spentree/core/app_style.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class DeleteTransactionsScreen extends StatefulWidget {
@@ -166,7 +167,7 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.bgWhite,
       body: Stack(
         children: [
           const SizedBox(height: 70),
@@ -252,7 +253,7 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
 
                   _buildTipSection(),
                   const SizedBox(height: 20),
-                  Divider(color: colBlack, thickness: 0.5),
+                  Divider(color: AppColors.divider, thickness: 1),
 
                   const SizedBox(height: 20),
 

@@ -7,6 +7,7 @@ import '../core/biometric_service.dart';
 import 'analytics/analytics_screen.dart';
 import 'dashboard/dashboard_screen.dart';
 import 'profile/profile_screen.dart';
+import '../../core/app_style.dart';
 
 class MainWrapper extends StatefulWidget {
   const MainWrapper({super.key});
@@ -104,7 +105,7 @@ class _MainWrapperState extends State<MainWrapper> with WidgetsBindingObserver {
       child: Stack(
         children: [
           Scaffold(
-            backgroundColor: Colors.white,
+            backgroundColor: AppColors.bgWhite,
             extendBody: true,
             body: IndexedStack(index: _selectedIndex, children: _pages),
             bottomNavigationBar: _buildBottomNavbar(),

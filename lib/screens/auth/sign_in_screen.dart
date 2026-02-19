@@ -48,9 +48,7 @@ class _SignInScreenState extends State<SignInScreen> {
     if (isValid) {
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(
-          builder: (context) => const MainWrapper(),
-        ),
+        MaterialPageRoute(builder: (context) => const MainWrapper()),
         (route) => false,
       );
     }
@@ -59,7 +57,7 @@ class _SignInScreenState extends State<SignInScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.bgWhite,
       resizeToAvoidBottomInset: true,
       body: SafeArea(
         child: CustomScrollView(
@@ -100,20 +98,21 @@ class _SignInScreenState extends State<SignInScreen> {
 
                     // --- INPUTS ---
                     _buildTextField(
-                      _phoneController, 
-                      "Phone Number", 
+                      _phoneController,
+                      "Phone Number",
                       isPhone: true,
                       errorText: _phoneError,
                     ),
                     SizedBox(height: inputGap),
-                    
+
                     _buildTextField(
                       _passwordController,
                       "Password",
                       isPassword: true,
                       isVisible: _isPasswordVisible,
-                      onVisibilityChanged: () =>
-                          setState(() => _isPasswordVisible = !_isPasswordVisible),
+                      onVisibilityChanged: () => setState(
+                        () => _isPasswordVisible = !_isPasswordVisible,
+                      ),
                       errorText: _passwordError,
                     ),
 
@@ -194,7 +193,8 @@ class _SignInScreenState extends State<SignInScreen> {
                                   Navigator.pushReplacement(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) => const SignUpScreen(),
+                                      builder: (context) =>
+                                          const SignUpScreen(),
                                     ),
                                   );
                                 },
@@ -248,7 +248,10 @@ class _SignInScreenState extends State<SignInScreen> {
               fontWeight: FontWeight.w400,
             ),
             inputFormatters: isPhone
-                ? [LengthLimitingTextInputFormatter(10), FilteringTextInputFormatter.digitsOnly]
+                ? [
+                    LengthLimitingTextInputFormatter(10),
+                    FilteringTextInputFormatter.digitsOnly,
+                  ]
                 : [],
             textAlignVertical: TextAlignVertical.center,
             decoration: InputDecoration(

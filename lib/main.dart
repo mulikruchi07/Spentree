@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'screens/onboarding/splash_onboarding_screen.dart'; // UPDATED IMPORT
 import 'screens/main_wrapper.dart';
 import 'core/biometric_service.dart';
+import '../../core/app_style.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -53,7 +54,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF34C759)),
         useMaterial3: true,
-        scaffoldBackgroundColor: Colors.white,
+        scaffoldBackgroundColor: AppColors.bgWhite,
       ),
       home: startScreen,
     );

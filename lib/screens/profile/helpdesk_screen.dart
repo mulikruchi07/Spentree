@@ -28,7 +28,7 @@ class HelpdeskScreen extends StatelessWidget {
               style: GoogleFonts.montserrat(
                 fontSize: 18,
                 fontWeight: FontWeight.w500,
-                color: Colors.black,
+                color: AppColors.colblack,
               ),
             ),
             Text(
@@ -36,7 +36,7 @@ class HelpdeskScreen extends StatelessWidget {
               style: GoogleFonts.montserrat(
                 fontSize: 36,
                 fontWeight: FontWeight.w600,
-                color: Colors.black,
+                color: AppColors.colblack,
                 height: 1.1,
               ),
             ),
@@ -102,14 +102,17 @@ class HelpdeskScreen extends StatelessWidget {
               style: GoogleFonts.montserrat(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
-                color: Colors.black,
+                color: AppColors.colblack,
               ),
             ),
             const SizedBox(height: 8),
             _buildPoppinsText("We’re here for you."),
             RichText(
               text: TextSpan(
-                style: GoogleFonts.poppins(fontSize: 13, color: Colors.black),
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  color: AppColors.colblack,
+                ),
                 children: [
                   const TextSpan(text: "Contact us at: "),
                   TextSpan(
@@ -133,11 +136,16 @@ class HelpdeskScreen extends StatelessWidget {
   Widget _buildExpansionRow(String title, String content) {
     return Theme(
       // Removes the default highlighted border when expanded
-      data: ThemeData().copyWith(dividerColor: Colors.black.withOpacity(0.0)),
+      data: ThemeData().copyWith(
+        dividerColor: AppColors.colblack.withOpacity(0.0),
+      ),
       child: Container(
         decoration: BoxDecoration(
           border: Border(
-            bottom: BorderSide(color: Colors.black.withOpacity(0.8), width: 1),
+            bottom: BorderSide(
+              color: AppColors.colblack.withOpacity(0.8),
+              width: 1,
+            ),
           ),
         ),
         child: ExpansionTile(
@@ -147,11 +155,11 @@ class HelpdeskScreen extends StatelessWidget {
             style: GoogleFonts.montserrat(
               fontSize: 15,
               fontWeight: FontWeight.w600,
-              color: Colors.black,
+              color: AppColors.colblack,
             ),
           ),
-          iconColor: Colors.grey,
-          collapsedIconColor: Colors.grey,
+          iconColor: AppColors.desctext,
+          collapsedIconColor: AppColors.colblack.withOpacity(0.5),
           children: [
             Padding(
               padding: const EdgeInsets.only(bottom: 16.0),
@@ -160,7 +168,7 @@ class HelpdeskScreen extends StatelessWidget {
                 style: GoogleFonts.poppins(
                   fontSize: 14,
                   fontWeight: FontWeight.w400,
-                  color: Colors.black.withValues(alpha: 0.8),
+                  color: AppColors.colblack.withValues(alpha: 0.8),
                   height: 1.5,
                 ),
               ),
@@ -179,7 +187,7 @@ class HelpdeskScreen extends StatelessWidget {
         style: GoogleFonts.poppins(
           fontSize: 14,
           fontWeight: FontWeight.w300,
-          color: Colors.black,
+          color: AppColors.colblack,
           height: 1.5,
         ),
       ),
@@ -187,9 +195,6 @@ class HelpdeskScreen extends StatelessWidget {
   }
 
   Widget _buildFooter(BuildContext context) {
-    // Define the common grey color from your specifications
-    const Color colGrey80 = Color(0xFF808080);
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start, // Ensures left alignment
       children: [
@@ -199,7 +204,7 @@ class HelpdeskScreen extends StatelessWidget {
           style: GoogleFonts.poppins(
             fontSize: 14,
             fontWeight: FontWeight.w400, // Poppins Medium
-            color: colGrey80,
+            color: AppColors.white500,
           ),
         ),
         const SizedBox(height: 4),
@@ -209,12 +214,16 @@ class HelpdeskScreen extends StatelessWidget {
           onTap: () => _launchURL("https://linkedin.com/in/designer"),
           child: RichText(
             text: TextSpan(
-              style: GoogleFonts.poppins(fontSize: 14, color: colGrey80),
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                color: AppColors.white500,
+              ),
               children: [
                 const TextSpan(
                   text: "Designed by ",
                   style: TextStyle(
                     fontWeight: FontWeight.w400,
+                    color: AppColors.white500,
                   ), // Poppins Medium
                 ),
                 TextSpan(
@@ -222,6 +231,7 @@ class HelpdeskScreen extends StatelessWidget {
                   style: GoogleFonts.poppins(
                     fontWeight: FontWeight.w200, // Poppins ExtraLight
                     fontStyle: FontStyle.italic, // Italic
+                    color: AppColors.white500,
                   ),
                 ),
               ],
@@ -235,12 +245,16 @@ class HelpdeskScreen extends StatelessWidget {
           onTap: () => _launchURL("https://linkedin.com/in/developer"),
           child: RichText(
             text: TextSpan(
-              style: GoogleFonts.poppins(fontSize: 14, color: colGrey80),
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                color: AppColors.white500,
+              ),
               children: [
                 const TextSpan(
                   text: "Developed by ",
                   style: TextStyle(
                     fontWeight: FontWeight.w400,
+                    color: AppColors.white500,
                   ), // Poppins Medium
                 ),
                 TextSpan(
@@ -248,6 +262,7 @@ class HelpdeskScreen extends StatelessWidget {
                   style: GoogleFonts.poppins(
                     fontWeight: FontWeight.w200, // Poppins ExtraLight
                     fontStyle: FontStyle.italic, // Italic
+                    color: AppColors.white500,
                   ),
                 ),
               ],

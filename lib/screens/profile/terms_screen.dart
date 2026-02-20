@@ -26,7 +26,7 @@ class TermsScreen extends StatelessWidget {
               style: GoogleFonts.montserrat(
                 fontSize: 24,
                 fontWeight: FontWeight.w600,
-                color: Colors.black,
+                color: AppColors.colblack,
               ),
             ),
             const SizedBox(height: 24),
@@ -114,6 +114,7 @@ class TermsScreen extends StatelessWidget {
             style: GoogleFonts.montserrat(
               fontSize: 18,
               fontWeight: FontWeight.w700,
+              color: AppColors.colblack,
             ),
           ),
           const SizedBox(height: 8),
@@ -122,7 +123,7 @@ class TermsScreen extends StatelessWidget {
             style: GoogleFonts.poppins(
               fontSize: 14,
               height: 1.5,
-              color: Colors.black,
+              color: AppColors.colblack,
             ),
           ),
         ],
@@ -132,7 +133,11 @@ class TermsScreen extends StatelessWidget {
 
   Widget _buildBodyText(String text) => Text(
     text,
-    style: GoogleFonts.poppins(fontSize: 14, height: 1.5, color: Colors.black),
+    style: GoogleFonts.poppins(
+      fontSize: 14,
+      height: 1.5,
+      color: AppColors.colblack,
+    ),
   );
 
   Widget _buildBoldText(String text) => Text(
@@ -141,7 +146,7 @@ class TermsScreen extends StatelessWidget {
       fontSize: 14,
       fontWeight: FontWeight.w500,
       height: 1.5,
-      color: Colors.black,
+      color: AppColors.colblack,
     ),
   );
 
@@ -152,7 +157,7 @@ class TermsScreen extends StatelessWidget {
       child: ElevatedButton(
         onPressed: () => Navigator.pop(context),
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF34C759),
+          backgroundColor: AppColors.primaryGreen,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -161,7 +166,7 @@ class TermsScreen extends StatelessWidget {
         child: Text(
           "I agree",
           style: GoogleFonts.montserrat(
-            color: Colors.white,
+            color: AppColors.colwhite,
             fontWeight: FontWeight.w600,
             fontSize: 16,
           ),
@@ -171,20 +176,22 @@ class TermsScreen extends StatelessWidget {
   }
 
   Widget _buildFooter() {
-    const Color colGrey = Color(0xFF808080);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           "Planted with love in Mumbai, India",
-          style: GoogleFonts.poppins(fontSize: 13, color: colGrey),
+          style: GoogleFonts.poppins(fontSize: 13, color: AppColors.white500),
         ),
         const SizedBox(height: 4),
         GestureDetector(
           onTap: () => _launchURL("https://linkedin.com"),
           child: RichText(
             text: TextSpan(
-              style: GoogleFonts.poppins(fontSize: 14, color: colGrey),
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                color: AppColors.white500,
+              ),
               children: [
                 const TextSpan(text: "Designed by "),
                 TextSpan(
@@ -192,6 +199,7 @@ class TermsScreen extends StatelessWidget {
                   style: GoogleFonts.poppins(
                     fontStyle: FontStyle.italic,
                     fontWeight: FontWeight.w200,
+                    color: AppColors.white500,
                   ),
                 ),
               ],
@@ -203,7 +211,10 @@ class TermsScreen extends StatelessWidget {
           onTap: () => _launchURL("https://linkedin.com"),
           child: RichText(
             text: TextSpan(
-              style: GoogleFonts.poppins(fontSize: 14, color: colGrey),
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                color: AppColors.white500,
+              ),
               children: [
                 const TextSpan(text: "Developed by "),
                 TextSpan(
@@ -211,6 +222,7 @@ class TermsScreen extends StatelessWidget {
                   style: GoogleFonts.poppins(
                     fontStyle: FontStyle.italic,
                     fontWeight: FontWeight.w200,
+                    color: AppColors.white500,
                   ),
                 ),
               ],

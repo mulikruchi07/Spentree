@@ -29,7 +29,7 @@ class ContactScreen extends StatelessWidget {
                 style: GoogleFonts.montserrat(
                   fontSize: 18,
                   fontWeight: FontWeight.w500,
-                  color: Colors.black,
+                  color: AppColors.colblack,
                 ),
               ),
               Text(
@@ -37,7 +37,7 @@ class ContactScreen extends StatelessWidget {
                 style: GoogleFonts.montserrat(
                   fontSize: 36,
                   fontWeight: FontWeight.w600,
-                  color: Colors.black,
+                  color: AppColors.colblack,
                   height: 1.1,
                 ),
               ),
@@ -57,7 +57,7 @@ class ContactScreen extends StatelessWidget {
                 style: GoogleFonts.poppins(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: Colors.black,
+                  color: AppColors.colblack,
                 ),
               ),
               const SizedBox(height: 16),
@@ -71,7 +71,7 @@ class ContactScreen extends StatelessWidget {
                 style: GoogleFonts.poppins(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: Colors.black,
+                  color: AppColors.colblack,
                 ),
               ),
 
@@ -109,7 +109,7 @@ class ContactScreen extends StatelessWidget {
         style: GoogleFonts.montserrat(
           fontSize: 18,
           fontWeight: FontWeight.w600,
-          color: Colors.black,
+          color: AppColors.colblack,
         ),
       ),
     );
@@ -123,7 +123,7 @@ class ContactScreen extends StatelessWidget {
         style: GoogleFonts.poppins(
           fontSize: 14,
           fontWeight: FontWeight.w300,
-          color: Colors.black,
+          color: AppColors.colblack,
           height: 1.5,
         ),
       ),
@@ -131,9 +131,6 @@ class ContactScreen extends StatelessWidget {
   }
 
   Widget _buildFooter(BuildContext context) {
-    // Define the common grey color from your specifications
-    const Color colGrey80 = Color(0xFF808080);
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start, // Ensures left alignment
       children: [
@@ -143,7 +140,7 @@ class ContactScreen extends StatelessWidget {
           style: GoogleFonts.poppins(
             fontSize: 14,
             fontWeight: FontWeight.w400, // Poppins Medium
-            color: colGrey80,
+            color: AppColors.white500,
           ),
         ),
         const SizedBox(height: 4),
@@ -153,12 +150,16 @@ class ContactScreen extends StatelessWidget {
           onTap: () => _launchURL("https://linkedin.com/in/designer"),
           child: RichText(
             text: TextSpan(
-              style: GoogleFonts.poppins(fontSize: 14, color: colGrey80),
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                color: AppColors.white500,
+              ),
               children: [
                 const TextSpan(
                   text: "Designed by ",
                   style: TextStyle(
                     fontWeight: FontWeight.w400,
+                    color: AppColors.white500,
                   ), // Poppins Medium
                 ),
                 TextSpan(
@@ -166,6 +167,7 @@ class ContactScreen extends StatelessWidget {
                   style: GoogleFonts.poppins(
                     fontWeight: FontWeight.w200, // Poppins ExtraLight
                     fontStyle: FontStyle.italic, // Italic
+                    color: AppColors.white500,
                   ),
                 ),
               ],
@@ -179,12 +181,16 @@ class ContactScreen extends StatelessWidget {
           onTap: () => _launchURL("https://linkedin.com/in/developer"),
           child: RichText(
             text: TextSpan(
-              style: GoogleFonts.poppins(fontSize: 14, color: colGrey80),
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                color: AppColors.white500,
+              ),
               children: [
                 const TextSpan(
                   text: "Developed by ",
                   style: TextStyle(
                     fontWeight: FontWeight.w400,
+                    color: AppColors.white500,
                   ), // Poppins Medium
                 ),
                 TextSpan(
@@ -192,6 +198,7 @@ class ContactScreen extends StatelessWidget {
                   style: GoogleFonts.poppins(
                     fontWeight: FontWeight.w200, // Poppins ExtraLight
                     fontStyle: FontStyle.italic, // Italic
+                    color: AppColors.white500,
                   ),
                 ),
               ],

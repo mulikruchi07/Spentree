@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/user_data.dart';
 import '../../core/biometric_service.dart';
 import '../auth/change_password_screen.dart';
+import '../../core/app_style.dart';
 
 class AccountScreen extends StatefulWidget {
   const AccountScreen({super.key});
@@ -20,6 +21,7 @@ class _AccountScreenState extends State<AccountScreen> {
   bool _spendingAlerts = false;
   bool _notifications = false;
   bool _spendingTips = false;
+  bool _soundEffects = false;
 
   // Inline Editing States
   bool _isEditingName = false;
@@ -27,14 +29,6 @@ class _AccountScreenState extends State<AccountScreen> {
 
   late TextEditingController _nameController;
   late TextEditingController _phoneController;
-
-  // UI Constants
-  final Color colBlack = const Color(0xFF000000);
-  final Color colGreyText = const Color(0xFF808080);
-  final Color colBoxBg = const Color(0xFFF1F1F1);
-  final Color colIconBg = const Color(0xFFB8F0C9);
-  final Color colPrimaryGreen = const Color(0xFF34C759);
-  final Color colDestructiveRed = const Color(0xFFFF4141);
 
   @override
   void initState() {
@@ -66,7 +60,7 @@ class _AccountScreenState extends State<AccountScreen> {
       }
     } else {
       // Floating destructive dialog for removal
-      _showDestructiveDialog(
+      _showConfirmationDialog(
         title: "Remove App Lock",
         message: "Are you sure you want to remove app-lock?",
         confirmText: "Remove",
@@ -83,7 +77,7 @@ class _AccountScreenState extends State<AccountScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.bgWhite,
       body: SafeArea(
         top: false,
         child: SingleChildScrollView(
@@ -98,6 +92,7 @@ class _AccountScreenState extends State<AccountScreen> {
                 style: GoogleFonts.montserrat(
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
+                  color: AppColors.colblack,
                 ),
               ),
               Text(
@@ -105,6 +100,7 @@ class _AccountScreenState extends State<AccountScreen> {
                 style: GoogleFonts.montserrat(
                   fontSize: 36,
                   fontWeight: FontWeight.w600,
+                  color: AppColors.colblack,
                   height: 1.1,
                 ),
               ),
@@ -161,6 +157,13 @@ class _AccountScreenState extends State<AccountScreen> {
                 (v) => setState(() => _spendingAlerts = v),
               ),
               _buildToggleTile(
+                Icons.lightbulb_outline_rounded,
+                "Spending Tips",
+                "Get tips for daily expenses",
+                _spendingTips,
+                (v) => setState(() => _spendingTips = v),
+              ),
+              _buildToggleTile(
                 Icons.notifications_none_rounded,
                 "Notifications",
                 "Streak & Milestone Notifications",
@@ -168,11 +171,11 @@ class _AccountScreenState extends State<AccountScreen> {
                 (v) => setState(() => _notifications = v),
               ),
               _buildToggleTile(
-                Icons.lightbulb_outline_rounded,
-                "Spending Tips",
-                "Get tips for daily expenses",
-                _spendingTips,
-                (v) => setState(() => _spendingTips = v),
+                Icons.volume_up,
+                "Sound Effects",
+                "Control Sound effects & Music",
+                _soundEffects,
+                (v) => setState(() => _soundEffects = v),
               ),
 
               const SizedBox(height: 32),
@@ -187,22 +190,24 @@ class _AccountScreenState extends State<AccountScreen> {
                 Icons.lock_outline_rounded,
                 "Deactivate Account",
                 "Temporarily disable account",
-                onPop: () => _showDestructiveDialog(
+                onPop: () => _showConfirmationDialog(
                   title: "Deactivate Account",
                   message: "You can come back anytime by logging in again.",
                   confirmText: "Yes, Deactivate",
                   icon: Icons.lock_outline,
+                  onConfirm: () {},
                 ),
               ),
               _buildActionTile(
                 Icons.delete_outline_rounded,
                 "Delete My Account",
                 "Delete your account permanently",
-                onPop: () => _showDestructiveDialog(
+                onPop: () => _showConfirmationDialog(
                   title: "Delete Account",
                   message: "All your data will be removed permanently.",
                   confirmText: "Yes, Delete",
                   icon: Icons.delete_outline,
+                  onConfirm: () {},
                 ),
               ),
 
@@ -224,12 +229,12 @@ class _AccountScreenState extends State<AccountScreen> {
         children: [
           CircleAvatar(
             radius: 60,
-            backgroundColor: colBoxBg,
+            backgroundColor: AppColors.inputFill,
             child: ClipOval(
               child: Image.asset(
-                'assets/images/user_avatar.png',
+                'assets/images/user_avaar.png',
                 errorBuilder: (context, error, stackTrace) =>
-                    Icon(Icons.person, size: 60, color: colGreyText),
+                    Icon(Icons.person, size: 60, color: AppColors.colblack),
               ),
             ),
           ),
@@ -239,6 +244,7 @@ class _AccountScreenState extends State<AccountScreen> {
             style: GoogleFonts.poppins(
               fontSize: 22,
               fontWeight: FontWeight.w600,
+              color: AppColors.colblack,
             ),
           ),
           Text(
@@ -246,7 +252,7 @@ class _AccountScreenState extends State<AccountScreen> {
             style: GoogleFonts.montserrat(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: colGreyText,
+              color: AppColors.white500,
             ),
           ),
         ],
@@ -266,13 +272,17 @@ class _AccountScreenState extends State<AccountScreen> {
       children: [
         Text(
           label,
-          style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w500),
+          style: GoogleFonts.poppins(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: AppColors.colblack,
+          ),
         ),
         const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
           decoration: BoxDecoration(
-            color: colBoxBg,
+            color: AppColors.inputFill,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Row(
@@ -287,7 +297,7 @@ class _AccountScreenState extends State<AccountScreen> {
                             : TextInputType.text,
                         style: GoogleFonts.poppins(
                           fontSize: 14,
-                          color: Colors.black,
+                          color: AppColors.colblack,
                         ),
                         decoration: const InputDecoration(
                           border: InputBorder.none,
@@ -298,7 +308,7 @@ class _AccountScreenState extends State<AccountScreen> {
                         controller.text,
                         style: GoogleFonts.poppins(
                           fontSize: 14,
-                          color: const Color(0xFF9EA3AE),
+                          color: AppColors.grey600,
                         ),
                       ),
               ),
@@ -309,7 +319,7 @@ class _AccountScreenState extends State<AccountScreen> {
                   style: GoogleFonts.poppins(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
-                    color: colGreyText,
+                    color: AppColors.white500,
                   ),
                 ),
               ),
@@ -326,13 +336,17 @@ class _AccountScreenState extends State<AccountScreen> {
       children: [
         Text(
           label,
-          style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w500),
+          style: GoogleFonts.poppins(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: AppColors.colblack,
+          ),
         ),
         const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
-            color: colBoxBg,
+            color: AppColors.inputFill,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Row(
@@ -342,7 +356,7 @@ class _AccountScreenState extends State<AccountScreen> {
                   value,
                   style: GoogleFonts.poppins(
                     fontSize: 14,
-                    color: const Color(0xFF9EA3AE),
+                    color: AppColors.grey600,
                   ),
                 ),
               ),
@@ -351,7 +365,7 @@ class _AccountScreenState extends State<AccountScreen> {
                 style: GoogleFonts.poppins(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
-                  color: colGreyText.withValues(alpha: 0.3),
+                  color: AppColors.white500,
                 ),
               ),
             ],
@@ -372,15 +386,18 @@ class _AccountScreenState extends State<AccountScreen> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: colBoxBg,
+        color: AppColors.inputFill,
         borderRadius: BorderRadius.circular(15),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(color: colIconBg, shape: BoxShape.circle),
-            child: Icon(icon, size: 24, color: colBlack),
+            decoration: BoxDecoration(
+              color: AppColors.colIconBg,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, size: 24, color: AppColors.colblack),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -392,11 +409,15 @@ class _AccountScreenState extends State<AccountScreen> {
                   style: GoogleFonts.poppins(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
+                    color: AppColors.colblack,
                   ),
                 ),
                 Text(
                   subtitle,
-                  style: GoogleFonts.poppins(fontSize: 10, color: colGreyText),
+                  style: GoogleFonts.poppins(
+                    fontSize: 10,
+                    color: AppColors.desctext,
+                  ),
                 ),
               ],
             ),
@@ -417,7 +438,7 @@ class _AccountScreenState extends State<AccountScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 4),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
-          color: value ? colPrimaryGreen : const Color(0xFFE0E0E0),
+          color: value ? AppColors.primaryGreen : const Color(0xFFE8E8E8),
         ),
         child: AnimatedAlign(
           duration: const Duration(milliseconds: 200),
@@ -427,7 +448,7 @@ class _AccountScreenState extends State<AccountScreen> {
             height: 20,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: value ? Colors.white : const Color(0xFFAAAAAA),
+              color: value ? Colors.white : const Color(0xFFABABAB),
             ),
           ),
         ),
@@ -445,7 +466,7 @@ class _AccountScreenState extends State<AccountScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       child: Material(
-        color: colBoxBg,
+        color: AppColors.inputFill,
         borderRadius: BorderRadius.circular(15),
         child: InkWell(
           onTap: onTap ?? onPop,
@@ -459,10 +480,10 @@ class _AccountScreenState extends State<AccountScreen> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: colIconBg,
+                    color: AppColors.colIconBg,
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(icon, size: 24, color: colBlack),
+                  child: Icon(icon, size: 24, color: AppColors.colblack),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -474,19 +495,20 @@ class _AccountScreenState extends State<AccountScreen> {
                         style: GoogleFonts.poppins(
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
+                          color: AppColors.colblack,
                         ),
                       ),
                       Text(
                         subtitle,
                         style: GoogleFonts.poppins(
                           fontSize: 10,
-                          color: colGreyText,
+                          color: AppColors.desctext,
                         ),
                       ),
                     ],
                   ),
                 ),
-                const Icon(Icons.chevron_right, color: Color(0xFFABABAB)),
+                const Icon(Icons.chevron_right, color: AppColors.desctext),
               ],
             ),
           ),
@@ -504,7 +526,7 @@ class _AccountScreenState extends State<AccountScreen> {
           style: GoogleFonts.poppins(
             fontSize: 14,
             fontWeight: FontWeight.w400,
-            color: colGreyText,
+            color: AppColors.white500,
           ),
         ),
         const SizedBox(height: 4),
@@ -512,17 +534,24 @@ class _AccountScreenState extends State<AccountScreen> {
           onTap: () => _launchURL("https://linkedin.com/in/designer"),
           child: RichText(
             text: TextSpan(
-              style: GoogleFonts.poppins(fontSize: 14, color: colGreyText),
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                color: AppColors.white500,
+              ),
               children: [
                 const TextSpan(
                   text: "Designed by ",
-                  style: TextStyle(fontWeight: FontWeight.w400),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w400,
+                    color: AppColors.white500,
+                  ),
                 ),
                 TextSpan(
                   text: "Designer",
                   style: GoogleFonts.poppins(
                     fontWeight: FontWeight.w200,
                     fontStyle: FontStyle.italic,
+                    color: AppColors.white500,
                   ),
                 ),
               ],
@@ -534,17 +563,24 @@ class _AccountScreenState extends State<AccountScreen> {
           onTap: () => _launchURL("https://linkedin.com/in/developer"),
           child: RichText(
             text: TextSpan(
-              style: GoogleFonts.poppins(fontSize: 14, color: colGreyText),
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                color: AppColors.white500,
+              ),
               children: [
                 const TextSpan(
                   text: "Developed by ",
-                  style: TextStyle(fontWeight: FontWeight.w400),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w400,
+                    color: AppColors.white500,
+                  ),
                 ),
                 TextSpan(
                   text: "Developer",
                   style: GoogleFonts.poppins(
                     fontWeight: FontWeight.w200,
                     fontStyle: FontStyle.italic,
+                    color: AppColors.white500,
                   ),
                 ),
               ],
@@ -555,103 +591,125 @@ class _AccountScreenState extends State<AccountScreen> {
     );
   }
 
-  Future<void> _showDestructiveDialog({
+  Future<void> _showConfirmationDialog({
     required String title,
     required String message,
     required String confirmText,
     required IconData icon,
-    VoidCallback? onConfirm,
+    required VoidCallback onConfirm,
   }) async {
-    showDialog(
+    return showDialog(
       context: context,
-      builder: (context) => BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Dialog(
-          backgroundColor: Colors.transparent,
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(28),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: colDestructiveRed,
-                    shape: BoxShape.circle,
+      barrierDismissible: true,
+      builder: (context) {
+        return BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10), // Background Blur
+          child: Dialog(
+            backgroundColor: Colors.transparent,
+            insetPadding: const EdgeInsets.symmetric(horizontal: 40),
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: AppColors.bgWhite,
+                borderRadius: BorderRadius.circular(
+                  28,
+                ), // Floating rounded look
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Red Circular Icon at Top
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: const BoxDecoration(
+                      color: AppColors.destructiveRed, // Design Red
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(icon, color: AppColors.colwhite, size: 32),
                   ),
-                  child: Icon(icon, color: Colors.white, size: 32),
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  title,
-                  style: GoogleFonts.poppins(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  message,
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.poppins(fontSize: 14, color: colGreyText),
-                ),
-                const SizedBox(height: 32),
-                _buildPopupButton(
-                  confirmText,
-                  colDestructiveRed,
-                  Colors.white,
-                  () {
-                    if (onConfirm != null) onConfirm();
-                    Navigator.pop(context);
-                  },
-                ),
-                const SizedBox(height: 12),
-                _buildPopupButton(
-                  "Cancel",
-                  colBoxBg,
-                  colDestructiveRed,
-                  () => Navigator.pop(context),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+                  const SizedBox(height: 20),
 
-  Widget _buildPopupButton(
-    String text,
-    Color bg,
-    Color textCol,
-    VoidCallback tap,
-  ) {
-    return SizedBox(
-      width: double.infinity,
-      height: 54,
-      child: ElevatedButton(
-        onPressed: tap,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: bg,
-          elevation: 0,
-          shadowColor: Colors.transparent,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+                  // Title
+                  Text(
+                    title,
+                    style: GoogleFonts.poppins(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.colblack,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Subtitle Message
+                  Text(
+                    message,
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.desctext,
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+
+                  // Confirm Button (Red)
+                  SizedBox(
+                    width: double.infinity,
+                    height: 54,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        onConfirm();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.destructiveRed,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      child: Text(
+                        confirmText,
+                        style: GoogleFonts.poppins(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.colwhite,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Cancel Button (Grey)
+                  SizedBox(
+                    width: double.infinity,
+                    height: 54,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.inputFill,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      child: Text(
+                        "Cancel",
+                        style: GoogleFonts.poppins(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color:
+                              AppColors.destructiveRed, // Red text for cancel
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-        ),
-        child: Text(
-          text,
-          style: GoogleFonts.poppins(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: textCol,
-          ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -659,7 +717,11 @@ class _AccountScreenState extends State<AccountScreen> {
     padding: const EdgeInsets.only(bottom: 16),
     child: Text(
       t,
-      style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w600),
+      style: GoogleFonts.poppins(
+        fontSize: 18,
+        fontWeight: FontWeight.w600,
+        color: AppColors.colblack,
+      ),
     ),
   );
 }

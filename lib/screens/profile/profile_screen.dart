@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:spentree/core/app_style.dart';
 import 'package:spentree/core/biometric_service.dart';
 import 'package:spentree/screens/auth/sign_in_screen.dart';
 import 'package:spentree/screens/profile/account_screen.dart';
@@ -19,12 +20,6 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  final Color colBlack = const Color(0xFF000000);
-  final Color colGrey80 = const Color(0xFF808080);
-  final Color colGreyArrow = const Color(0xFFABABAB);
-  final Color colBoxBg = const Color(0xFFF1F1F1);
-  final Color colIconBg = const Color(0xFFB8F0C9);
-
   @override
   void initState() {
     super.initState();
@@ -50,7 +45,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             child: Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.bgWhite,
                 borderRadius: BorderRadius.circular(
                   28,
                 ), // Floating rounded look
@@ -62,10 +57,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: const BoxDecoration(
-                      color: Color(0xFFFF4141), // Design Red
+                      color: AppColors.destructiveRed, // Design Red
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(icon, color: Colors.white, size: 32),
+                    child: Icon(icon, color: AppColors.colwhite, size: 32),
                   ),
                   const SizedBox(height: 20),
 
@@ -75,7 +70,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     style: GoogleFonts.poppins(
                       fontSize: 22,
                       fontWeight: FontWeight.w600,
-                      color: colBlack,
+                      color: AppColors.colblack,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -87,7 +82,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     style: GoogleFonts.poppins(
                       fontSize: 14,
                       fontWeight: FontWeight.w400,
-                      color: colGrey80,
+                      color: AppColors.desctext,
                     ),
                   ),
                   const SizedBox(height: 32),
@@ -102,7 +97,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         onConfirm();
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFFF4141),
+                        backgroundColor: AppColors.destructiveRed,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
@@ -113,7 +108,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         style: GoogleFonts.poppins(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color: Colors.white,
+                          color: AppColors.colwhite,
                         ),
                       ),
                     ),
@@ -127,7 +122,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     child: ElevatedButton(
                       onPressed: () => Navigator.pop(context),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFF1F1F1),
+                        backgroundColor: AppColors.inputFill,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
@@ -138,7 +133,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         style: GoogleFonts.poppins(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color: const Color(0xFFFF4141), // Red text for cancel
+                          color:
+                              AppColors.destructiveRed, // Red text for cancel
                         ),
                       ),
                     ),
@@ -159,7 +155,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         : "?";
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.bgWhite,
       body: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
         child: Padding(
@@ -181,7 +177,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         style: GoogleFonts.montserrat(
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
-                          color: colBlack,
+                          color: AppColors.colblack,
                         ),
                       ),
                       Text(
@@ -189,7 +185,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         style: GoogleFonts.montserrat(
                           fontSize: 36,
                           fontWeight: FontWeight.w600,
-                          color: colBlack,
+                          color: AppColors.colblack,
                           height: 1.1,
                         ),
                       ),
@@ -200,7 +196,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     child: Icon(
                       Icons.emoji_events_outlined,
                       size: 32,
-                      color: colBlack,
+                      color: AppColors.colblack,
                     ),
                   ),
                 ],
@@ -211,20 +207,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
-                  color: colBoxBg,
+                  color: AppColors.inputFill,
                   borderRadius: BorderRadius.circular(15),
                 ),
                 child: Row(
                   children: [
                     CircleAvatar(
                       radius: 35,
-                      backgroundColor: const Color(0xFF34C759),
+                      backgroundColor: AppColors.primaryGreen,
                       child: Text(
                         initial,
                         style: GoogleFonts.montserrat(
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          color: AppColors.colblack,
                         ),
                       ),
                     ),
@@ -237,7 +233,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           style: GoogleFonts.poppins(
                             fontSize: 22,
                             fontWeight: FontWeight.w600,
-                            color: colBlack,
+                            color: AppColors.colblack,
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -246,7 +242,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           style: GoogleFonts.montserrat(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: colGrey80,
+                            color: AppColors.white500,
                           ),
                         ),
                       ],
@@ -296,6 +292,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     message: "Are you sure you want to logout?",
                     confirmText: "Yes, Logout",
                     icon: Icons.logout,
+
                     onConfirm: () async {
                       final prefs = await SharedPreferences.getInstance();
                       await prefs.setBool('isLoggedIn', false);
@@ -355,7 +352,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(
                 height: 20,
               ), // "Reduce gap distance between tip and divide line"
-              Divider(color: colBlack, thickness: 0.5),
+              Divider(color: AppColors.divider, thickness: 1),
 
               const SizedBox(height: 20),
 
@@ -367,7 +364,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   style: GoogleFonts.poppins(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
-                    color: colGrey80,
+                    color: AppColors.white500,
                   ),
                 ),
               ),
@@ -388,7 +385,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   ) => Container(
     margin: const EdgeInsets.only(bottom: 16),
     decoration: BoxDecoration(
-      color: colBoxBg,
+      color: AppColors.inputFill,
       borderRadius: BorderRadius.circular(16),
     ),
     child: InkWell(
@@ -401,10 +398,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: colIconBg,
+                color: AppColors.colIconBg,
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, size: 24),
+              child: Icon(icon, size: 24, color: AppColors.colblack),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -416,6 +413,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     style: GoogleFonts.poppins(
                       fontSize: 15,
                       fontWeight: FontWeight.w500,
+                      color: AppColors.colblack,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -423,13 +421,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     s,
                     style: GoogleFonts.poppins(
                       fontSize: 11,
-                      color: const Color(0xFF808080),
+                      color: AppColors.desctext,
                     ),
                   ),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, color: Color(0xFFABABAB)),
+            const Icon(Icons.chevron_right, color: AppColors.desctext),
           ],
         ),
       ),

@@ -26,6 +26,128 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
   }
 
   // --- Popups ---
+  Future<void> _showConfirmationDialog({
+    required String title,
+    required String message,
+    required String confirmText,
+    required IconData icon,
+    required VoidCallback onConfirm,
+  }) async {
+    return showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) {
+        return BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10), // Background Blur
+          child: Dialog(
+            backgroundColor: Colors.transparent,
+            insetPadding: const EdgeInsets.symmetric(horizontal: 40),
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: AppColors.bgWhite,
+                borderRadius: BorderRadius.circular(
+                  28,
+                ), // Floating rounded look
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Red Circular Icon at Top
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: const BoxDecoration(
+                      color: AppColors.destructiveRed, // Design Red
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(icon, color: AppColors.colwhite, size: 32),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Title
+                  Text(
+                    title,
+                    style: GoogleFonts.poppins(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.colblack,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Subtitle Message
+                  Text(
+                    message,
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.desctext,
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+
+                  // Confirm Button (Red)
+                  SizedBox(
+                    width: double.infinity,
+                    height: 54,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        onConfirm();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.destructiveRed,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      child: Text(
+                        confirmText,
+                        style: GoogleFonts.poppins(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.colwhite,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Cancel Button (Grey)
+                  SizedBox(
+                    width: double.infinity,
+                    height: 54,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.inputFill,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      child: Text(
+                        "Cancel",
+                        style: GoogleFonts.poppins(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color:
+                              AppColors.destructiveRed, // Red text for cancel
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Future<void> _showSquarePopup({required Widget content}) async {
     return showDialog(
       context: context,
@@ -38,7 +160,7 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
             width: double.infinity,
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.bgWhite,
               borderRadius: BorderRadius.circular(28),
             ),
             child: content,
@@ -333,7 +455,14 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
                 "Reset App Data",
                 "Reset your account data",
                 () {
-                  _showSquarePopup(content: _buildResetContent());
+                  // SHOW CUSTOM LOGOUT DIALOG
+                  _showConfirmationDialog(
+                    title: "Reset App Data",
+                    message: "Are you sure you want to reset your app data?",
+                    confirmText: "Yes, Reset",
+                    icon: Icons.refresh_rounded,
+                    onConfirm: () {},
+                  );
                 },
               ),
               _buildTile(
@@ -341,11 +470,22 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
                 "Delete Transactions",
                 "Manage your transactions",
                 () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const DeleteTransactionsScreen(),
-                    ),
+                  // SHOW CUSTOM LOGOUT DIALOG
+                  _showConfirmationDialog(
+                    title: "Delete Transactions",
+                    message:
+                        "Are you sure you want to delete all transactions?",
+                    confirmText: "Yes, Delete",
+                    icon: Icons.delete_outline_rounded,
+                    onConfirm: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              const DeleteTransactionsScreen(),
+                        ),
+                      );
+                    },
                   );
                 },
               ),
@@ -454,48 +594,6 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
     );
   }
 
-  Widget _buildResetContent() {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _buildIconCircle(Icons.refresh, AppColors.destructiveRed),
-        const SizedBox(height: 20),
-        Text(
-          "Reset App-data",
-          style: GoogleFonts.montserrat(
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
-            color: AppColors.colblack,
-          ),
-        ),
-        const SizedBox(height: 20),
-        Text(
-          "This will clear your spending history and progress.",
-          textAlign: TextAlign.center,
-          style: GoogleFonts.montserrat(
-            fontSize: 14,
-            color: AppColors.desctext,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const SizedBox(height: 32),
-        _buildActionBtn(
-          "Yes, Reset",
-          AppColors.destructiveRed,
-          AppColors.colblack,
-          () => Navigator.pop(context),
-        ),
-        const SizedBox(height: 12),
-        _buildActionBtn(
-          "Cancel",
-          AppColors.inputFill,
-          AppColors.destructiveRed,
-          () => Navigator.pop(context),
-        ),
-      ],
-    );
-  }
-
   Widget _buildIconCircle(IconData icon, Color bg) => Container(
     padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
@@ -573,7 +671,7 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
                     ],
                   ),
                 ),
-                const Icon(Icons.chevron_right, color: Color(0xFFABABAB)),
+                const Icon(Icons.chevron_right, color: AppColors.desctext),
               ],
             ),
           ),
@@ -668,7 +766,7 @@ class _CustomRangeCalendarState extends State<_CustomRangeCalendar> {
                 child: _btn(
                   "Cancel",
                   AppColors.inputFill,
-                  const Color(0xFFFF4141),
+                  AppColors.destructiveRed,
                   () => Navigator.pop(context),
                 ),
               ),
@@ -709,6 +807,7 @@ class _CustomRangeCalendarState extends State<_CustomRangeCalendar> {
                   style: GoogleFonts.montserrat(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
+                    color: AppColors.colblack,
                   ),
                 ),
               ),
@@ -731,6 +830,7 @@ class _CustomRangeCalendarState extends State<_CustomRangeCalendar> {
                   style: GoogleFonts.montserrat(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
+                    color: AppColors.colblack,
                   ),
                 ),
               ),

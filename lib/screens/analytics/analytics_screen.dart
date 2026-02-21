@@ -570,7 +570,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
               width: 55,
               height: 55,
               decoration: BoxDecoration(
-                color: AppColors.colwhite,
+                color: AppColors.iconbox,
                 borderRadius: BorderRadius.circular(9.63),
                 boxShadow: [
                   BoxShadow(
@@ -765,7 +765,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                 height: 48,
                 decoration: BoxDecoration(
                   color: DateUtils.isSameDay(date, _focusedDate)
-                      ? const Color(0xFFE0E0E0)
+                      ? AppColors.datebox
                       : Colors.transparent,
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -1121,7 +1121,7 @@ class _ExpenseFormState extends State<ExpenseForm> {
                 width: 50,
                 height: 50,
                 decoration: BoxDecoration(
-                  color: AppColors.colwhite,
+                  color: AppColors.iconbox,
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
@@ -1146,6 +1146,7 @@ class _ExpenseFormState extends State<ExpenseForm> {
                     style: GoogleFonts.poppins(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
+                      color: AppColors.colblack,
                     ),
                   ),
                   Text(
@@ -1166,6 +1167,7 @@ class _ExpenseFormState extends State<ExpenseForm> {
                     style: GoogleFonts.poppins(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
+                      color: AppColors.colblack,
                     ),
                   ),
                   Text(
@@ -1218,7 +1220,7 @@ class _ExpenseFormState extends State<ExpenseForm> {
               height: 44, // Reduced Height
               padding: const EdgeInsets.symmetric(horizontal: 14),
               decoration: BoxDecoration(
-                color: AppColors.colwhite,
+                color: AppColors.bgWhite,
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: Colors.transparent),
               ),
@@ -1227,7 +1229,10 @@ class _ExpenseFormState extends State<ExpenseForm> {
                 children: [
                   Text(
                     _selectedCategory,
-                    style: GoogleFonts.poppins(fontSize: 14),
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      color: AppColors.colblack,
+                    ),
                   ),
                   Icon(
                     _isCategoryListVisible
@@ -1247,7 +1252,7 @@ class _ExpenseFormState extends State<ExpenseForm> {
                 ? Container(
                     margin: const EdgeInsets.only(top: 6),
                     decoration: BoxDecoration(
-                      color: AppColors.colwhite,
+                      color: AppColors.bgWhite,
                       borderRadius: BorderRadius.circular(10),
                       boxShadow: [
                         BoxShadow(
@@ -1284,7 +1289,10 @@ class _ExpenseFormState extends State<ExpenseForm> {
                                 ),
                                 child: Text(
                                   cat,
-                                  style: GoogleFonts.poppins(fontSize: 14),
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 14,
+                                    color: AppColors.colblack,
+                                  ),
                                 ),
                               ),
                             ),
@@ -1316,7 +1324,7 @@ class _ExpenseFormState extends State<ExpenseForm> {
                     height: 44, // Reduced Height
                     padding: const EdgeInsets.symmetric(horizontal: 14),
                     decoration: BoxDecoration(
-                      color: AppColors.colwhite,
+                      color: AppColors.bgWhite,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Row(
@@ -1383,28 +1391,39 @@ class _ExpenseFormState extends State<ExpenseForm> {
                     height: 150,
                     margin: const EdgeInsets.only(top: 10),
                     decoration: BoxDecoration(
-                      color: AppColors.colwhite,
+                      color: AppColors.bgWhite, // Black background
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: CupertinoDatePicker(
-                      mode: CupertinoDatePickerMode.time,
-                      initialDateTime: DateTime(
-                        2023,
-                        1,
-                        1,
-                        _selectedTime.hour,
-                        _selectedTime.minute,
+                    child: CupertinoTheme(
+                      data: const CupertinoThemeData(
+                        brightness: Brightness.dark, // Makes text white
+                        textTheme: CupertinoTextThemeData(
+                          dateTimePickerTextStyle: TextStyle(
+                            color: AppColors.colblack,
+                            fontSize: 20,
+                          ),
+                        ),
                       ),
-                      onDateTimeChanged: (val) {
-                        setState(
-                          () => _selectedTime = TimeOfDay.fromDateTime(val),
-                        );
-                      },
+                      child: CupertinoDatePicker(
+                        backgroundColor: AppColors.bgWhite,
+                        mode: CupertinoDatePickerMode.time,
+                        initialDateTime: DateTime(
+                          2023,
+                          1,
+                          1,
+                          _selectedTime.hour,
+                          _selectedTime.minute,
+                        ),
+                        onDateTimeChanged: (val) {
+                          setState(
+                            () => _selectedTime = TimeOfDay.fromDateTime(val),
+                          );
+                        },
+                      ),
                     ),
                   )
                 : const SizedBox.shrink(),
           ),
-
           const SizedBox(height: 16),
 
           // --- BUTTONS ---
@@ -1425,7 +1444,7 @@ class _ExpenseFormState extends State<ExpenseForm> {
                     child: Text(
                       "Cancel",
                       style: GoogleFonts.poppins(
-                        color: const Color(0xFFFF383C),
+                        color: AppColors.destructiveRed,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -1475,7 +1494,7 @@ class _ExpenseFormState extends State<ExpenseForm> {
           alignment: Alignment.centerLeft,
           padding: const EdgeInsets.symmetric(horizontal: 14),
           decoration: BoxDecoration(
-            color: AppColors.colwhite,
+            color: AppColors.bgWhite,
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
               color: hasError ? AppColors.errorRed : Colors.transparent,

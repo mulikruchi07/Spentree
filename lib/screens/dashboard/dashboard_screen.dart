@@ -414,7 +414,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 height: 48, // Taller for the dot
                 decoration: BoxDecoration(
                   color: isFocused
-                      ? const Color(0xFFE0E0E0)
+                      ? AppColors.datebox
                       : Colors.transparent, // Darker grey selection
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -470,7 +470,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 (index) => Center(
                   child: Text(
                     DateFormat('MMMM').format(DateTime(2025, index + 1)),
-                    style: GoogleFonts.montserrat(fontSize: 16),
+                    style: GoogleFonts.montserrat(
+                      fontSize: 16,
+                      color: AppColors.colblack,
+                    ),
                   ),
                 ),
               ),
@@ -488,7 +491,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 (index) => Center(
                   child: Text(
                     "${2025 + index}",
-                    style: GoogleFonts.montserrat(fontSize: 16),
+                    style: GoogleFonts.montserrat(
+                      fontSize: 16,
+                      color: AppColors.colblack,
+                    ),
                   ),
                 ),
               ),
@@ -544,7 +550,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             style: GoogleFonts.montserrat(
               fontSize: 13,
               fontWeight: FontWeight.w500,
-              color: Colors.white,
+              color: AppColors.colwhite,
             ),
           ),
         ),
@@ -602,14 +608,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.trending_up, color: Colors.white, size: 14),
+          const Icon(Icons.trending_up, color: AppColors.colwhite, size: 14),
           const SizedBox(width: 4),
           Text(
             text,
             style: GoogleFonts.montserrat(
               fontSize: 12,
               fontWeight: FontWeight.w500,
-              color: Colors.white,
+              color: AppColors.colwhite,
             ),
           ),
         ],
@@ -660,11 +666,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 width: 55,
                 height: 55,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: AppColors.iconbox,
                   borderRadius: BorderRadius.circular(9.63),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: AppColors.colblack.withOpacity(0.05),
                       blurRadius: 4,
                       offset: const Offset(0, 2),
                     ),

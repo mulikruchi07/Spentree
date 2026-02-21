@@ -154,7 +154,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           style: GoogleFonts.poppins(
                             fontSize: 16,
                             fontWeight: FontWeight.w500,
-                            color: Colors.white,
+                            color: AppColors.colwhite,
                           ),
                         ),
                       ),
@@ -190,7 +190,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             color: AppColors.inputFill,
             borderRadius: BorderRadius.circular(cornerRadius),
             border: errorText != null
-                ? Border.all(color: Colors.redAccent, width: 1.0)
+                ? Border.all(color: AppColors.errorRed, width: 1.0)
                 : null,
           ),
           child: TextField(
@@ -235,7 +235,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             padding: const EdgeInsets.only(top: 6, left: 12),
             child: Text(
               errorText,
-              style: GoogleFonts.poppins(color: Colors.redAccent, fontSize: 12),
+              style: GoogleFonts.poppins(
+                color: AppColors.errorRed,
+                fontSize: 12,
+              ),
             ),
           ),
       ],

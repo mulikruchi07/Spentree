@@ -83,7 +83,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
             children: [
               const Icon(
                 Icons.check_circle_outline,
-                color: Colors.white,
+                color: AppColors.colwhite,
                 size: 24,
               ),
               const SizedBox(width: 12),
@@ -93,7 +93,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   style: GoogleFonts.poppins(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
-                    color: Colors.white,
+                    color: AppColors.colwhite,
                   ),
                 ),
               ),
@@ -213,7 +213,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                           style: GoogleFonts.poppins(
                             fontSize: 16,
                             fontWeight: FontWeight.w500,
-                            color: Colors.white,
+                            color: AppColors.colwhite,
                           ),
                         ),
                       ),
@@ -249,7 +249,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
             color: AppColors.inputFill,
             borderRadius: BorderRadius.circular(cornerRadius),
             border: errorText != null
-                ? Border.all(color: Colors.redAccent, width: 1.0)
+                ? Border.all(color: AppColors.errorRed, width: 1.0)
                 : null,
           ),
           child: TextField(
@@ -258,7 +258,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
             textAlignVertical: TextAlignVertical.center,
             style: GoogleFonts.poppins(
               fontSize: 15,
-              color: AppColors.textMain,
+              color: AppColors.colblack,
               fontWeight: FontWeight.w400,
             ),
             decoration: InputDecoration(
@@ -279,7 +279,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                           (isVisible ?? false)
                               ? Icons.visibility_outlined
                               : Icons.visibility_off_outlined,
-                          color: AppColors.grey800,
+                          color: AppColors.grey600,
                           size: 24,
                         ),
                         onPressed: onVisibilityChanged,
@@ -294,7 +294,10 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
             padding: const EdgeInsets.only(top: 6, left: 12),
             child: Text(
               errorText,
-              style: GoogleFonts.poppins(color: Colors.redAccent, fontSize: 12),
+              style: GoogleFonts.poppins(
+                color: AppColors.errorRed,
+                fontSize: 12,
+              ),
             ),
           ),
       ],

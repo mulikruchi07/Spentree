@@ -106,7 +106,7 @@ class _VerifyNumberScreenState extends State<VerifyNumberScreen> {
                         child: Text(
                           "Invalid OTP. Please try again.",
                           style: GoogleFonts.poppins(
-                            color: Colors.redAccent,
+                            color: AppColors.errorRed,
                             fontSize: 13,
                           ),
                         ),
@@ -141,7 +141,7 @@ class _VerifyNumberScreenState extends State<VerifyNumberScreen> {
                           style: GoogleFonts.poppins(
                             fontSize: 16,
                             fontWeight: FontWeight.w500,
-                            color: Colors.white,
+                            color: AppColors.colwhite,
                           ),
                         ),
                       ),
@@ -193,7 +193,7 @@ class _VerifyNumberScreenState extends State<VerifyNumberScreen> {
         color: AppColors.inputFill,
         borderRadius: BorderRadius.circular(12),
         border: _hasError
-            ? Border.all(color: Colors.redAccent, width: 1)
+            ? Border.all(color: AppColors.errorRed, width: 1)
             : null,
       ),
       child: TextField(
@@ -205,7 +205,7 @@ class _VerifyNumberScreenState extends State<VerifyNumberScreen> {
         style: GoogleFonts.poppins(
           fontSize: 24,
           fontWeight: FontWeight.w600,
-          color: AppColors.textMain,
+          color: AppColors.colblack
         ),
         decoration: const InputDecoration(
           counterText: "",

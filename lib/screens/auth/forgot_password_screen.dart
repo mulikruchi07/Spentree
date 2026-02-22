@@ -199,7 +199,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             textAlignVertical: TextAlignVertical.center,
             style: GoogleFonts.poppins(
               fontSize: 15,
-              color: AppColors.textMain,
+              color: AppColors.colblack,
               fontWeight: FontWeight.w400,
             ),
             decoration: InputDecoration(
@@ -220,7 +220,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           (isVisible ?? false)
                               ? Icons.visibility_outlined
                               : Icons.visibility_off_outlined,
-                          color: AppColors.grey800,
+                          color: AppColors.grey600,
                           size: 24,
                         ),
                         onPressed: onVisibilityChanged,

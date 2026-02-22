@@ -206,7 +206,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                         ? const Icon(
                                             Icons.check,
                                             size: 16,
-                                            color: Colors.white,
+                                            color: AppColors.colwhite,
                                           )
                                         : null,
                                   ),
@@ -284,7 +284,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   style: GoogleFonts.poppins(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w500,
-                                    color: Colors.white,
+                                    color: AppColors.colwhite,
                                   ),
                                 ),
                               ),
@@ -313,7 +313,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                     vertical: 8,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: Colors.white,
+                                    color: AppColors.colwhite,
                                     borderRadius: BorderRadius.circular(8),
                                     border: Border.all(
                                       color: Colors.orangeAccent.withOpacity(
@@ -322,7 +322,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                     ),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: Colors.black.withOpacity(0.1),
+                                        color: AppColors.colblack.withOpacity(
+                                          0.1,
+                                        ),
                                         blurRadius: 10,
                                         offset: const Offset(0, 4),
                                       ),
@@ -341,7 +343,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                         "Please check this box to proceed.",
                                         style: GoogleFonts.poppins(
                                           fontSize: 12,
-                                          color: Colors.black87,
+                                          color: AppColors.colblack,
                                         ),
                                       ),
                                     ],
@@ -420,7 +422,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
             color: AppColors.inputFill,
             borderRadius: BorderRadius.circular(cornerRadius),
             border: errorText != null
-                ? Border.all(color: Colors.redAccent, width: 1.0)
+                ? Border.all(color: AppColors.errorRed, width: 1.0)
                 : null,
           ),
           child: TextField(
@@ -429,7 +431,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
             keyboardType: isPhone ? TextInputType.phone : TextInputType.text,
             style: GoogleFonts.poppins(
               fontSize: 15,
-              color: AppColors.textMain,
+              color: AppColors.colblack,
               fontWeight: FontWeight.w400,
             ),
             inputFormatters: isPhone
@@ -457,7 +459,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           (isVisible ?? false)
                               ? Icons.visibility_outlined
                               : Icons.visibility_off_outlined,
-                          color: AppColors.grey800,
+                          color: AppColors.grey600,
                           size: 24,
                         ),
                         onPressed: onVisibilityChanged,
@@ -472,7 +474,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
             padding: const EdgeInsets.only(top: 6, left: 12),
             child: Text(
               errorText,
-              style: GoogleFonts.poppins(color: Colors.redAccent, fontSize: 12),
+              style: GoogleFonts.poppins(
+                color: AppColors.errorRed,
+                fontSize: 12,
+              ),
             ),
           ),
       ],
@@ -484,7 +489,7 @@ class _ArrowPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.white
+      ..color = AppColors.colwhite
       ..style = PaintingStyle.fill;
 
     final borderPaint = Paint()

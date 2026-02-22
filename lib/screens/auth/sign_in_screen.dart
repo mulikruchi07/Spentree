@@ -162,7 +162,7 @@ class _SignInScreenState extends State<SignInScreen> {
                           style: GoogleFonts.poppins(
                             fontSize: 16,
                             fontWeight: FontWeight.w500,
-                            color: Colors.white,
+                            color: AppColors.colwhite,
                           ),
                         ),
                       ),
@@ -235,7 +235,7 @@ class _SignInScreenState extends State<SignInScreen> {
             color: AppColors.inputFill,
             borderRadius: BorderRadius.circular(cornerRadius),
             border: errorText != null
-                ? Border.all(color: Colors.redAccent, width: 1.0)
+                ? Border.all(color: AppColors.errorRed, width: 1.0)
                 : null,
           ),
           child: TextField(
@@ -244,7 +244,7 @@ class _SignInScreenState extends State<SignInScreen> {
             keyboardType: isPhone ? TextInputType.phone : TextInputType.text,
             style: GoogleFonts.poppins(
               fontSize: 15,
-              color: AppColors.textMain,
+              color: AppColors.colblack,
               fontWeight: FontWeight.w400,
             ),
             inputFormatters: isPhone
@@ -272,7 +272,7 @@ class _SignInScreenState extends State<SignInScreen> {
                           (isVisible ?? false)
                               ? Icons.visibility_outlined
                               : Icons.visibility_off_outlined,
-                          color: AppColors.grey800,
+                          color: AppColors.grey600,
                           size: 24,
                         ),
                         onPressed: onVisibilityChanged,
@@ -287,7 +287,10 @@ class _SignInScreenState extends State<SignInScreen> {
             padding: const EdgeInsets.only(top: 6, left: 12),
             child: Text(
               errorText,
-              style: GoogleFonts.poppins(color: Colors.redAccent, fontSize: 12),
+              style: GoogleFonts.poppins(
+                color: AppColors.errorRed,
+                fontSize: 12,
+              ),
             ),
           ),
       ],

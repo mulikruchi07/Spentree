@@ -74,12 +74,6 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
 
   final Set<int> _selectedIndices = {};
 
-  // UI Constants
-  final Color colBlack = const Color(0xFF000000);
-  final Color colGrey80 = const Color(0xFF808080);
-  final Color colBoxBg = const Color(0xFFF1F1F1);
-  final Color colDestructiveRed = const Color(0xFFFF4141);
-
   @override
   void initState() {
     super.initState();
@@ -184,7 +178,7 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
                     "Delete",
                     style: GoogleFonts.montserrat(
                       fontSize: 16,
-                      color: colBlack,
+                      color: AppColors.colblack,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -192,7 +186,7 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
                     "Transactions",
                     style: GoogleFonts.montserrat(
                       fontSize: 36,
-                      color: colBlack,
+                      color: AppColors.colblack,
                       fontWeight: FontWeight.w600,
                       height: 1.1,
                     ),
@@ -207,6 +201,7 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
                     style: GoogleFonts.poppins(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
+                      color: AppColors.colblack,
                     ),
                   ),
                   Text(
@@ -214,7 +209,7 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
                     style: GoogleFonts.poppins(
                       fontSize: 14,
                       fontWeight: FontWeight.w400,
-                      color: colGrey80,
+                      color: AppColors.white500,
                     ),
                   ),
 
@@ -245,7 +240,7 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
                       style: GoogleFonts.poppins(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
-                        color: colGrey80,
+                        color: AppColors.white500,
                       ),
                     ),
                   ),
@@ -258,9 +253,19 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
                   const SizedBox(height: 20),
 
                   // --- 7. Footer ---
-                  _buildFooter(),
+                  Center(
+                    child: Text(
+                      "Planted with love in Mumbai, India",
+                      // Poppins, Medium 13
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.white500,
+                      ),
+                    ),
+                  ),
 
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 120),
                 ],
               ),
             ),
@@ -287,11 +292,11 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
       child: Container(
         height: 56,
         decoration: BoxDecoration(
-          color: colDestructiveRed,
+          color: AppColors.destructiveRed,
           borderRadius: BorderRadius.circular(15),
           boxShadow: [
             BoxShadow(
-              color: colDestructiveRed.withOpacity(0.2),
+              color: AppColors.destructiveRed.withOpacity(0.2),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -301,7 +306,7 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
           child: Text(
             "Delete ${_selectedIndices.length} Transaction${_selectedIndices.length > 1 ? 's' : ''}",
             style: GoogleFonts.poppins(
-              color: Colors.white,
+              color: AppColors.colwhite,
               fontWeight: FontWeight.w600,
               fontSize: 16,
             ),
@@ -324,10 +329,10 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
         height: 76.0,
         padding: const EdgeInsets.symmetric(horizontal: 10),
         decoration: BoxDecoration(
-          color: colBoxBg,
+          color: AppColors.inputFill,
           borderRadius: BorderRadius.circular(15),
           border: Border.all(
-            color: isSelected ? colDestructiveRed : Colors.transparent,
+            color: isSelected ? AppColors.destructiveRed : Colors.transparent,
             width: 1.0, // Thinner border
           ),
         ),
@@ -338,17 +343,21 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
               width: 55,
               height: 55,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppColors.iconbox,
                 borderRadius: BorderRadius.circular(9.63),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: AppColors.colblack.withOpacity(0.05),
                     blurRadius: 4,
                     offset: const Offset(0, 2),
                   ),
                 ],
               ),
-              child: Icon(item['icon'] as IconData, color: colBlack, size: 28),
+              child: Icon(
+                item['icon'] as IconData,
+                color: AppColors.colblack,
+                size: 28,
+              ),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -361,7 +370,7 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
                     style: GoogleFonts.montserrat(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: colBlack,
+                      color: AppColors.colblack,
                     ),
                   ),
                   Text(
@@ -369,7 +378,7 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
                     style: GoogleFonts.montserrat(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
-                      color: colGrey80,
+                      color: AppColors.white500,
                     ),
                   ),
                 ],
@@ -384,7 +393,7 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
                   style: GoogleFonts.montserrat(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: colBlack,
+                    color: AppColors.colblack,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -393,7 +402,7 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
                   style: GoogleFonts.montserrat(
                     fontSize: 11,
                     fontWeight: FontWeight.w500,
-                    color: colGrey80,
+                    color: AppColors.white500,
                   ),
                 ),
               ],
@@ -408,7 +417,7 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
       decoration: BoxDecoration(
-        color: colBoxBg,
+        color: AppColors.inputFill,
         borderRadius: BorderRadius.circular(15),
       ),
       child: Column(
@@ -421,7 +430,11 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
                 // LEFT ARROW (Restored functionality)
                 GestureDetector(
                   onTap: () => _moveWeek(-7),
-                  child: Icon(Icons.chevron_left, size: 24, color: colBlack),
+                  child: Icon(
+                    Icons.chevron_left,
+                    size: 24,
+                    color: AppColors.colblack,
+                  ),
                 ),
 
                 Row(
@@ -431,7 +444,7 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
                       style: GoogleFonts.montserrat(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
-                        color: colBlack,
+                        color: AppColors.colblack,
                       ),
                     ),
                     const SizedBox(width: 4),
@@ -440,7 +453,7 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
                       style: GoogleFonts.montserrat(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
-                        color: colBlack,
+                        color: AppColors.colblack,
                       ),
                     ),
                   ],
@@ -449,7 +462,11 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
                 // RIGHT ARROW (Restored functionality)
                 GestureDetector(
                   onTap: () => _moveWeek(7),
-                  child: Icon(Icons.chevron_right, size: 24, color: colBlack),
+                  child: Icon(
+                    Icons.chevron_right,
+                    size: 24,
+                    color: AppColors.colblack,
+                  ),
                 ),
               ],
             ),
@@ -496,7 +513,7 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
                 style: GoogleFonts.montserrat(
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
-                  color: colGrey80,
+                  color: AppColors.white500,
                 ),
               ),
               const SizedBox(height: 12),
@@ -506,7 +523,7 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
                 height: 48, // Taller for the dot
                 decoration: BoxDecoration(
                   color: isFocused
-                      ? const Color(0xFFE0E0E0)
+                      ? AppColors.datebox
                       : Colors.transparent, // Darker grey selection
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -520,7 +537,7 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
                         height: 5,
                         margin: const EdgeInsets.only(bottom: 4),
                         decoration: BoxDecoration(
-                          color: colBlack,
+                          color: AppColors.colblack,
                           shape: BoxShape.circle,
                         ),
                       )
@@ -532,7 +549,7 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
                       style: GoogleFonts.montserrat(
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
-                        color: colGrey80, // Numbers are Grey
+                        color: AppColors.white500, // Numbers are Grey
                       ),
                     ),
                   ],
@@ -562,7 +579,10 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
                 (index) => Center(
                   child: Text(
                     DateFormat('MMMM').format(DateTime(2025, index + 1)),
-                    style: GoogleFonts.montserrat(fontSize: 16),
+                    style: GoogleFonts.montserrat(
+                      fontSize: 16,
+                      color: AppColors.colblack,
+                    ),
                   ),
                 ),
               ),
@@ -580,7 +600,10 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
                 (index) => Center(
                   child: Text(
                     "${2025 + index}",
-                    style: GoogleFonts.montserrat(fontSize: 16),
+                    style: GoogleFonts.montserrat(
+                      fontSize: 16,
+                      color: AppColors.colblack,
+                    ),
                   ),
                 ),
               ),
@@ -601,7 +624,7 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
           style: GoogleFonts.poppins(
             fontSize: 16,
             fontWeight: FontWeight.w500,
-            color: colBlack,
+            color: AppColors.colblack,
           ),
         ),
         const SizedBox(height: 8),
@@ -611,72 +634,8 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
           style: GoogleFonts.poppins(
             fontSize: 21,
             fontWeight: FontWeight.w500,
-            color: colGrey80,
+            color: AppColors.white500,
             height: 1.3,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildFooter() {
-    const Color colGrey80 = Color(0xFF808080);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          "Planted with love in Mumbai, India",
-          style: GoogleFonts.poppins(
-            fontSize: 14,
-            fontWeight: FontWeight.w400,
-            color: colGrey80,
-          ),
-        ),
-        const SizedBox(height: 4),
-
-        GestureDetector(
-          onTap: () => _launchURL("https://linkedin.com/in/designer"),
-          child: RichText(
-            text: TextSpan(
-              style: GoogleFonts.poppins(fontSize: 14, color: colGrey80),
-              children: [
-                const TextSpan(
-                  text: "Designed by ",
-                  style: TextStyle(fontWeight: FontWeight.w400),
-                ),
-                TextSpan(
-                  text: "Designer",
-                  style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w200,
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 4),
-
-        GestureDetector(
-          onTap: () => _launchURL("https://linkedin.com/in/developer"),
-          child: RichText(
-            text: TextSpan(
-              style: GoogleFonts.poppins(fontSize: 14, color: colGrey80),
-              children: [
-                const TextSpan(
-                  text: "Developed by ",
-                  style: TextStyle(fontWeight: FontWeight.w400),
-                ),
-                TextSpan(
-                  text: "Developer",
-                  style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w200,
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
-              ],
-            ),
           ),
         ),
       ],

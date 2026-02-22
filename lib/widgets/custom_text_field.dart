@@ -55,7 +55,7 @@ class CustomTextField extends StatelessWidget {
                 textAlignVertical: TextAlignVertical.center,
                 style: GoogleFonts.montserrat(
                   fontSize: 16,
-                  color: AppColors.textMain,
+                  color: AppColors.colblack,
                   fontWeight: FontWeight.w500,
                 ),
                 decoration: InputDecoration(

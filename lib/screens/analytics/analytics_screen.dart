@@ -202,7 +202,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
         return Icons.checkroom;
       case "Fuel":
         return Icons.local_gas_station;
-      case "Recharge":
+      case "Bills & Subscriptions":
         return Icons.smartphone;
       case "To People":
         return Icons.person;
@@ -1014,7 +1014,7 @@ class _ExpenseFormState extends State<ExpenseForm> {
     "Shopping",
     "To People",
     "Fuel",
-    "Recharge",
+    "Bills & Subscriptions",
     "Other",
   ];
 
@@ -1079,7 +1079,7 @@ class _ExpenseFormState extends State<ExpenseForm> {
     if (cat == "Food & Beverages") return Icons.fastfood;
     if (cat == "Shopping") return Icons.checkroom;
     if (cat == "Fuel") return Icons.local_gas_station;
-    if (cat == "Recharge") return Icons.smartphone;
+    if (cat == "Bills & Subscriptions") return Icons.smartphone;
     if (cat == "To People") return Icons.person;
     return Icons.receipt;
   }
@@ -1191,6 +1191,10 @@ class _ExpenseFormState extends State<ExpenseForm> {
               controller: _titleCtrl,
               focusNode: _titleFocus,
               onTap: _closePickers,
+              style: GoogleFonts.poppins(
+                color: AppColors.colblack, // Text color
+                fontSize: 14,
+              ),
               decoration: InputDecoration(
                 hintText: "Enter receiver name",
                 hintStyle: GoogleFonts.poppins(
@@ -1363,6 +1367,10 @@ class _ExpenseFormState extends State<ExpenseForm> {
                     controller: _amountCtrl,
                     focusNode: _amountFocus,
                     onTap: _closePickers,
+                    style: GoogleFonts.poppins(
+                      color: AppColors.colblack, // Text color
+                      fontSize: 14,
+                    ),
                     keyboardType: TextInputType.number,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     decoration: InputDecoration(

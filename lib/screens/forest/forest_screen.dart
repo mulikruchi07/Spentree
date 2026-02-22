@@ -38,7 +38,7 @@ class _ForestScreenState extends State<ForestScreen> {
     {"name": "Shopping", "amount": 15000},
     {"name": "To People", "amount": 12000},
     {"name": "Fuel", "amount": 7000},
-    {"name": "Recharge", "amount": 6000},
+    {"name": "Bills & Subscriptions", "amount": 6000},
     {"name": "Other", "amount": 2000},
   ];
 
@@ -309,7 +309,10 @@ class _ForestScreenState extends State<ForestScreen> {
                 (i) => Center(
                   child: Text(
                     DateFormat('MMMM').format(DateTime(2025, i + 1)),
-                    style: GoogleFonts.montserrat(fontSize: 16),
+                    style: GoogleFonts.montserrat(
+                      fontSize: 16,
+                      color: AppColors.colblack,
+                    ),
                   ),
                 ),
               ),
@@ -327,7 +330,10 @@ class _ForestScreenState extends State<ForestScreen> {
                 (i) => Center(
                   child: Text(
                     "${2025 + i}",
-                    style: GoogleFonts.montserrat(fontSize: 16),
+                    style: GoogleFonts.montserrat(
+                      fontSize: 16,
+                      color: AppColors.colblack,
+                    ),
                   ),
                 ),
               ),
@@ -376,7 +382,7 @@ class _ForestScreenState extends State<ForestScreen> {
               style: GoogleFonts.montserrat(
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
-                color: Colors.white,
+                color: AppColors.colblack,
               ),
             ),
           ),
@@ -486,13 +492,17 @@ class _ForestScreenState extends State<ForestScreen> {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.trending_up, color: Colors.white, size: 14),
+                  const Icon(
+                    Icons.trending_up,
+                    color: AppColors.colblack,
+                    size: 14,
+                  ),
                   const SizedBox(width: 4),
                   Text(
                     "Great",
                     style: GoogleFonts.montserrat(
                       fontSize: 12,
-                      color: Colors.white,
+                      color: AppColors.colblack,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -627,11 +637,11 @@ class _ForestScreenState extends State<ForestScreen> {
                     width: 55,
                     height: 55,
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppColors.iconbox,
                       borderRadius: BorderRadius.circular(9.63),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
+                          color: AppColors.colblack.withOpacity(0.05),
                           blurRadius: 4,
                           offset: const Offset(0, 2),
                         ),

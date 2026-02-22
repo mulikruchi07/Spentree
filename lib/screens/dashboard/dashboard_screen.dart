@@ -404,7 +404,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 style: GoogleFonts.montserrat(
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
-                  color: AppColors.white500,
+                  color: AppColors.datenum,
                 ),
               ),
               const SizedBox(height: 12),
@@ -428,7 +428,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         height: 5,
                         margin: const EdgeInsets.only(bottom: 4),
                         decoration: BoxDecoration(
-                          color: AppColors.colblack,
+                          color: AppColors.datenum,
                           shape: BoxShape.circle,
                         ),
                       )
@@ -440,7 +440,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       style: GoogleFonts.montserrat(
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
-                        color: AppColors.white500, // Numbers are Grey
+                        color: AppColors.datenum, // Numbers are Grey
                       ),
                     ),
                   ],
@@ -638,7 +638,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       }, // Shirt
       {
         "icon": Icons.smartphone,
-        "name": "Jio Recharge",
+        "name": "Jio Bills & Subscriptions",
         "amount": "- Rs. 349",
       }, // Mobile
       {

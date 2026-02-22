@@ -144,7 +144,7 @@ class _SplashOnboardingScreenState extends State<SplashOnboardingScreen>
                         style: GoogleFonts.montserrat(
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
-                          color: Colors.black,
+                          color: AppColors.colblack,
                         ),
                       ),
                     ],
@@ -175,7 +175,7 @@ class _SplashOnboardingScreenState extends State<SplashOnboardingScreen>
                             width: 50,
                             height: 50,
                             decoration: const BoxDecoration(
-                              color: Color(0xFF34C759),
+                              color: AppColors.primaryGreen,
                               shape: BoxShape.circle,
                             ),
                           ),
@@ -207,7 +207,7 @@ class _SplashOnboardingScreenState extends State<SplashOnboardingScreen>
                         style: GoogleFonts.montserrat(
                           fontSize: 24,
                           fontWeight: FontWeight.w600,
-                          color: Colors.white,
+                          color: AppColors.colwhite,
                         ),
                       ),
                     ),

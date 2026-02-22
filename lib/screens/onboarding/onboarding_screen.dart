@@ -4,8 +4,6 @@ import 'package:spentree/screens/questionnaire/questionnaire_screen.dart';
 import '../../core/app_style.dart';
 
 class OnboardingColors {
-  static const Color primaryGreen = Color(0xFF34C759);
-  static const Color textMain = Color(0xFF2D2B2E);
   static const Color inactiveGrey = Color(0xFFE5E5EA);
   static const Color textDesc = Color(0xFF818082);
 }
@@ -206,7 +204,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                                           style: GoogleFonts.montserrat(
                                             fontSize: 24,
                                             fontWeight: FontWeight.w600,
-                                            color: OnboardingColors.textMain,
+                                            color: AppColors.colblack,
                                           ),
                                         ),
                                       ),
@@ -217,7 +215,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                                       style: GoogleFonts.montserrat(
                                         fontSize: 24,
                                         fontWeight: FontWeight.w600,
-                                        color: OnboardingColors.textMain,
+                                        color: AppColors.colblack,
                                       ),
                                     ),
 
@@ -294,7 +292,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                             }
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: OnboardingColors.primaryGreen,
+                            backgroundColor: AppColors.primaryGreen,
                             elevation: 0,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(14),
@@ -307,7 +305,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                             style: GoogleFonts.montserrat(
                               fontSize: 18,
                               fontWeight: FontWeight.w500,
-                              color: Colors.white,
+                              color: AppColors.colwhite,
                             ),
                           ),
                         ),
@@ -337,7 +335,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(3),
         color: _currentIndex == index
-            ? OnboardingColors.primaryGreen
+            ? AppColors.primaryGreen
             : OnboardingColors.inactiveGrey,
       ),
     );

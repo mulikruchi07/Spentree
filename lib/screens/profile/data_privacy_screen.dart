@@ -597,7 +597,7 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
   Widget _buildIconCircle(IconData icon, Color bg) => Container(
     padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
-    child: Icon(icon, color: AppColors.colwhite, size: 32),
+    child: Icon(icon, color: Colors.white, size: 32),
   );
 
   Widget _buildActionBtn(String text, Color bg, Color tx, VoidCallback? tap) =>

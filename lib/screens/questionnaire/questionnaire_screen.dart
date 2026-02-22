@@ -217,7 +217,10 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
             child: Text(
               "What’s your daily spending limit?",
               textAlign: TextAlign.center,
-              style: AppTextStyles.title.copyWith(fontSize: 24 * scale),
+              style: AppTextStyles.title.copyWith(
+                fontSize: 24 * scale,
+                color: AppColors.colblack,
+              ),
             ),
           ),
           SizedBox(height: 12 * scale),
@@ -253,7 +256,7 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
                 textAlignVertical: TextAlignVertical.center,
                 style: GoogleFonts.montserrat(
                   fontSize: 16 * scale,
-                  color: AppColors.textMain,
+                  color: AppColors.colblack,
                   fontWeight: FontWeight.w500,
                 ),
                 decoration: InputDecoration(
@@ -274,13 +277,9 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
                           "INR",
                           style: GoogleFonts.montserrat(
                             fontWeight: FontWeight.w500,
-                            color: AppColors.textMain,
+                            color: AppColors.colblack,
                             fontSize: 16 * scale,
                           ),
-                        ),
-                        const Icon(
-                          Icons.keyboard_arrow_down,
-                          color: AppColors.textMain,
                         ),
                       ],
                     ),
@@ -334,7 +333,7 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
               child: Text(
                 _inlineError!,
                 style: GoogleFonts.poppins(
-                  color: Colors.redAccent,
+                  color: AppColors.errorRed,
                   fontSize: 13 * scale,
                 ),
               ),
@@ -376,7 +375,10 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
             child: Text(
               title,
               textAlign: TextAlign.center,
-              style: AppTextStyles.title.copyWith(fontSize: 24 * scale),
+              style: AppTextStyles.title.copyWith(
+                fontSize: 24 * scale,
+                color: AppColors.colblack,
+              ),
             ),
           ),
           SizedBox(height: 12 * scale),
@@ -421,7 +423,7 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
               child: Text(
                 _inlineError!,
                 style: GoogleFonts.poppins(
-                  color: Colors.redAccent,
+                  color: AppColors.errorRed,
                   fontSize: 13 * scale,
                 ),
               ),
@@ -542,12 +544,12 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
             margin: const EdgeInsets.only(top: 8, right: 8),
             padding: EdgeInsets.symmetric(vertical: 20 * scale, horizontal: 20),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.inputFill,
               borderRadius: BorderRadius.circular(cornerRadius),
               border: Border.all(
                 color: isSelected
                     ? AppColors.primaryGreen
-                    : AppColors.borderGrey,
+                    : AppColors.inputFill,
                 width: 1.5,
               ),
             ),
@@ -557,7 +559,7 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
               style: GoogleFonts.montserrat(
                 fontSize: 14 * scale,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textMain,
+                color: AppColors.colblack,
               ),
             ),
           ),
@@ -571,7 +573,11 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
                   shape: BoxShape.circle,
                   color: AppColors.primaryGreen,
                 ),
-                child: const Icon(Icons.check, size: 16, color: Colors.white),
+                child: const Icon(
+                  Icons.check,
+                  size: 16,
+                  color: AppColors.colwhite,
+                ),
               ),
             ),
         ],
@@ -602,7 +608,7 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
           style: GoogleFonts.montserrat(
             fontSize: 18 * scale,
             fontWeight: FontWeight.w500,
-            color: Colors.white,
+            color: AppColors.colwhite,
           ),
         ),
       ),

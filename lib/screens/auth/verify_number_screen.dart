@@ -1,5 +1,6 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:spentree/screens/main_wrapper.dart';
@@ -205,7 +206,7 @@ class _VerifyNumberScreenState extends State<VerifyNumberScreen> {
         style: GoogleFonts.poppins(
           fontSize: 24,
           fontWeight: FontWeight.w600,
-          color: AppColors.colblack
+          color: AppColors.colblack,
         ),
         decoration: const InputDecoration(
           counterText: "",

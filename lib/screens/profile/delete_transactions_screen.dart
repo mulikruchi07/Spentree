@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -24,43 +25,43 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
 
   final List<Map<String, dynamic>> _transactions = [
     {
-      "icon": Icons.restaurant,
+      "icon": PhosphorIcons.bowlSteam(),
       "title": "Reciever",
       "amount": "100",
       "time": "11:00 AM",
     },
     {
-      "icon": Icons.checkroom,
+      "icon": PhosphorIcons.tShirt(),
       "title": "Reciever",
       "amount": "100",
       "time": "11:00 AM",
     },
     {
-      "icon": Icons.home_work_outlined,
+      "icon": PhosphorIcons.gasCan(),
       "title": "Reciever",
       "amount": "100",
       "time": "11:00 AM",
     },
     {
-      "icon": Icons.restaurant,
+      "icon": PhosphorIcons.simCard(),
       "title": "Reciever",
       "amount": "100",
       "time": "11:00 AM",
     },
     {
-      "icon": Icons.edit_document,
+      "icon": PhosphorIcons.user(),
       "title": "Reciever",
       "amount": "100",
       "time": "11:00 AM",
     },
     {
-      "icon": Icons.person,
+      "icon": PhosphorIcons.currencyInr(),
       "title": "Reciever",
       "amount": "100",
       "time": "11:00 AM",
     },
     {
-      "icon": Icons.shopping_basket,
+      "icon": PhosphorIcons.simCard(),
       "title": "Reciever",
       "amount": "100",
       "time": "11:00 AM",

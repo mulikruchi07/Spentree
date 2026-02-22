@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -127,7 +128,7 @@ class _AccountScreenState extends State<AccountScreen> {
               const SizedBox(height: 32),
               _buildSectionHeader("Login & Security"),
               _buildActionTile(
-                Icons.password,
+                PhosphorIcons.password(),
                 "Change Password",
                 "Change your current password",
                 onTap: () {
@@ -140,7 +141,7 @@ class _AccountScreenState extends State<AccountScreen> {
                 },
               ),
               _buildToggleTile(
-                Icons.fingerprint,
+                PhosphorIcons.fingerprintSimple(),
                 "Face ID / Touch ID",
                 "Manage your device security",
                 _isFaceIdEnabled,
@@ -150,28 +151,28 @@ class _AccountScreenState extends State<AccountScreen> {
               const SizedBox(height: 32),
               _buildSectionHeader("Communication Preferences"),
               _buildToggleTile(
-                Icons.warning_amber_rounded,
+                PhosphorIcons.warning(),
                 "Spending Alerts",
                 "Get alerts when you overspend",
                 _spendingAlerts,
                 (v) => setState(() => _spendingAlerts = v),
               ),
               _buildToggleTile(
-                Icons.lightbulb_outline_rounded,
+                PhosphorIcons.lightbulb(),
                 "Spending Tips",
                 "Get tips for daily expenses",
                 _spendingTips,
                 (v) => setState(() => _spendingTips = v),
               ),
               _buildToggleTile(
-                Icons.notifications_none_rounded,
+                PhosphorIcons.bellSimpleRinging(),
                 "Notifications",
                 "Streak & Milestone Notifications",
                 _notifications,
                 (v) => setState(() => _notifications = v),
               ),
               _buildToggleTile(
-                Icons.volume_up,
+                PhosphorIcons.speakerHigh(),
                 "Sound Effects",
                 "Control Sound effects & Music",
                 _soundEffects,
@@ -187,26 +188,26 @@ class _AccountScreenState extends State<AccountScreen> {
               const SizedBox(height: 32),
               _buildSectionHeader("Account Control"),
               _buildActionTile(
-                Icons.lock_outline_rounded,
+                PhosphorIcons.lockKey(),
                 "Deactivate Account",
                 "Temporarily disable account",
                 onPop: () => _showConfirmationDialog(
                   title: "Deactivate Account",
                   message: "You can come back anytime by logging in again.",
                   confirmText: "Yes, Deactivate",
-                  icon: Icons.lock_outline,
+                  icon: PhosphorIcons.lockKey(),
                   onConfirm: () {},
                 ),
               ),
               _buildActionTile(
-                Icons.delete_outline_rounded,
+                PhosphorIcons.trash(),
                 "Delete My Account",
                 "Delete your account permanently",
                 onPop: () => _showConfirmationDialog(
                   title: "Delete Account",
                   message: "All your data will be removed permanently.",
                   confirmText: "Yes, Delete",
-                  icon: Icons.delete_outline,
+                  icon: PhosphorIcons.trash(),
                   onConfirm: () {},
                 ),
               ),

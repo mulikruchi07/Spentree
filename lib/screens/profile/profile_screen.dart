@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:spentree/core/app_style.dart';
@@ -194,7 +195,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   Padding(
                     padding: const EdgeInsets.only(bottom: 8.0),
                     child: Icon(
-                      Icons.emoji_events_outlined,
+                      PhosphorIcons.trophy(),
                       size: 32,
                       color: AppColors.colblack,
                     ),
@@ -254,7 +255,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
               // Settings List
               _buildSettingsItem(
-                Icons.person_2_outlined,
+                PhosphorIcons.user(),
                 "My Account",
                 "Make changes to your account",
                 () {
@@ -268,7 +269,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
 
               _buildSettingsItem(
-                Icons.privacy_tip_outlined,
+                PhosphorIcons.shieldCheck(),
                 "Data & Privacy",
                 "Manage your data & privacy",
                 () {
@@ -282,7 +283,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               // Logout Item
               _buildSettingsItem(
-                Icons.logout_rounded,
+                PhosphorIcons.signOut(),
                 "Log out",
                 "Further secure your account for safety",
                 () {
@@ -291,7 +292,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     title: "Logout",
                     message: "Are you sure you want to logout?",
                     confirmText: "Yes, Logout",
-                    icon: Icons.logout,
+                    icon: PhosphorIcons.signOut(),
 
                     onConfirm: () async {
                       final prefs = await SharedPreferences.getInstance();
@@ -310,7 +311,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 },
               ),
               _buildSettingsItem(
-                Icons.help_outline,
+                PhosphorIcons.question(),
                 "Helpdesk & FAQ",
                 "Further secure your account for safety",
                 () {
@@ -323,7 +324,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 },
               ),
               _buildSettingsItem(
-                Icons.info_outline,
+                PhosphorIcons.info(),
                 "About Us",
                 "Further secure your account for safety",
                 () {
@@ -336,7 +337,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 },
               ),
               _buildSettingsItem(
-                Icons.mail_outline,
+                PhosphorIcons.envelopeSimple(),
                 "Contact Us",
                 "Further secure your account for safety",
                 () {

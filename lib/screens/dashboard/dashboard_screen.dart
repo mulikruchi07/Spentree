@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -299,7 +300,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ],
         ),
         // Trophy Icon - No Circle
-        Icon(Icons.emoji_events_outlined, size: 32, color: AppColors.colblack),
+        Icon(PhosphorIcons.trophy(), size: 32, color: AppColors.colblack),
       ],
     );
   }
@@ -627,22 +628,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
     // Icons mapped to Figma visual
     final transactions = [
       {
-        "icon": Icons.fastfood,
+        "icon": PhosphorIcons.bowlSteam(),
         "name": "McDonald's Ltd.",
         "amount": "- Rs. 159",
       }, // Burger
       {
-        "icon": Icons.checkroom,
+        "icon": PhosphorIcons.tShirt(),
         "name": "Zudio",
         "amount": "- Rs. 899",
       }, // Shirt
       {
-        "icon": Icons.smartphone,
-        "name": "Jio Bills & Subscriptions",
+        "icon": PhosphorIcons.simCard(),
+        "name": "Jio",
         "amount": "- Rs. 349",
       }, // Mobile
       {
-        "icon": Icons.local_pizza,
+        "icon": PhosphorIcons.bowlSteam(),
         "name": "Dominos Ltd.",
         "amount": "- Rs. 458",
       }, // Pizza

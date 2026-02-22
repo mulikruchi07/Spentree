@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -197,17 +198,17 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
   IconData _getIconForCategory(String cat) {
     switch (cat) {
       case "Food & Beverages":
-        return Icons.fastfood;
+        return PhosphorIcons.bowlSteam();
       case "Shopping":
-        return Icons.checkroom;
+        return PhosphorIcons.tShirt();
       case "Fuel":
-        return Icons.local_gas_station;
+        return PhosphorIcons.gasCan();
       case "Bills & Subscriptions":
-        return Icons.smartphone;
+        return PhosphorIcons.simCard();
       case "To People":
-        return Icons.person;
+        return PhosphorIcons.user();
       default:
-        return Icons.receipt;
+        return PhosphorIcons.currencyInr();
     }
   }
 
@@ -662,11 +663,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
             ),
           ],
         ),
-        const Icon(
-          Icons.emoji_events_outlined,
-          size: 32,
-          color: AppColors.colblack,
-        ),
+        Icon(PhosphorIcons.trophy(), size: 32, color: AppColors.colblack),
       ],
     );
   }
@@ -1073,15 +1070,19 @@ class _ExpenseFormState extends State<ExpenseForm> {
     if (!widget.isEditing &&
         _titleCtrl.text.isEmpty &&
         _amountCtrl.text.isEmpty) {
-      if (_titleCtrl.text.isEmpty) return Icons.question_mark;
+      // NOTE: Depending on your exact phosphor_flutter version,
+      // if .questionMark() gives an error, use PhosphorIcons.question() instead.
+      if (_titleCtrl.text.isEmpty) return PhosphorIcons.questionMark();
     }
 
-    if (cat == "Food & Beverages") return Icons.fastfood;
-    if (cat == "Shopping") return Icons.checkroom;
-    if (cat == "Fuel") return Icons.local_gas_station;
-    if (cat == "Bills & Subscriptions") return Icons.smartphone;
-    if (cat == "To People") return Icons.person;
-    return Icons.receipt;
+    if (cat == "Food & Beverages") return PhosphorIcons.bowlSteam();
+    if (cat == "Shopping") return PhosphorIcons.tShirt();
+    if (cat == "Fuel") return PhosphorIcons.gasCan();
+    if (cat == "Bills & Subscriptions") return PhosphorIcons.simCard();
+    if (cat == "To People") return PhosphorIcons.user();
+
+    // Default fallback icon
+    return PhosphorIcons.currencyInr();
   }
 
   void _trySave() {

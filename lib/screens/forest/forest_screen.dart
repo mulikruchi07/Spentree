@@ -4,9 +4,12 @@ import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:spentree/core/app_style.dart';
+import 'package:audioplayers/audioplayers.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ForestScreen extends StatefulWidget {
-  const ForestScreen({super.key});
+  final bool isActive;
+  const ForestScreen({super.key, this.isActive = false});
 
   @override
   State<ForestScreen> createState() => _ForestScreenState();
@@ -16,6 +19,8 @@ class _ForestScreenState extends State<ForestScreen> {
   // --- STATE ---
   late DateTime _focusedDate;
   bool _isPickerOpen = false;
+
+  final AudioPlayer _audioPlayer = AudioPlayer();
 
   // --- UI CONSTANTS ---
   final double cardRadius = 15.0;
@@ -58,6 +63,46 @@ class _ForestScreenState extends State<ForestScreen> {
     super.initState();
     _focusedDate = DateTime.now();
     _processCategoryData();
+    if (widget.isActive) _playForestSound();
+  }
+
+  @override
+  void didUpdateWidget(covariant ForestScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Triggers when the tab becomes fully active after a swipe
+    if (widget.isActive && !oldWidget.isActive) {
+      _playForestSound();
+    }
+  }
+
+  @override
+  void dispose() {
+    _audioPlayer.dispose();
+    super.dispose();
+  }
+
+  // --- NEW: PLAYBACK LOGIC ---
+  Future<void> _playForestSound() async {
+    // CHECK PREFERENCE FIRST
+    final prefs = await SharedPreferences.getInstance();
+    final bool isSoundEnabled = prefs.getBool('sound_effects') ?? true; // Defaults to true
+    
+    // If user turned it off, do not play!
+    if (!isSoundEnabled) return;
+
+    // PLAY SOUND
+    final hour = DateTime.now().hour;
+    // Define Night as between 6:00 PM (18) and 5:59 AM (6)
+    final bool isNight = hour >= 18 || hour < 6;
+
+    // Selects the sound based on time
+    final String audioFile = isNight
+        ? 'audio/night_forest.m4a'
+        : 'audio/morning_forest.m4a';
+
+    // Stop any currently playing sound and start the new one
+    await _audioPlayer.stop();
+    await _audioPlayer.play(AssetSource(audioFile));
   }
 
   void _processCategoryData() {
@@ -489,11 +534,7 @@ class _ForestScreenState extends State<ForestScreen> {
               ),
               child: Row(
                 children: [
-                  Icon(
-                    Icons.trending_up,
-                    color: AppColors.colblack,
-                    size: 14,
-                  ),
+                  Icon(Icons.trending_up, color: AppColors.colblack, size: 14),
                   const SizedBox(width: 4),
                   Text(
                     "Great",

@@ -240,6 +240,7 @@
 //   }
 // }
 
+import 'dart:convert';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
@@ -251,6 +252,7 @@ import 'analytics/analytics_screen.dart';
 import 'dashboard/dashboard_screen.dart';
 import 'profile/profile_screen.dart';
 import '../../core/app_style.dart';
+import '../screens/profile/account_screen.dart';
 
 class MainWrapper extends StatefulWidget {
   const MainWrapper({super.key});
@@ -273,6 +275,7 @@ class _MainWrapperState extends State<MainWrapper> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     _pageController = PageController(initialPage: _selectedIndex);
     _syncLockState();
+    _preloadAccountData();
   }
 
   @override
@@ -280,6 +283,23 @@ class _MainWrapperState extends State<MainWrapper> with WidgetsBindingObserver {
     WidgetsBinding.instance.removeObserver(this);
     _pageController.dispose();
     super.dispose();
+  }
+
+  Future<void> _preloadAccountData() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    // Sync settings to AccountScreen's global cache
+    AccountScreen.cachedFaceId = prefs.getBool('isFaceIdEnabled') ?? false;
+    AccountScreen.cachedTheme = prefs.getString('app_theme') ?? "System";
+    AccountScreen.cachedSoundEffects =
+        prefs.getBool('sound_effects') ?? true; // Default to true
+
+    final String? savedImageBase64 = prefs.getString('profile_image');
+    if (savedImageBase64 != null) {
+      AccountScreen.cachedProfileBytes = base64Decode(savedImageBase64);
+    }
+
+    AccountScreen.isDataPreloaded = true;
   }
 
   Future<void> _syncLockState() async {
@@ -333,7 +353,7 @@ class _MainWrapperState extends State<MainWrapper> with WidgetsBindingObserver {
     final List<Widget> pages = [
       DashboardScreen(),
       AnalyticsScreen(),
-      ForestScreen(),
+      ForestScreen(isActive: _selectedIndex == 2),
       ProfileScreen(),
     ];
 

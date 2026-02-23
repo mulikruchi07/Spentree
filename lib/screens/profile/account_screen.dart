@@ -1257,9 +1257,17 @@ import '../../core/user_data.dart';
 import '../../core/biometric_service.dart';
 import '../auth/change_password_screen.dart';
 import '../../core/app_style.dart';
+import '../forest/forest_screen.dart';
 
 class AccountScreen extends StatefulWidget {
   const AccountScreen({super.key});
+
+  // --- GLOBAL STATIC CACHE FOR ZERO-DELAY LOADING ---
+  static bool isDataPreloaded = false;
+  static bool cachedFaceId = false;
+  static String cachedTheme = "System";
+  static Uint8List? cachedProfileBytes;
+  static bool cachedSoundEffects = true;
 
   @override
   State<AccountScreen> createState() => _AccountScreenState();
@@ -1274,7 +1282,7 @@ class _AccountScreenState extends State<AccountScreen> {
   bool _spendingAlerts = false;
   bool _notifications = false;
   bool _spendingTips = false;
-  bool _soundEffects = false;
+  bool _soundEffects = true;
   String _selectedTheme = "System";
 
   // --- Inline Editing States & Validation ---
@@ -1323,6 +1331,7 @@ class _AccountScreenState extends State<AccountScreen> {
     setState(() {
       _isFaceIdEnabled = prefs.getBool('isFaceIdEnabled') ?? false;
       _selectedTheme = prefs.getString('app_theme') ?? "System";
+      _soundEffects = prefs.getBool('sound_effects') ?? true;
 
       final String? savedImageBase64 = prefs.getString('profile_image');
       if (savedImageBase64 != null) {
@@ -1798,7 +1807,17 @@ class _AccountScreenState extends State<AccountScreen> {
                   "Sound Effects",
                   "Control Sound effects & Music",
                   _soundEffects,
-                  (v) => setState(() => _soundEffects = v),
+                  (v) async {
+                    // 1. Update the UI instantly
+                    setState(() => _soundEffects = v);
+
+                    // 2. Sync to the global cache (so ForestScreen can read it instantly)
+                    AccountScreen.cachedSoundEffects = v;
+
+                    // 3. Save to device storage for the next time the app opens
+                    final prefs = await SharedPreferences.getInstance();
+                    await prefs.setBool('sound_effects', v);
+                  },
                 ),
 
                 const SizedBox(height: 32),

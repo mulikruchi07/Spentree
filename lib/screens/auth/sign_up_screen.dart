@@ -1,6 +1,5 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:spentree/screens/profile/privacy_screen.dart';
@@ -204,7 +203,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                       borderRadius: BorderRadius.circular(6),
                                     ),
                                     child: _isChecked
-                                        ? const Icon(
+                                        ? Icon(
                                             Icons.check,
                                             size: 16,
                                             color: AppColors.colwhite,
@@ -222,7 +221,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                         color: AppColors.grey800,
                                       ),
                                       children: [
-                                        const TextSpan(text: "I agree to the "),
+                                        TextSpan(text: "I agree to the "),
                                         TextSpan(
                                           text: "terms and conditions",
                                           style: const TextStyle(
@@ -239,7 +238,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                               );
                                             },
                                         ),
-                                        const TextSpan(text: " and "),
+                                        TextSpan(text: " and "),
                                         TextSpan(
                                           text: "Privacy Policy",
                                           style: const TextStyle(
@@ -369,7 +368,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             color: AppColors.grey800,
                           ),
                           children: [
-                            const TextSpan(text: "Do you have account? "),
+                            TextSpan(text: "Do you have account? "),
                             TextSpan(
                               text: "Sign In",
                               style: const TextStyle(

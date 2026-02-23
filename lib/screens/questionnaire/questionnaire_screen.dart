@@ -1,6 +1,5 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/app_style.dart';
 import 'package:flutter/services.dart';
@@ -574,11 +573,7 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
                   shape: BoxShape.circle,
                   color: AppColors.primaryGreen,
                 ),
-                child: const Icon(
-                  Icons.check,
-                  size: 16,
-                  color: AppColors.colwhite,
-                ),
+                child: Icon(Icons.check, size: 16, color: AppColors.colwhite),
               ),
             ),
         ],

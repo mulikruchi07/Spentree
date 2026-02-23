@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:spentree/screens/questionnaire/questionnaire_screen.dart';
 import '../../core/app_style.dart';
@@ -128,7 +127,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                 child: Hero(
                   tag: 'logo-image',
                   child: Image.asset(
-                    "assets/logo-name.png",
+                    AppImages.logoName,
                     fit: BoxFit.contain,
                   ),
                 ),

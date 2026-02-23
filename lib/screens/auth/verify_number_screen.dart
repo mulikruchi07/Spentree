@@ -1,6 +1,5 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:spentree/screens/main_wrapper.dart';
@@ -160,7 +159,7 @@ class _VerifyNumberScreenState extends State<VerifyNumberScreen> {
                             color: AppColors.grey800,
                           ),
                           children: [
-                            const TextSpan(text: "Didn’t get OTP? "),
+                            TextSpan(text: "Didn’t get OTP? "),
                             TextSpan(
                               text: "Resend OTP",
                               style: const TextStyle(

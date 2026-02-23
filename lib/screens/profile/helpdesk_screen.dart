@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/app_style.dart';
@@ -115,7 +114,7 @@ class HelpdeskScreen extends StatelessWidget {
                   color: AppColors.colblack,
                 ),
                 children: [
-                  const TextSpan(text: "Contact us at: "),
+                  TextSpan(text: "Contact us at: "),
                   TextSpan(
                     text: "support@spentree.app",
                     style: TextStyle(fontWeight: FontWeight.w600),
@@ -220,7 +219,7 @@ class HelpdeskScreen extends StatelessWidget {
                 color: AppColors.white500,
               ),
               children: [
-                const TextSpan(
+                TextSpan(
                   text: "Designed by ",
                   style: TextStyle(
                     fontWeight: FontWeight.w400,
@@ -251,7 +250,7 @@ class HelpdeskScreen extends StatelessWidget {
                 color: AppColors.white500,
               ),
               children: [
-                const TextSpan(
+                TextSpan(
                   text: "Developed by ",
                   style: TextStyle(
                     fontWeight: FontWeight.w400,

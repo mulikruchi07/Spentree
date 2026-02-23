@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/app_style.dart';
@@ -194,7 +193,7 @@ class TermsScreen extends StatelessWidget {
                 color: AppColors.white500,
               ),
               children: [
-                const TextSpan(text: "Designed by "),
+                TextSpan(text: "Designed by "),
                 TextSpan(
                   text: "Designer",
                   style: GoogleFonts.poppins(
@@ -217,7 +216,7 @@ class TermsScreen extends StatelessWidget {
                 color: AppColors.white500,
               ),
               children: [
-                const TextSpan(text: "Developed by "),
+                TextSpan(text: "Developed by "),
                 TextSpan(
                   text: "Developer",
                   style: GoogleFonts.poppins(

@@ -250,7 +250,7 @@ class _ForestScreenState extends State<ForestScreen> {
               children: [
                 GestureDetector(
                   onTap: () => _moveMonth(-1),
-                  child: const Icon(
+                  child: Icon(
                     Icons.chevron_left,
                     size: 24,
                     color: AppColors.colblack,
@@ -266,7 +266,7 @@ class _ForestScreenState extends State<ForestScreen> {
                 ),
                 GestureDetector(
                   onTap: () => _moveMonth(1),
-                  child: const Icon(
+                  child: Icon(
                     Icons.chevron_right,
                     size: 24,
                     color: AppColors.colblack,
@@ -489,7 +489,7 @@ class _ForestScreenState extends State<ForestScreen> {
               ),
               child: Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.trending_up,
                     color: AppColors.colblack,
                     size: 14,

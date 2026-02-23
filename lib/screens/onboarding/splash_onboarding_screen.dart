@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'onboarding_screen.dart';
 import '../../core/app_style.dart';
@@ -61,8 +60,8 @@ class _SplashOnboardingScreenState extends State<SplashOnboardingScreen>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    precacheImage(const AssetImage("assets/logo-name.png"), context);
-    precacheImage(const AssetImage("assets/images/bg_room.png"), context);
+    precacheImage(AssetImage(AppImages.logoName), context);
+    precacheImage(AssetImage("assets/images/bg_room.png"), context);
   }
 
   void _startAnimationSequence() async {
@@ -127,13 +126,13 @@ class _SplashOnboardingScreenState extends State<SplashOnboardingScreen>
                               return Material(
                                 color: Colors.transparent,
                                 child: Image.asset(
-                                  "assets/logo-name.png",
+                                  AppImages.logoName,
                                   fit: BoxFit.contain,
                                 ),
                               );
                             },
                         child: Image.asset(
-                          "assets/appname.png",
+                          AppImages.appName,
                           width: 220,
                           fit: BoxFit.contain,
                         ),

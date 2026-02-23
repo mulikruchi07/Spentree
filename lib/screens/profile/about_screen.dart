@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart'; // Add url_launcher to pubspec.yaml
 import '../../core/app_style.dart';
@@ -178,7 +177,7 @@ class AboutScreen extends StatelessWidget {
                 color: AppColors.white500,
               ),
               children: [
-                const TextSpan(
+                TextSpan(
                   text: "Designed by ",
                   style: TextStyle(
                     fontWeight: FontWeight.w400,
@@ -209,7 +208,7 @@ class AboutScreen extends StatelessWidget {
                 color: AppColors.white500,
               ),
               children: [
-                const TextSpan(
+                TextSpan(
                   text: "Developed by ",
                   style: TextStyle(
                     fontWeight: FontWeight.w400,

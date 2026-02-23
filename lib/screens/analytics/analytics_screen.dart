@@ -385,7 +385,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.add, color: AppColors.colwhite),
+                            Icon(Icons.add, color: AppColors.colwhite),
                             const SizedBox(width: 8),
                             Text(
                               "Add Expense",
@@ -1285,7 +1285,7 @@ class _ExpenseFormState extends State<ExpenseForm> {
                                 ),
                                 decoration: BoxDecoration(
                                   border: cat != _categories.last
-                                      ? const Border(
+                                      ? Border(
                                           bottom: BorderSide(
                                             color: AppColors.inputFill,
                                           ),
@@ -1404,7 +1404,7 @@ class _ExpenseFormState extends State<ExpenseForm> {
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: CupertinoTheme(
-                      data: const CupertinoThemeData(
+                      data: CupertinoThemeData(
                         brightness: Brightness.dark, // Makes text white
                         textTheme: CupertinoTextThemeData(
                           dateTimePickerTextStyle: TextStyle(

@@ -609,7 +609,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.trending_up, color: AppColors.colwhite, size: 14),
+          Icon(Icons.trending_up, color: AppColors.colwhite, size: 14),
           const SizedBox(width: 4),
           Text(
             text,

@@ -20,6 +20,9 @@ dependencies:
   intl: ^0.20.2
   url_launcher: ^6.3.2
   phosphor_flutter: ^2.1.0
+  image_picker: ^1.2.1
+  image_cropper: ^11.0.0
+  path_provider: ^2.1.5
 
 dev_dependencies:
   flutter_test:
@@ -33,7 +36,10 @@ flutter:
   assets:
     - assets/logo.png
     - assets/appname.png
+    - assets/dappname.png
     - assets/logo-name.png
+    - assets/dlogo-name.png
+    - assets/icons/navbg.png
     - assets/images/
     - assets/images/forest/
     - assets/icons/home.png

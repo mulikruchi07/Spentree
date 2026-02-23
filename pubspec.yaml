@@ -40,6 +40,7 @@ flutter:
     - assets/logo-name.png
     - assets/dlogo-name.png
     - assets/icons/navbg.png
+    - assets/icons/dnavbg.png
     - assets/images/
     - assets/images/forest/
     - assets/icons/home.png

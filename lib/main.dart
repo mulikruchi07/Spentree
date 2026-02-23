@@ -10,6 +10,14 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   final prefs = await SharedPreferences.getInstance();
+  final savedTheme = prefs.getString('app_theme') ?? 'System';
+  if (savedTheme == 'Light mode') {
+    themeNotifier.value = ThemeMode.light;
+  } else if (savedTheme == 'Dark mode') {
+    themeNotifier.value = ThemeMode.dark;
+  } else {
+    themeNotifier.value = ThemeMode.system;
+  }
 
   // 1. Check if it's the first time launch
   bool isOnboarded = prefs.getBool('isOnboarded') ?? false;
@@ -49,15 +57,36 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'SpenTree',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF34C759)),
-        useMaterial3: true,
-        scaffoldBackgroundColor: AppColors.bgWhite,
-      ),
-      home: startScreen,
+    // --- THEME LISTENER ---
+    // This rebuilds the entire app instantly when themeNotifier changes
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: themeNotifier,
+      builder: (context, currentMode, child) {
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          title: 'SpenTree',
+          themeMode: currentMode,
+          // Light Theme Setup
+          theme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: AppColors.primaryGreen,
+              brightness: Brightness.light,
+            ),
+            useMaterial3: true,
+            scaffoldBackgroundColor: AppColors.bgWhite, // Uses dynamic getter
+          ),
+          // Dark Theme Setup
+          darkTheme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: AppColors.primaryGreen,
+              brightness: Brightness.dark,
+            ),
+            useMaterial3: true,
+            scaffoldBackgroundColor: AppColors.bgWhite, // Uses dynamic getter
+          ),
+          home: startScreen,
+        );
+      },
     );
   }
 }
@@ -69,21 +98,31 @@ class AppLockedScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.bgWhite,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.lock_outline, size: 64, color: Color(0xFF34C759)),
+            // Updated to Phosphor Icon for consistency
+            PhosphorIcon(
+              PhosphorIcons.lockKey(),
+              size: 64,
+              color: AppColors.primaryGreen,
+            ),
             const SizedBox(height: 20),
-            const Text(
+            Text(
               "SpenTree is Locked",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textMain, // Dynamic text color
+              ),
             ),
             TextButton(
               onPressed: () => main(), // Restart the auth process
               child: const Text(
                 "Tap to Unlock",
-                style: TextStyle(color: Color(0xFF34C759)),
+                style: TextStyle(color: AppColors.primaryGreen),
               ),
             ),
           ],

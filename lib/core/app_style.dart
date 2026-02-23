@@ -96,3 +96,80 @@ class AppTextStyles {
     color: AppColors.errorRed,
   );
 }
+
+// Reusable Custom Toasts ---
+class CustomToasts {
+  static void showSuccessToast(BuildContext context, String message) {
+    // Dynamically gets the height of the device's bottom navigation keys
+    final double bottomNavHeight = MediaQuery.of(context).padding.bottom;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        duration: const Duration(seconds: 2),
+        // Removed 'const' from EdgeInsets and added bottomNavHeight
+        margin: EdgeInsets.only(
+          bottom: 20 + bottomNavHeight,
+          left: 24,
+          right: 24,
+        ),
+        content: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          decoration: BoxDecoration(
+            color: const Color(0xFFDAF0D6), // Light green background
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Text(
+            message,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.poppins(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: AppColors.primaryGreen, // Green text
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  static void showErrorToast(BuildContext context, String message) {
+    // Dynamically gets the height of the device's bottom navigation keys
+    final double bottomNavHeight = MediaQuery.of(context).padding.bottom;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        duration: const Duration(seconds: 2),
+        // Removed 'const' from EdgeInsets and added bottomNavHeight
+        margin: EdgeInsets.only(
+          bottom: 20 + bottomNavHeight,
+          left: 24,
+          right: 24,
+        ),
+        content: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF0D6D6), // Light red background
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Text(
+            message,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.poppins(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: AppColors.destructiveRed, // Red text
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}

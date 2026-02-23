@@ -40,68 +40,39 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     });
 
     bool isValid = true;
+    String newPassword = _newPasswordController.text;
 
-    if (_newPasswordController.text.isEmpty) {
+    if (newPassword.isEmpty) {
       setState(() => _newPasswordError = "New password is required");
       isValid = false;
+    } else {
+      String pattern = r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$';
+      RegExp regExp = RegExp(pattern);
+
+      if (!regExp.hasMatch(newPassword)) {
+        setState(
+          () => _newPasswordError = "Password does not meet the requirements",
+        );
+        CustomToasts.showErrorToast(
+          context,
+          "Please follow the password rules.",
+        );
+        isValid = false;
+      }
     }
-    if (_confirmPasswordController.text != _newPasswordController.text) {
+
+    if (_confirmPasswordController.text != newPassword) {
       setState(() => _confirmPasswordError = "Passwords do not match");
       isValid = false;
     }
 
     if (isValid) {
-      _showSuccessToast(context);
+      CustomToasts.showSuccessToast(context, "Password changed successfully!");
+
       Timer(const Duration(seconds: 2), () {
         if (mounted) Navigator.pop(context);
       });
     }
-  }
-
-  void _showSuccessToast(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        duration: const Duration(seconds: 2),
-        margin: const EdgeInsets.only(bottom: 20, left: 24, right: 24),
-        content: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          decoration: BoxDecoration(
-            color: const Color(0xFF34C759),
-            borderRadius: BorderRadius.circular(14),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF34C759).withOpacity(0.3),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              Icon(
-                Icons.check_circle_outline,
-                color: AppColors.colwhite,
-                size: 24,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  "Password changed successfully!",
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.colwhite,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 
   @override

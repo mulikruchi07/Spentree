@@ -1302,7 +1302,7 @@ class _AccountScreenState extends State<AccountScreen> {
   void initState() {
     super.initState();
     _originalName = UserData.userName;
-    _originalPhone = "0000000000"; 
+    _originalPhone = "0000000000";
 
     _nameController = TextEditingController(text: _originalName);
     _phoneController = TextEditingController(text: _originalPhone);
@@ -1319,7 +1319,7 @@ class _AccountScreenState extends State<AccountScreen> {
 
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
-    
+
     setState(() {
       _isFaceIdEnabled = prefs.getBool('isFaceIdEnabled') ?? false;
       _selectedTheme = prefs.getString('app_theme') ?? "System";
@@ -1328,7 +1328,7 @@ class _AccountScreenState extends State<AccountScreen> {
       if (savedImageBase64 != null) {
         _profileBytes = base64Decode(savedImageBase64);
       }
-      
+
       _isLoading = false; // Data is loaded, safe to build UI!
     });
   }
@@ -1339,10 +1339,12 @@ class _AccountScreenState extends State<AccountScreen> {
 
     if ((_isEditingName && nameChanged) || (_isEditingPhone && phoneChanged)) {
       setState(() {
-        if (_isEditingName && nameChanged) _nameError = "Please save your name before leaving.";
-        if (_isEditingPhone && phoneChanged) _phoneError = "Please save your phone number before leaving.";
+        if (_isEditingName && nameChanged)
+          _nameError = "Please save your name before leaving.";
+        if (_isEditingPhone && phoneChanged)
+          _phoneError = "Please save your phone number before leaving.";
       });
-      
+
       Scrollable.ensureVisible(
         _editSectionKey.currentContext!,
         duration: const Duration(milliseconds: 300),
@@ -1417,8 +1419,14 @@ class _AccountScreenState extends State<AccountScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: PhosphorIcon(PhosphorIcons.image(), color: AppColors.colblack),
-              title: Text("Change Profile Picture", style: GoogleFonts.poppins(color: AppColors.colblack)),
+              leading: PhosphorIcon(
+                PhosphorIcons.image(),
+                color: AppColors.colblack,
+              ),
+              title: Text(
+                "Change Profile Picture",
+                style: GoogleFonts.poppins(color: AppColors.colblack),
+              ),
               onTap: () {
                 Navigator.pop(context);
                 _showImageSourceSelector(true);
@@ -1426,16 +1434,28 @@ class _AccountScreenState extends State<AccountScreen> {
             ),
             if (_originalImagePath != null)
               ListTile(
-                leading: PhosphorIcon(PhosphorIcons.crop(), color: AppColors.colblack),
-                title: Text("Adjust Profile Picture", style: GoogleFonts.poppins(color: AppColors.colblack)),
+                leading: PhosphorIcon(
+                  PhosphorIcons.crop(),
+                  color: AppColors.colblack,
+                ),
+                title: Text(
+                  "Adjust Profile Picture",
+                  style: GoogleFonts.poppins(color: AppColors.colblack),
+                ),
                 onTap: () {
                   Navigator.pop(context);
                   _cropImage(_originalImagePath!);
                 },
               ),
             ListTile(
-              leading: PhosphorIcon(PhosphorIcons.trash(), color: AppColors.destructiveRed),
-              title: Text("Remove Profile Picture", style: GoogleFonts.poppins(color: AppColors.destructiveRed)),
+              leading: PhosphorIcon(
+                PhosphorIcons.trash(),
+                color: AppColors.destructiveRed,
+              ),
+              title: Text(
+                "Remove Profile Picture",
+                style: GoogleFonts.poppins(color: AppColors.destructiveRed),
+              ),
               onTap: () async {
                 Navigator.pop(context);
                 final prefs = await SharedPreferences.getInstance();
@@ -1464,16 +1484,28 @@ class _AccountScreenState extends State<AccountScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: PhosphorIcon(PhosphorIcons.camera(), color: AppColors.colblack),
-              title: Text("Take Photo", style: GoogleFonts.poppins(color: AppColors.colblack)),
+              leading: PhosphorIcon(
+                PhosphorIcons.camera(),
+                color: AppColors.colblack,
+              ),
+              title: Text(
+                "Take Photo",
+                style: GoogleFonts.poppins(color: AppColors.colblack),
+              ),
               onTap: () {
                 Navigator.pop(context);
                 _pickImage(ImageSource.camera);
               },
             ),
             ListTile(
-              leading: PhosphorIcon(PhosphorIcons.image(), color: AppColors.colblack),
-              title: Text("Choose from Gallery", style: GoogleFonts.poppins(color: AppColors.colblack)),
+              leading: PhosphorIcon(
+                PhosphorIcons.image(),
+                color: AppColors.colblack,
+              ),
+              title: Text(
+                "Choose from Gallery",
+                style: GoogleFonts.poppins(color: AppColors.colblack),
+              ),
               onTap: () {
                 Navigator.pop(context);
                 _pickImage(ImageSource.gallery);
@@ -1498,7 +1530,10 @@ class _AccountScreenState extends State<AccountScreen> {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text("Image size must be less than 5MB", style: GoogleFonts.poppins(color: Colors.white)),
+                content: Text(
+                  "Image size must be less than 5MB",
+                  style: GoogleFonts.poppins(color: Colors.white),
+                ),
                 backgroundColor: AppColors.destructiveRed,
               ),
             );
@@ -1644,7 +1679,7 @@ class _AccountScreenState extends State<AccountScreen> {
     }
 
     return PopScope(
-      canPop: false, 
+      canPop: false,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
         _handleBackNavigation();
@@ -1683,7 +1718,7 @@ class _AccountScreenState extends State<AccountScreen> {
                 _buildProfileHeader(),
 
                 const SizedBox(height: 32),
-                
+
                 Container(
                   key: _editSectionKey,
                   child: Column(
@@ -1882,7 +1917,7 @@ class _AccountScreenState extends State<AccountScreen> {
             clipBehavior: Clip.none,
             children: [
               GestureDetector(
-                onTap: _viewProfileImage, 
+                onTap: _viewProfileImage,
                 child: Hero(
                   tag: 'profile_image_hero',
                   child: Container(
@@ -1896,7 +1931,7 @@ class _AccountScreenState extends State<AccountScreen> {
                     child: _profileBytes != null
                         ? Image.memory(_profileBytes!, fit: BoxFit.cover)
                         : Image.asset(
-                            'assets/images/user_avaar.png',
+                            'assets/images/user_avatar.png',
                             fit: BoxFit.cover,
                             errorBuilder: (context, error, stackTrace) => Icon(
                               Icons.person,
@@ -1912,7 +1947,7 @@ class _AccountScreenState extends State<AccountScreen> {
                 top: 0,
                 right: 0,
                 child: GestureDetector(
-                  onTap: _handleEditIconTap, 
+                  onTap: _handleEditIconTap,
                   child: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
@@ -1943,7 +1978,7 @@ class _AccountScreenState extends State<AccountScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            _originalName, 
+            _originalName,
             style: GoogleFonts.poppins(
               fontSize: 22,
               fontWeight: FontWeight.w600,
@@ -1988,7 +2023,9 @@ class _AccountScreenState extends State<AccountScreen> {
           decoration: BoxDecoration(
             color: AppColors.inputFill,
             borderRadius: BorderRadius.circular(12),
-            border: errorMsg != null ? Border.all(color: AppColors.destructiveRed) : null,
+            border: errorMsg != null
+                ? Border.all(color: AppColors.destructiveRed)
+                : null,
           ),
           child: Row(
             children: [
@@ -1997,9 +2034,14 @@ class _AccountScreenState extends State<AccountScreen> {
                     ? TextField(
                         controller: controller,
                         autofocus: true,
-                        keyboardType: isPhone ? TextInputType.number : TextInputType.text,
-                        inputFormatters: isPhone 
-                            ? [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(10)]
+                        keyboardType: isPhone
+                            ? TextInputType.number
+                            : TextInputType.text,
+                        inputFormatters: isPhone
+                            ? [
+                                FilteringTextInputFormatter.digitsOnly,
+                                LengthLimitingTextInputFormatter(10),
+                              ]
                             : [],
                         style: GoogleFonts.poppins(
                           fontSize: 14,
@@ -2010,10 +2052,13 @@ class _AccountScreenState extends State<AccountScreen> {
                           isDense: true,
                         ),
                         onChanged: (_) {
-                           if (errorMsg != null) setState(() {
-                             if (isPhone) _phoneError = null;
-                             else _nameError = null;
-                           });
+                          if (errorMsg != null)
+                            setState(() {
+                              if (isPhone)
+                                _phoneError = null;
+                              else
+                                _nameError = null;
+                            });
                         },
                       )
                     : Text(

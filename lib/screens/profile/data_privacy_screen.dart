@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -172,106 +173,10 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
   }
 
   void _handleChangeLimit() {
-    _showSquarePopup(
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                "Change limit",
-                style: GoogleFonts.montserrat(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.colblack,
-                ),
-              ),
-              GestureDetector(
-                onTap: () => Navigator.pop(context),
-                child: const Icon(
-                  Icons.close,
-                  size: 24,
-                  color: AppColors.colblack,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            "Current Limit : Rs. 0,000",
-            style: GoogleFonts.montserrat(
-              fontSize: 22,
-              fontWeight: FontWeight.w600,
-              color: AppColors.white600,
-            ),
-          ),
-          const SizedBox(height: 20),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            decoration: BoxDecoration(
-              color: AppColors.inputFill,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    keyboardType: TextInputType.number,
-                    style: GoogleFonts.montserrat(
-                      fontSize: 16,
-                      color: AppColors.colblack,
-                    ),
-                    decoration: InputDecoration(
-                      hintText: "Enter new limit",
-                      hintStyle: GoogleFonts.montserrat(
-                        color: AppColors.grey600,
-                      ),
-                      border: InputBorder.none,
-                    ),
-                  ),
-                ),
-                Text(
-                  "INR",
-                  style: GoogleFonts.montserrat(
-                    color: AppColors.grey600,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Container(
-                width: 20,
-                height: 20,
-                decoration: BoxDecoration(
-                  color: AppColors.inputFill,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Text(
-                "Limit can be changed only once a week",
-                style: GoogleFonts.montserrat(
-                  fontSize: 11,
-                  color: AppColors.white500,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          _buildActionBtn(
-            "Change",
-            AppColors.primaryGreen,
-            AppColors.colwhite,
-            () => Navigator.pop(context),
-          ),
-        ],
-      ),
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) => const _ChangeLimitPopup(),
     );
   }
 
@@ -542,7 +447,7 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
                 color: AppColors.white500,
               ),
               children: [
-                const TextSpan(
+                TextSpan(
                   text: "Designed by ",
                   style: TextStyle(
                     fontWeight: FontWeight.w400,
@@ -572,7 +477,7 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
                 color: AppColors.white500,
               ),
               children: [
-                const TextSpan(
+                TextSpan(
                   text: "Developed by ",
                   style: TextStyle(
                     fontWeight: FontWeight.w400,
@@ -727,10 +632,7 @@ class _CustomRangeCalendarState extends State<_CustomRangeCalendar> {
                 Row(
                   children: [
                     IconButton(
-                      icon: const Icon(
-                        Icons.chevron_left,
-                        color: AppColors.colblack,
-                      ),
+                      icon: Icon(Icons.chevron_left, color: AppColors.colblack),
                       onPressed: () => setState(
                         () => _viewDate = DateTime(
                           _viewDate.year,
@@ -739,7 +641,7 @@ class _CustomRangeCalendarState extends State<_CustomRangeCalendar> {
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.chevron_right,
                         color: AppColors.colblack,
                       ),
@@ -905,9 +807,7 @@ class _CustomRangeCalendarState extends State<_CustomRangeCalendar> {
                       : Colors.transparent,
                   borderRadius: isSelected
                       ? (date == _start
-                            ? const BorderRadius.horizontal(
-                                left: Radius.circular(8),
-                              )
+                            ? BorderRadius.horizontal(left: Radius.circular(8))
                             : const BorderRadius.horizontal(
                                 right: Radius.circular(8),
                               ))
@@ -953,4 +853,294 @@ class _CustomRangeCalendarState extends State<_CustomRangeCalendar> {
       ),
     ),
   );
+}
+
+// --- NEW CHANGE LIMIT POPUP COMPONENT ---
+class _ChangeLimitPopup extends StatefulWidget {
+  const _ChangeLimitPopup();
+
+  @override
+  State<_ChangeLimitPopup> createState() => _ChangeLimitPopupState();
+}
+
+class _ChangeLimitPopupState extends State<_ChangeLimitPopup>
+    with SingleTickerProviderStateMixin {
+  final TextEditingController _limitCtrl = TextEditingController();
+  bool _isChecked = false;
+  String? _errorMsg;
+  late AnimationController _shakeController;
+
+  @override
+  void initState() {
+    super.initState();
+    _shakeController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+  }
+
+  @override
+  void dispose() {
+    _limitCtrl.dispose();
+    _shakeController.dispose();
+    super.dispose();
+  }
+
+  void _triggerError(String msg) {
+    setState(() => _errorMsg = msg);
+    _shakeController.forward(from: 0.0);
+  }
+
+  void _validateAndSubmit() {
+    setState(() => _errorMsg = null);
+
+    final val = int.tryParse(_limitCtrl.text) ?? 0;
+
+    if (val <= 0) {
+      _triggerError("Please enter a valid amount");
+      return;
+    }
+    if (val > 100000) {
+      _triggerError("Limit cannot exceed Rs. 1,00,000");
+      return;
+    }
+    if (!_isChecked) {
+      _triggerError("Please agree to the condition");
+      return;
+    }
+
+    // Success
+    Navigator.pop(context);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Shake Animation Logic
+    final Animation<double> offsetAnimation = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 0.0, end: 10.0), weight: 1),
+      TweenSequenceItem(tween: Tween(begin: 10.0, end: -10.0), weight: 2),
+      TweenSequenceItem(tween: Tween(begin: -10.0, end: 10.0), weight: 2),
+      TweenSequenceItem(tween: Tween(begin: 10.0, end: 0.0), weight: 1),
+    ]).animate(CurvedAnimation(parent: _shakeController, curve: Curves.linear));
+
+    // Wrapped in AnimatedBuilder for shaking, and LayoutBuilder for responsiveness
+    return AnimatedBuilder(
+      animation: offsetAnimation,
+      builder: (context, child) {
+        return Transform.translate(
+          offset: Offset(offsetAnimation.value, 0),
+          child: child,
+        );
+      },
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.symmetric(
+            horizontal: 24,
+            vertical: 24,
+          ),
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: AppColors.bgWhite,
+              borderRadius: BorderRadius.circular(28),
+            ),
+            // FIX: Using SingleChildScrollView inside constraints prevents pixel errors
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "Change limit",
+                        style: GoogleFonts.montserrat(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.colblack,
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: Icon(
+                          Icons.close,
+                          size: 24,
+                          color: AppColors.colblack,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  Text(
+                    "Current Limit : Rs. 0,000",
+                    style: GoogleFonts.montserrat(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.white600,
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.inputFill,
+                      borderRadius: BorderRadius.circular(12),
+                      border:
+                          _errorMsg != null && _errorMsg!.contains("valid") ||
+                              _errorMsg != null && _errorMsg!.contains("exceed")
+                          ? Border.all(
+                              color: AppColors.destructiveRed,
+                              width: 1.5,
+                            )
+                          : null,
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _limitCtrl,
+                            keyboardType: TextInputType.number,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+                            ],
+                            style: GoogleFonts.montserrat(
+                              fontSize: 16,
+                              color: AppColors.colblack,
+                            ),
+                            decoration: InputDecoration(
+                              hintText: "Enter new limit",
+                              hintStyle: GoogleFonts.montserrat(
+                                color: AppColors.grey600,
+                              ),
+                              border: InputBorder.none,
+                            ),
+                            onChanged: (v) {
+                              if (_errorMsg != null)
+                                setState(() => _errorMsg = null);
+                            },
+                          ),
+                        ),
+                        Text(
+                          "INR",
+                          style: GoogleFonts.montserrat(
+                            color: AppColors.grey600,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _isChecked = !_isChecked;
+                        if (_isChecked) _errorMsg = null;
+                      });
+                    },
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Custom Checkbox mapping to your design
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          width: 20,
+                          height: 20,
+                          margin: const EdgeInsets.only(top: 2),
+                          decoration: BoxDecoration(
+                            color: _isChecked
+                                ? AppColors.primaryGreen
+                                : AppColors.inputFill,
+                            borderRadius: BorderRadius.circular(4),
+                            border:
+                                _errorMsg != null &&
+                                    _errorMsg!.contains("agree") &&
+                                    !_isChecked
+                                ? Border.all(
+                                    color: AppColors.destructiveRed,
+                                    width: 1.5,
+                                  )
+                                : null,
+                          ),
+                          child: _isChecked
+                              ? const Icon(
+                                  Icons.check,
+                                  size: 14,
+                                  color: Colors.white,
+                                )
+                              : null,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            "Limit can be changed only once a week",
+                            style: GoogleFonts.montserrat(
+                              fontSize: 12,
+                              color: AppColors.white500,
+                              height: 1.4,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Error Text Display
+                  if (_errorMsg != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 12.0),
+                      child: Text(
+                        _errorMsg!,
+                        style: GoogleFonts.poppins(
+                          color: AppColors.destructiveRed,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+
+                  const SizedBox(height: 24),
+
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: _validateAndSubmit,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryGreen,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        "Change",
+                        style: GoogleFonts.montserrat(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.colwhite,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }

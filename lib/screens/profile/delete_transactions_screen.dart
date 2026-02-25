@@ -277,7 +277,8 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
             AnimatedPositioned(
               duration: const Duration(milliseconds: 500),
               curve: Curves.easeOutCubic,
-              bottom: 30, // Floating position
+              // dynamically adding the device bottom padding avoids the nav keys
+              bottom: 30 + MediaQuery.of(context).padding.bottom,
               left: 24,
               right: 24,
               child: _buildDeleteButton(),

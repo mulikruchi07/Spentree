@@ -253,6 +253,7 @@ import 'dashboard/dashboard_screen.dart';
 import 'profile/profile_screen.dart';
 import '../../core/app_style.dart';
 import '../screens/profile/account_screen.dart';
+import 'forest/spentwrap_intro_screen.dart';
 
 class MainWrapper extends StatefulWidget {
   const MainWrapper({super.key});
@@ -266,6 +267,7 @@ class _MainWrapperState extends State<MainWrapper> with WidgetsBindingObserver {
   bool _isAuthenticating = false;
   bool _showPrivacyBlur = false;
   bool _lockCache = false;
+
 
   late PageController _pageController;
 
@@ -353,7 +355,8 @@ class _MainWrapperState extends State<MainWrapper> with WidgetsBindingObserver {
     final List<Widget> pages = [
       DashboardScreen(),
       AnalyticsScreen(),
-      ForestScreen(isActive: _selectedIndex == 2),
+      SpentWrapScreen(),
+      // ForestScreen(isActive: _selectedIndex == 2),
       ProfileScreen(),
     ];
 
@@ -394,15 +397,33 @@ class _MainWrapperState extends State<MainWrapper> with WidgetsBindingObserver {
                   body: PageView(
                     controller: _pageController,
                     physics: const BouncingScrollPhysics(
-                      parent: AlwaysScrollableScrollPhysics(),
+                        parent: AlwaysScrollableScrollPhysics(),
+                      ),
+                      onPageChanged: (index) {
+                        setState(() => _selectedIndex = index);
+                      },
+                      children: pages,
                     ),
-                    onPageChanged: (index) {
-                      setState(() => _selectedIndex = index);
-                    },
-                    children: pages,
+                    // REMOVE bottomNavigationBar from Scaffold here!
                   ),
-                  bottomNavigationBar: _buildBottomNavbar(),
-                ),
+
+                  // Privacy Overlay
+                  if (_showPrivacyBlur)
+                    Positioned.fill(
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 35.0, sigmaY: 35.0),
+                        child: Container(
+                          color: AppColors.bgWhite.withOpacity(0.85),
+                          child: const Center(
+                            child: Icon(
+                              Icons.lock_outline,
+                              size: 60,
+                              color: AppColors.primaryGreen,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
 
                 // FIX 4: Top Status Bar Shadow Gradient
                 Positioned(
@@ -428,6 +449,16 @@ class _MainWrapperState extends State<MainWrapper> with WidgetsBindingObserver {
                     ),
                   ),
                 ),
+
+                // Animated Navbar that slides off-screen on index 2 ---
+                  AnimatedPositioned(
+                    duration: const Duration(milliseconds: 400),
+                    curve: Curves.easeInOutCubic,
+                    bottom: _selectedIndex == 2 ? -100 : 0, // Slides out for SpentWrap
+                    left: 0,
+                    right: 0,
+                    child: _buildBottomNavbar(),
+                  ),
 
                 // Privacy Overlay
                 if (_showPrivacyBlur)

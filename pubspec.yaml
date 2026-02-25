@@ -53,6 +53,7 @@ flutter:
     - assets/icons/profile.png
     - assets/icons/profile_filled.png
     - assets/audio/
+    - assets/images/forest/spentwrap/
   
   fonts:
     - family: CalcioDemo

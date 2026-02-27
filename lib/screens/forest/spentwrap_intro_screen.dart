@@ -1,3 +1,719 @@
+// import 'dart:ui';
+// import 'dart:math' as math;
+// import 'package:flutter/material.dart';
+// import 'package:google_fonts/google_fonts.dart';
+// import 'package:phosphor_flutter/phosphor_flutter.dart';
+// import '../../core/app_style.dart';
+
+// // Defines the current state of our animation sequence
+// enum WrapPhase { intro, transition, details }
+
+// class SpentWrapScreen extends StatefulWidget {
+//   const SpentWrapScreen({super.key});
+
+//   @override
+//   State<SpentWrapScreen> createState() => _SpentWrapScreenState();
+// }
+
+// class _SpentWrapScreenState extends State<SpentWrapScreen>
+//     with TickerProviderStateMixin {
+//   // --- Controllers for the 4-part Choreography ---
+//   late AnimationController _introCtrl;
+//   late AnimationController _exitCtrl;
+//   late AnimationController _circleCtrl;
+//   late AnimationController _detailsCtrl;
+
+//   WrapPhase _currentPhase = WrapPhase.intro;
+
+//   @override
+//   void initState() {
+//     super.initState();
+
+//     // 1. Intro Entry Animation (1.4s)
+//     _introCtrl = AnimationController(
+//       vsync: this,
+//       duration: const Duration(milliseconds: 1400),
+//     );
+
+//     // 2. Intro Exit Animation (When checkout is clicked)
+//     _exitCtrl = AnimationController(
+//       vsync: this,
+//       duration: const Duration(milliseconds: 800),
+//     );
+
+//     // 3. White Circle Drop & Expand Transition
+//     _circleCtrl = AnimationController(
+//       vsync: this,
+//       duration: const Duration(milliseconds: 1200),
+//     );
+
+//     // 4. Details Screen Entry Animation
+//     _detailsCtrl = AnimationController(
+//       vsync: this,
+//       duration: const Duration(milliseconds: 1400),
+//     );
+
+//     // Initial 2.5 second delay so the user reads "SPENTWRAP"
+//     Future.delayed(const Duration(milliseconds: 2500), () {
+//       if (mounted) _introCtrl.forward();
+//     });
+//   }
+
+//   @override
+//   void dispose() {
+//     _introCtrl.dispose();
+//     _exitCtrl.dispose();
+//     _circleCtrl.dispose();
+//     _detailsCtrl.dispose();
+//     super.dispose();
+//   }
+
+//   // --- TRIGGERED WHEN "CHECKOUT" IS CLICKED ---
+//   void _startCheckoutTransition() {
+//     // 1. Slide everything away (except title)
+//     _exitCtrl.forward().then((_) {
+//       // 2. Start the circle drop transition
+//       setState(() => _currentPhase = WrapPhase.transition);
+//       _circleCtrl.forward().then((_) {
+//         // 3. Circle covered screen. Switch background to white and bring in details
+//         setState(() => _currentPhase = WrapPhase.details);
+//         Future.delayed(const Duration(milliseconds: 400), () {
+//           if (mounted) _detailsCtrl.forward();
+//         });
+//       });
+//     });
+//   }
+
+//   @override
+//   Widget build(BuildContext context) {
+//     final screenWidth = MediaQuery.of(context).size.width;
+//     final screenHeight = MediaQuery.of(context).size.height;
+//     final double topTextCenterY = screenHeight * 0.100;
+
+//     return Scaffold(
+//       backgroundColor: _currentPhase == WrapPhase.details
+//           ? Colors.white
+//           : AppColors.primaryGreen,
+//       body: Stack(
+//         children: [
+//           // ==========================================
+//           // LAYER 1: INTRO SCREEN (Only visible initially)
+//           // ==========================================
+//           if (_currentPhase != WrapPhase.details)
+//             AnimatedBuilder(
+//               animation: Listenable.merge([_introCtrl, _exitCtrl]),
+//               builder: (context, child) {
+//                 final intro = Curves.easeOutCubic.transform(_introCtrl.value);
+//                 final exit = Curves.easeIn.transform(_exitCtrl.value);
+
+//                 final val = intro * (1 - exit);
+//                 final exitDownVal = intro - exit;
+
+//                 final double treeWidth = screenWidth * 0.55;
+//                 final double forestWidth = screenWidth * 1.45;
+
+//                 return Stack(
+//                   children: [
+//                     // --- Hollow "WRAP" Texts ---
+//                     Positioned(
+//                       top: screenHeight * 0.20,
+//                       left: lerpDouble(-screenWidth, -screenWidth * 0.25, val),
+//                       child: Opacity(
+//                         opacity: val,
+//                         child: _buildHollowText(screenWidth),
+//                       ),
+//                     ),
+//                     Positioned(
+//                       bottom: screenHeight * 0.16,
+//                       right: lerpDouble(-screenWidth, -screenWidth * 0.10, val),
+//                       child: Opacity(
+//                         opacity: val,
+//                         child: _buildHollowText(screenWidth),
+//                       ),
+//                     ),
+
+//                     // --- 2. Floating 3D Assets ---
+//                     Positioned(
+//                       top: screenHeight * 0.15,
+//                       right: lerpDouble(-treeWidth, -(treeWidth * 0.50), val),
+//                       width: treeWidth,
+//                       child: Opacity(
+//                         opacity: val,
+//                         child: Image.asset(
+//                           'assets/images/tree_1.png',
+//                           fit: BoxFit.contain,
+//                         ),
+//                       ),
+//                     ),
+//                     Positioned(
+//                       bottom: -screenHeight * 0.002,
+//                       left: lerpDouble(
+//                         -forestWidth,
+//                         -(forestWidth * 0.60),
+//                         val,
+//                       ),
+//                       width: forestWidth,
+//                       child: Opacity(
+//                         opacity: val,
+//                         child: Image.asset(
+//                           'assets/images/full_forest_iso.png',
+//                           fit: BoxFit.contain,
+//                         ),
+//                       ),
+//                     ),
+
+//                     // --- Center Data Card ---
+//                     Align(
+//                       alignment: Alignment.center,
+//                       child: Transform.translate(
+//                         offset: Offset(
+//                           0,
+//                           (screenHeight * 1.2) * (1 - exitDownVal),
+//                         ),
+//                         child: Padding(
+//                           padding: EdgeInsets.symmetric(
+//                             horizontal: screenWidth * 0.08,
+//                           ),
+//                           child: Container(
+//                             decoration: BoxDecoration(
+//                               borderRadius: BorderRadius.circular(24),
+//                             ),
+//                             child: ClipRRect(
+//                               borderRadius: BorderRadius.circular(24),
+//                               child: BackdropFilter(
+//                                 filter: ImageFilter.blur(
+//                                   sigmaX: 15.0,
+//                                   sigmaY: 15.0,
+//                                 ),
+//                                 child: Container(
+//                                   padding: EdgeInsets.all(screenWidth * 0.035),
+//                                   decoration: BoxDecoration(
+//                                     color: Colors.black.withOpacity(0.40),
+//                                     borderRadius: BorderRadius.circular(24),
+//                                   ),
+//                                   child: Column(
+//                                     mainAxisSize: MainAxisSize.min,
+//                                     children: [
+//                                       Container(
+//                                         padding: EdgeInsets.all(
+//                                           screenWidth * 0.03,
+//                                         ),
+//                                         decoration: const BoxDecoration(
+//                                           color: AppColors.primaryGreen,
+//                                           shape: BoxShape.circle,
+//                                         ),
+//                                         child: Icon(
+//                                           PhosphorIcons.presentationChart(),
+//                                           color: Colors.white,
+//                                           size: screenWidth * 0.1,
+//                                         ),
+//                                       ),
+//                                       SizedBox(height: screenHeight * 0.02),
+//                                       Text(
+//                                         "September Spentwrap",
+//                                         textAlign: TextAlign.center,
+//                                         style: GoogleFonts.montserrat(
+//                                           fontSize: screenWidth * 0.055,
+//                                           fontWeight: FontWeight.w600,
+//                                           color: Colors.white,
+//                                         ),
+//                                       ),
+//                                       SizedBox(height: screenHeight * 0.01),
+//                                       Text(
+//                                         "See your performance in the\nlast month",
+//                                         textAlign: TextAlign.center,
+//                                         style: GoogleFonts.montserrat(
+//                                           fontSize: screenWidth * 0.035,
+//                                           fontWeight: FontWeight.w500,
+//                                           color: Colors.white.withOpacity(0.46),
+//                                           height: 1.4,
+//                                         ),
+//                                       ),
+//                                       SizedBox(height: screenHeight * 0.02),
+
+//                                       // Checkout Button
+//                                       SizedBox(
+//                                         width: double.infinity,
+//                                         height: screenHeight * 0.06,
+//                                         child: ElevatedButton(
+//                                           onPressed: _startCheckoutTransition,
+//                                           style: ElevatedButton.styleFrom(
+//                                             backgroundColor:
+//                                                 AppColors.primaryGreen,
+//                                             elevation: 0,
+//                                             shape: RoundedRectangleBorder(
+//                                               borderRadius:
+//                                                   BorderRadius.circular(14),
+//                                             ),
+//                                           ),
+//                                           child: Text(
+//                                             "Checkout",
+//                                             style: GoogleFonts.montserrat(
+//                                               fontSize: screenWidth * 0.04,
+//                                               fontWeight: FontWeight.w500,
+//                                               color: Colors.white,
+//                                             ),
+//                                           ),
+//                                         ),
+//                                       ),
+//                                       SizedBox(height: screenHeight * 0.01),
+
+//                                       // Remind me later Button
+//                                       SizedBox(
+//                                         width: double.infinity,
+//                                         height: screenHeight * 0.06,
+//                                         child: OutlinedButton(
+//                                           onPressed: () =>
+//                                               Navigator.pop(context),
+//                                           style: OutlinedButton.styleFrom(
+//                                             side: BorderSide(
+//                                               color: Colors.white.withOpacity(
+//                                                 1,
+//                                               ),
+//                                               width: 1,
+//                                             ),
+//                                             shape: RoundedRectangleBorder(
+//                                               borderRadius:
+//                                                   BorderRadius.circular(14),
+//                                             ),
+//                                           ),
+//                                           child: Text(
+//                                             "Remind me later",
+//                                             style: GoogleFonts.montserrat(
+//                                               fontSize: screenWidth * 0.04,
+//                                               fontWeight: FontWeight.w500,
+//                                               color: Colors.white,
+//                                             ),
+//                                           ),
+//                                         ),
+//                                       ),
+//                                     ],
+//                                   ),
+//                                 ),
+//                               ),
+//                             ),
+//                           ),
+//                         ),
+//                       ),
+//                     ),
+
+//                     // --- SPENTWRAP Title ---
+//                     Align(
+//                       alignment: Alignment.lerp(
+//                         Alignment.center,
+//                         const Alignment(0, -0.70),
+//                         intro,
+//                       )!,
+//                       child: FittedBox(
+//                         fit: BoxFit.scaleDown,
+//                         child: Text(
+//                           "SPENTWRAP",
+//                           style: TextStyle(
+//                             fontFamily: 'CalcioDemo',
+//                             fontSize: lerpDouble(
+//                               screenWidth * 0.2,
+//                               screenWidth * 0.15,
+//                               intro,
+//                             ),
+//                             color: Colors.white,
+//                             letterSpacing: 2.0,
+//                             height: 1.0,
+//                           ),
+//                         ),
+//                       ),
+//                     ),
+//                   ],
+//                 );
+//               },
+//             ),
+
+//           // ==========================================
+//           // LAYER 2: CIRCLE TRANSITION
+//           // ==========================================
+//           if (_currentPhase == WrapPhase.transition)
+//             AnimatedBuilder(
+//               animation: _circleCtrl,
+//               builder: (context, child) {
+//                 final circleVal = _circleCtrl.value;
+
+//                 double dropProgress = Curves.easeOutCubic.transform(
+//                   (circleVal / 0.5).clamp(0.0, 1.0),
+//                 );
+//                 double expandProgress = Curves.easeInCirc.transform(
+//                   ((circleVal - 0.5) / 0.5).clamp(0.0, 1.0),
+//                 );
+
+//                 double circleY = lerpDouble(
+//                   topTextCenterY + 40,
+//                   screenHeight / 2,
+//                   dropProgress,
+//                 )!;
+//                 double scale = lerpDouble(
+//                   1.0,
+//                   screenHeight * 0.1,
+//                   expandProgress,
+//                 )!;
+
+//                 return Positioned(
+//                   top: circleY - 10,
+//                   left: screenWidth / 2 - 10,
+//                   child: Opacity(
+//                     opacity: dropProgress,
+//                     child: Transform.scale(
+//                       scale: scale,
+//                       child: Container(
+//                         width: 20,
+//                         height: 20,
+//                         decoration: const BoxDecoration(
+//                           color: Colors.white,
+//                           shape: BoxShape.circle,
+//                         ),
+//                       ),
+//                     ),
+//                   ),
+//                 );
+//               },
+//             ),
+
+//           // ==========================================
+//           // LAYER 3: NEW DETAILS SCREEN
+//           // ==========================================
+//           if (_currentPhase == WrapPhase.details)
+//             AnimatedBuilder(
+//               animation: _detailsCtrl,
+//               builder: (context, child) {
+//                 final dVal = Curves.easeOutCubic.transform(_detailsCtrl.value);
+//                 final linearVal = _detailsCtrl.value;
+
+//                 return Stack(
+//                   children: [
+//                     SafeArea(
+//                       child: Column(
+//                         children: [
+//                           SizedBox(height: screenHeight * 0.05),
+
+//                           // Header (Slides down from top)
+//                           Transform.translate(
+//                             offset: Offset(
+//                               0,
+//                               lerpDouble(-screenHeight * 0.3, 0, dVal)!,
+//                             ),
+//                             child: Column(
+//                               children: [
+//                                 Text(
+//                                   "April Spentwrap",
+//                                   style: GoogleFonts.montserrat(
+//                                     fontSize: screenWidth * 0.045,
+//                                     fontWeight: FontWeight.w600,
+//                                     color: Colors.black,
+//                                   ),
+//                                 ),
+//                                 SizedBox(height: screenHeight * 0.03),
+//                                 Row(
+//                                   mainAxisAlignment: MainAxisAlignment.center,
+//                                   children: List.generate(
+//                                     5,
+//                                     (index) => Container(
+//                                       margin: const EdgeInsets.symmetric(
+//                                         horizontal: 4,
+//                                       ),
+//                                       width: screenWidth * 0.1,
+//                                       height: 5,
+//                                       decoration: BoxDecoration(
+//                                         color: index == 0
+//                                             ? AppColors.primaryGreen
+//                                             : AppColors.inputFill,
+//                                         borderRadius: BorderRadius.circular(4),
+//                                       ),
+//                                     ),
+//                                   ),
+//                                 ),
+//                               ],
+//                             ),
+//                           ),
+
+//                           SizedBox(height: screenHeight * 0.14),
+
+//                           // Biggest Spending Zone Text
+//                           Transform.translate(
+//                             offset: Offset(
+//                               0,
+//                               lerpDouble(-screenHeight * 0.6, 0, dVal)!,
+//                             ),
+//                             child: RichText(
+//                               textAlign: TextAlign.center,
+//                               text: TextSpan(
+//                                 children: [
+//                                   TextSpan(
+//                                     text: "Your ",
+//                                     style: GoogleFonts.montserrat(
+//                                       fontSize: screenWidth * 0.06,
+//                                       fontWeight: FontWeight.w600,
+//                                       color: const Color(0xFF2D2B3F),
+//                                     ),
+//                                   ),
+//                                   TextSpan(
+//                                     text: "BIGGEST\n",
+//                                     style: GoogleFonts.montserrat(
+//                                       fontSize: screenWidth * 0.1,
+//                                       fontWeight: FontWeight.w700,
+//                                       height: 1.1,
+//                                       color: const Color(0xFF2D2B3F),
+//                                     ),
+//                                   ),
+//                                   TextSpan(
+//                                     text: "spending zone",
+//                                     style: GoogleFonts.montserrat(
+//                                       fontSize: screenWidth * 0.06,
+//                                       fontWeight: FontWeight.w600,
+//                                       color: const Color(0xFF2D2B3F),
+//                                     ),
+//                                   ),
+//                                 ],
+//                               ),
+//                             ),
+//                           ),
+
+//                           SizedBox(height: screenHeight * 0.08),
+
+//                           // --- Center Data Box & Icons ---
+//                           Align(
+//                             alignment: Alignment.center,
+//                             child: Stack(
+//                               clipBehavior: Clip.none,
+//                               alignment: Alignment.center,
+//                               children: [
+//                                 // Top Right Green Box
+//                                 Positioned(
+//                                   top: -26,
+//                                   right: -40,
+//                                   child: Transform.translate(
+//                                     offset: Offset(
+//                                       lerpDouble(screenWidth * 0.5, 0, dVal)!,
+//                                       0,
+//                                     ),
+//                                     child: Transform.rotate(
+//                                       angle: lerpDouble(
+//                                         0,
+//                                         21.47 * math.pi / 180,
+//                                         linearVal,
+//                                       )!,
+//                                       child: _buildGreenIconBox(
+//                                         PhosphorIcons.bowlSteam(),
+//                                         screenWidth,
+//                                       ),
+//                                     ),
+//                                   ),
+//                                 ),
+
+//                                 // Bottom Left Green Box
+//                                 Positioned(
+//                                   bottom: -16,
+//                                   left: -40,
+//                                   child: Transform.translate(
+//                                     offset: Offset(
+//                                       lerpDouble(-screenWidth * 0.5, 0, dVal)!,
+//                                       0,
+//                                     ),
+//                                     child: Transform.rotate(
+//                                       angle: lerpDouble(
+//                                         0,
+//                                         -25.87 * math.pi / 180,
+//                                         linearVal,
+//                                       )!,
+//                                       child: _buildGreenIconBox(
+//                                         PhosphorIconsRegular.wine,
+//                                         screenWidth,
+//                                       ),
+//                                     ),
+//                                   ),
+//                                 ),
+
+//                                 // --- THE ACTUAL BLURRED DATA BOX ---
+//                                 Transform.translate(
+//                                   offset: Offset(
+//                                     0,
+//                                     lerpDouble(screenHeight * 0.6, 0, dVal)!,
+//                                   ),
+//                                   child: Container(
+//                                     width:
+//                                         screenWidth * 0.65, // Responsive width
+//                                     decoration: BoxDecoration(
+//                                       borderRadius: BorderRadius.circular(19),
+//                                       boxShadow: [
+//                                         BoxShadow(
+//                                           color: Colors.black.withOpacity(0.1),
+//                                           blurRadius: 30,
+//                                           spreadRadius: 5,
+//                                           offset: const Offset(0, 10),
+//                                         ),
+//                                       ],
+//                                     ),
+//                                     child: ClipRRect(
+//                                       borderRadius: BorderRadius.circular(19),
+//                                       child: BackdropFilter(
+//                                         filter: ImageFilter.blur(
+//                                           sigmaX: 5.0,
+//                                           sigmaY: 5.0,
+//                                         ),
+//                                         child: Container(
+//                                           padding: EdgeInsets.symmetric(
+//                                             vertical: screenHeight * 0.03,
+//                                             horizontal: screenWidth * 0.05,
+//                                           ),
+//                                           decoration: BoxDecoration(
+//                                             color: Colors.white.withOpacity(
+//                                               0.60,
+//                                             ),
+//                                             borderRadius: BorderRadius.circular(
+//                                               19,
+//                                             ),
+//                                           ),
+//                                           child: Column(
+//                                             children: [
+//                                               Text(
+//                                                 "Food - ₹8,200",
+//                                                 style: GoogleFonts.montserrat(
+//                                                   fontSize: screenWidth * 0.06,
+//                                                   fontWeight: FontWeight.w600,
+//                                                   color: Colors.black,
+//                                                 ),
+//                                               ),
+//                                               SizedBox(
+//                                                 height: screenHeight * 0.015,
+//                                               ),
+//                                               Text(
+//                                                 "That's 33% of your total\nspending.",
+//                                                 textAlign: TextAlign.center,
+//                                                 style: GoogleFonts.montserrat(
+//                                                   fontSize: screenWidth * 0.035,
+//                                                   fontWeight: FontWeight.w500,
+//                                                   color: Colors.grey.shade700,
+//                                                   height: 1.4,
+//                                                 ),
+//                                               ),
+//                                             ],
+//                                           ),
+//                                         ),
+//                                       ),
+//                                     ),
+//                                   ),
+//                                 ),
+//                               ],
+//                             ),
+//                           ),
+
+//                           SizedBox(height: screenHeight * 0.12),
+
+//                           // Bottom Tip
+//                           Transform.translate(
+//                             offset: Offset(
+//                               0,
+//                               lerpDouble(screenHeight * 0.5, 0, dVal)!,
+//                             ),
+//                             child: Padding(
+//                               padding: EdgeInsets.only(
+//                                 bottom: screenHeight * 0.1,
+//                               ),
+//                               child: Text(
+//                                 "Maybe you should join\ncooking classes",
+//                                 textAlign: TextAlign.center,
+//                                 style: GoogleFonts.montserrat(
+//                                   fontSize: screenWidth * 0.035,
+//                                   fontWeight: FontWeight.w500,
+//                                   color: Colors.grey.shade500,
+//                                 ),
+//                               ),
+//                             ),
+//                           ),
+//                         ],
+//                       ),
+//                     ),
+
+//                     // --- Floating Images (Burger & Fries) ---
+//                     Positioned(
+//                       top: screenHeight * 0.12,
+//                       left: lerpDouble(
+//                         -screenWidth * 0.5,
+//                         -screenWidth * 0.15,
+//                         dVal,
+//                       ),
+//                       child: Transform.rotate(
+//                         angle: lerpDouble(0, 14 * math.pi / 180, linearVal)!,
+//                         child: Image.asset(
+//                           'assets/images/forest/spentwrap/food1.png',
+//                           width: screenWidth * 0.35, // Responsive size
+//                         ),
+//                       ),
+//                     ),
+
+//                     Positioned(
+//                       bottom: screenHeight * 0.12,
+//                       right: lerpDouble(
+//                         -screenWidth * 0.5,
+//                         -screenWidth * 0.15,
+//                         dVal,
+//                       ),
+//                       child: Transform.rotate(
+//                         angle: lerpDouble(0, -14 * math.pi / 180, linearVal)!,
+//                         child: Image.asset(
+//                           'assets/images/forest/spentwrap/food2.png',
+//                           width: screenWidth * 0.35, // Responsive size
+//                         ),
+//                       ),
+//                     ),
+//                   ],
+//                 );
+//               },
+//             ),
+//         ],
+//       ),
+//     );
+//   }
+
+//   // Helper Widget: Responsive Green Icon Box
+//   Widget _buildGreenIconBox(IconData icon, double screenWidth) {
+//     return Container(
+//       width: screenWidth * 0.14, // Responsive box size
+//       height: screenWidth * 0.14,
+//       decoration: BoxDecoration(
+//         color: AppColors.primaryGreen,
+//         borderRadius: BorderRadius.circular(14),
+//         boxShadow: [
+//           BoxShadow(
+//             color: Colors.black.withOpacity(0.1),
+//             blurRadius: 9,
+//             offset: const Offset(0, 4),
+//           ),
+//         ],
+//       ),
+//       child: Center(
+//         child: PhosphorIcon(
+//           icon,
+//           color: Colors.white,
+//           size: screenWidth * 0.08,
+//         ),
+//       ), // Responsive icon size
+//     );
+//   }
+
+//   // Helper Widget: Responsive Hollow Background Text
+//   Widget _buildHollowText(double screenWidth) {
+//     return Text(
+//       "WRAP",
+//       style: TextStyle(
+//         fontFamily: 'CalcioDemo',
+//         fontSize: screenWidth * 0.4, // Responsive massive background size
+//         letterSpacing: 1.0,
+//         height: 1.0,
+//         foreground: Paint()
+//           ..style = PaintingStyle.stroke
+//           ..strokeWidth = 1.2
+//           ..color = Colors.white.withOpacity(0.15),
+//       ),
+//     );
+//   }
+// }
 import 'dart:ui';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
@@ -5,7 +721,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../core/app_style.dart';
 
-// Defines the current state of our animation sequence
+// Added the 4th phase for Top Spends
 enum WrapPhase { intro, transition, details, topSpends }
 
 class SpentWrapScreen extends StatefulWidget {
@@ -59,36 +775,38 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
       duration: const Duration(milliseconds: 1200),
     );
 
-    // New Controllers
-    _detailsExitCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1000),
-    );
-    _topSpendsCtrl = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1400),
-    );
-
     // 4. Details Screen Entry Animation
     _detailsCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1400),
     );
 
-    // 5-Second Progress Bar Timer
-    _progressCtrl = AnimationController(
+    // NEW: Details Screen Exit Animation
+    _detailsExitCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 5),
+      duration: const Duration(milliseconds: 1000), // Smooth 1s exit
     );
 
-    // When the Details screen finishes entering, start the 5s progress bar
+    // NEW: Top Spends Screen Entry Animation
+    _topSpendsCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1400),
+    );
+
+    // NEW: 5-Second Progress Bar Timer
+    _progressCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 1),
+    );
+
+    // Listener 1: When Layer 3 finishes entering, start the 5s progress bar
     _detailsCtrl.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
         _progressCtrl.forward();
       }
     });
 
-    // When the 5s progress bar finishes on the Details screen, transition to Top Spends
+    // Listener 2: When the 5s progress bar finishes on Layer 3, trigger the transition to Layer 4
     _progressCtrl.addStatusListener((status) {
       if (status == AnimationStatus.completed &&
           _currentPhase == WrapPhase.details) {
@@ -96,12 +814,11 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
       }
     });
 
-    // When the Top Spends screen finishes entering, start the progress bar again for the next slide
+    // Listener 3: When Layer 4 finishes entering, start the progress bar for the next slot
     _topSpendsCtrl.addStatusListener((status) {
       if (status == AnimationStatus.completed) {
-        // Reset timer, increment dash index, and start 5s timer again
         _progressCtrl.reset();
-        setState(() => _activeProgressIndex = 1);
+        setState(() => _activeProgressIndex = 1); // Move to 2nd dash
         _progressCtrl.forward();
       }
     });
@@ -126,12 +843,9 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
 
   // --- TRIGGERED WHEN "CHECKOUT" IS CLICKED ---
   void _startCheckoutTransition() {
-    // 1. Slide everything away (except title)
     _exitCtrl.forward().then((_) {
-      // 2. Start the circle drop transition
       setState(() => _currentPhase = WrapPhase.transition);
       _circleCtrl.forward().then((_) {
-        // 3. Circle covered screen. Switch background to white and bring in details
         setState(() => _currentPhase = WrapPhase.details);
         Future.delayed(const Duration(milliseconds: 400), () {
           if (mounted) _detailsCtrl.forward();
@@ -140,13 +854,13 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
     });
   }
 
-  // --- TRANSITION FROM DETAILS TO TOP SPENDS ---
+  // --- TRANSITION FROM LAYER 3 TO LAYER 4 ---
   void _transitionToTopSpends() {
-    // 1. Slide old elements out
+    // 1. Slide Layer 3 elements out
     _detailsExitCtrl.forward().then((_) {
-      // 2. Change phase to render new elements
+      // 2. Change phase so Layer 4 renders
       setState(() => _currentPhase = WrapPhase.topSpends);
-      // 3. Slide new elements in
+      // 3. Slide Layer 4 elements in
       _topSpendsCtrl.forward();
     });
   }
@@ -158,7 +872,9 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
     final double topTextCenterY = screenHeight * 0.100;
 
     return Scaffold(
-      backgroundColor: _currentPhase == WrapPhase.details
+      backgroundColor:
+          _currentPhase == WrapPhase.details ||
+              _currentPhase == WrapPhase.topSpends
           ? Colors.white
           : AppColors.primaryGreen,
       body: Stack(
@@ -166,7 +882,8 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
           // ==========================================
           // LAYER 1: INTRO SCREEN (Only visible initially)
           // ==========================================
-          if (_currentPhase != WrapPhase.details)
+          if (_currentPhase == WrapPhase.intro ||
+              _currentPhase == WrapPhase.transition)
             AnimatedBuilder(
               animation: Listenable.merge([_introCtrl, _exitCtrl]),
               builder: (context, child) {
@@ -237,131 +954,124 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                           0,
                           (screenHeight * 1.2) * (1 - exitDownVal),
                         ),
-                        child: Opacity(
-                          opacity: exitDownVal.clamp(0.0, 1.0),
-                          child: Padding(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: screenWidth * 0.08,
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: screenWidth * 0.08,
+                          ),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(24),
                             ),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(24),
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(24),
-                                child: BackdropFilter(
-                                  filter: ImageFilter.blur(
-                                    sigmaX: 15.0,
-                                    sigmaY: 15.0,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(24),
+                              child: BackdropFilter(
+                                filter: ImageFilter.blur(
+                                  sigmaX: 15.0,
+                                  sigmaY: 15.0,
+                                ),
+                                child: Container(
+                                  padding: EdgeInsets.all(screenWidth * 0.035),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withOpacity(0.40),
+                                    borderRadius: BorderRadius.circular(24),
                                   ),
-                                  child: Container(
-                                    padding: EdgeInsets.all(
-                                      screenWidth * 0.035,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Colors.black.withOpacity(0.40),
-                                      borderRadius: BorderRadius.circular(24),
-                                    ),
-                                    child: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Container(
-                                          padding: EdgeInsets.all(
-                                            screenWidth * 0.03,
-                                          ),
-                                          decoration: const BoxDecoration(
-                                            color: AppColors.primaryGreen,
-                                            shape: BoxShape.circle,
-                                          ),
-                                          child: Icon(
-                                            PhosphorIcons.presentationChart(),
-                                            color: Colors.white,
-                                            size: screenWidth * 0.1,
-                                          ),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Container(
+                                        padding: EdgeInsets.all(
+                                          screenWidth * 0.03,
                                         ),
-                                        SizedBox(height: screenHeight * 0.02),
-                                        Text(
-                                          "September Spentwrap",
-                                          textAlign: TextAlign.center,
-                                          style: GoogleFonts.montserrat(
-                                            fontSize: screenWidth * 0.055,
-                                            fontWeight: FontWeight.w600,
-                                            color: Colors.white,
-                                          ),
+                                        decoration: const BoxDecoration(
+                                          color: AppColors.primaryGreen,
+                                          shape: BoxShape.circle,
                                         ),
-                                        SizedBox(height: screenHeight * 0.01),
-                                        Text(
-                                          "See your performance in the\nlast month",
-                                          textAlign: TextAlign.center,
-                                          style: GoogleFonts.montserrat(
-                                            fontSize: screenWidth * 0.035,
-                                            fontWeight: FontWeight.w500,
-                                            color: Colors.white.withOpacity(
-                                              0.46,
-                                            ),
-                                            height: 1.4,
-                                          ),
+                                        child: Icon(
+                                          PhosphorIcons.presentationChart(),
+                                          color: Colors.white,
+                                          size: screenWidth * 0.1,
                                         ),
-                                        SizedBox(height: screenHeight * 0.02),
+                                      ),
+                                      SizedBox(height: screenHeight * 0.02),
+                                      Text(
+                                        "September Spentwrap",
+                                        textAlign: TextAlign.center,
+                                        style: GoogleFonts.montserrat(
+                                          fontSize: screenWidth * 0.055,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                      SizedBox(height: screenHeight * 0.01),
+                                      Text(
+                                        "See your performance in the\nlast month",
+                                        textAlign: TextAlign.center,
+                                        style: GoogleFonts.montserrat(
+                                          fontSize: screenWidth * 0.035,
+                                          fontWeight: FontWeight.w500,
+                                          color: Colors.white.withOpacity(0.46),
+                                          height: 1.4,
+                                        ),
+                                      ),
+                                      SizedBox(height: screenHeight * 0.02),
 
-                                        // Checkout Button
-                                        SizedBox(
-                                          width: double.infinity,
-                                          height: screenHeight * 0.06,
-                                          child: ElevatedButton(
-                                            onPressed: _startCheckoutTransition,
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor:
-                                                  AppColors.primaryGreen,
-                                              elevation: 0,
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(14),
-                                              ),
+                                      // Checkout Button
+                                      SizedBox(
+                                        width: double.infinity,
+                                        height: screenHeight * 0.06,
+                                        child: ElevatedButton(
+                                          onPressed: _startCheckoutTransition,
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor:
+                                                AppColors.primaryGreen,
+                                            elevation: 0,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(14),
                                             ),
-                                            child: Text(
-                                              "Checkout",
-                                              style: GoogleFonts.montserrat(
-                                                fontSize: screenWidth * 0.04,
-                                                fontWeight: FontWeight.w500,
-                                                color: Colors.white,
-                                              ),
+                                          ),
+                                          child: Text(
+                                            "Checkout",
+                                            style: GoogleFonts.montserrat(
+                                              fontSize: screenWidth * 0.04,
+                                              fontWeight: FontWeight.w500,
+                                              color: Colors.white,
                                             ),
                                           ),
                                         ),
-                                        SizedBox(height: screenHeight * 0.01),
+                                      ),
+                                      SizedBox(height: screenHeight * 0.01),
 
-                                        // Remind me later Button
-                                        SizedBox(
-                                          width: double.infinity,
-                                          height: screenHeight * 0.06,
-                                          child: OutlinedButton(
-                                            onPressed: () =>
-                                                Navigator.pop(context),
-                                            style: OutlinedButton.styleFrom(
-                                              side: BorderSide(
-                                                color: Colors.white.withOpacity(
-                                                  1,
-                                                ),
-                                                width: 1,
+                                      // Remind me later Button
+                                      SizedBox(
+                                        width: double.infinity,
+                                        height: screenHeight * 0.06,
+                                        child: OutlinedButton(
+                                          onPressed: () =>
+                                              Navigator.pop(context),
+                                          style: OutlinedButton.styleFrom(
+                                            side: BorderSide(
+                                              color: Colors.white.withOpacity(
+                                                1,
                                               ),
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(14),
-                                              ),
+                                              width: 1,
                                             ),
-                                            child: Text(
-                                              "Remind me later",
-                                              style: GoogleFonts.montserrat(
-                                                fontSize: screenWidth * 0.04,
-                                                fontWeight: FontWeight.w500,
-                                                color: Colors.white,
-                                              ),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(14),
+                                            ),
+                                          ),
+                                          child: Text(
+                                            "Remind me later",
+                                            style: GoogleFonts.montserrat(
+                                              fontSize: screenWidth * 0.04,
+                                              fontWeight: FontWeight.w500,
+                                              color: Colors.white,
                                             ),
                                           ),
                                         ),
-                                      ],
-                                    ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ),
@@ -450,13 +1160,15 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
             ),
 
           // ==========================================
-          // LAYER 3: NEW DETAILS SCREEN
+          // HEADER & PROGRESS BAR (PERSISTENT ACROSS LAYER 3 & 4)
           // ==========================================
           if (_currentPhase == WrapPhase.details ||
               _currentPhase == WrapPhase.topSpends)
             AnimatedBuilder(
               animation: Listenable.merge([_detailsCtrl, _progressCtrl]),
               builder: (context, child) {
+                // Header ONLY animates in during the initial details entry.
+                // It stays at value 1.0 permanently after that.
                 final dVal = Curves.easeOutCubic.transform(_detailsCtrl.value);
                 final pVal = _progressCtrl.value;
 
@@ -523,8 +1235,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
           // ==========================================
           // LAYER 3: DETAILS SCREEN (Biggest Spending Zone)
           // ==========================================
-          if (_currentPhase == WrapPhase.details ||
-              _currentPhase == WrapPhase.topSpends)
+          if (_currentPhase == WrapPhase.details)
             AnimatedBuilder(
               animation: Listenable.merge([_detailsCtrl, _detailsExitCtrl]),
               builder: (context, child) {
@@ -536,30 +1247,23 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
 
                 // Active Val for sliding elements: Combines entry (0->1) and exit (1->0)
                 final dVal = intro * (1 - exit);
-                final linearVal = _detailsCtrl.value; // For rotation
-
-                // Hide completely when exit is finished to make way for Layer 4
-                if (exit == 1.0) return const SizedBox.shrink();
+                final linearVal =
+                    _detailsCtrl.value * (1 - _detailsExitCtrl.value);
 
                 return Stack(
                   children: [
                     SafeArea(
                       child: Column(
                         children: [
-                          // Invisible placeholder to push content down past the fixed header
-                          SizedBox(
-                            height:
-                                screenHeight * 0.05 +
-                                screenHeight * 0.03 +
-                                5 +
-                                26,
+                          // Invisible placeholder to push content exactly below the persistent header
+                          _buildInvisibleHeaderSpacer(
+                            screenWidth,
+                            screenHeight,
                           ),
+
                           SizedBox(height: screenHeight * 0.12),
 
-                          // Biggest Spending Zone Text (Slides down initially, slides UP on exit)
-                          // We map the exit differently here so it goes UP to -screenHeight * 0.6 instead of back down.
-
-                          // Biggest Spending Zone Text
+                          // Biggest Spending Zone Text (Slides DOWN initially, slides UP on exit)
                           Transform.translate(
                             offset: Offset(
                               0,
@@ -601,7 +1305,6 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                           ),
 
                           SizedBox(height: screenHeight * 0.08),
-                          // SizedBox(height: screenHeight * 0.05),
 
                           // --- Center Data Box & Icons ---
                           Align(
@@ -610,7 +1313,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                               clipBehavior: Clip.none,
                               alignment: Alignment.center,
                               children: [
-                                // Top Right Green Box
+                                // Top Right Green Box (Slides left/right on entry/exit)
                                 Positioned(
                                   top: -26,
                                   right: -40,
@@ -633,7 +1336,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                                   ),
                                 ),
 
-                                // Bottom Left Green Box
+                                // Bottom Left Green Box (Slides left/right on entry/exit)
                                 Positioned(
                                   bottom: -16,
                                   left: -40,
@@ -660,11 +1363,11 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                                 Transform.translate(
                                   offset: Offset(
                                     0,
+                                    // Slides UP on entry, DOWN on exit
                                     lerpDouble(screenHeight * 0.6, 0, dVal)!,
                                   ),
                                   child: Container(
-                                    width:
-                                        screenWidth * 0.65, // Responsive width
+                                    width: screenWidth * 0.65,
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(19),
                                       boxShadow: [
@@ -769,7 +1472,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                         angle: lerpDouble(0, 14 * math.pi / 180, linearVal)!,
                         child: Image.asset(
                           'assets/images/forest/spentwrap/food1.png',
-                          width: screenWidth * 0.35, // Responsive size
+                          width: screenWidth * 0.35,
                         ),
                       ),
                     ),
@@ -785,7 +1488,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                         angle: lerpDouble(0, -14 * math.pi / 180, linearVal)!,
                         child: Image.asset(
                           'assets/images/forest/spentwrap/food2.png',
-                          width: screenWidth * 0.35, // Responsive size
+                          width: screenWidth * 0.35,
                         ),
                       ),
                     ),
@@ -808,20 +1511,50 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
 
                 return Stack(
                   children: [
+                    // Floating Images rendered behind the content so they don't block the list
+                    Positioned(
+                      top: screenHeight * 0.12,
+                      left: lerpDouble(
+                        -screenWidth * 0.5,
+                        -screenWidth * 0.13,
+                        tVal,
+                      ),
+                      child: Transform.rotate(
+                        angle: lerpDouble(0, 14 * math.pi / 180, linearVal)!,
+                        child: Image.asset(
+                          'assets/images/forest/spentwrap/cash.png',
+                          width: screenWidth * 0.35,
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      bottom: screenHeight * 0.12,
+                      right: lerpDouble(
+                        -screenWidth * 0.5,
+                        -screenWidth * 0.13,
+                        tVal,
+                      ),
+                      child: Transform.rotate(
+                        angle: lerpDouble(0, -14 * math.pi / 180, linearVal)!,
+                        child: Image.asset(
+                          'assets/images/forest/spentwrap/bag.png',
+                          width: screenWidth * 0.35,
+                        ),
+                      ),
+                    ),
+
                     SafeArea(
                       child: Column(
                         children: [
-                          // Push content below the fixed header
-                          SizedBox(
-                            height:
-                                screenHeight * 0.05 +
-                                screenHeight * 0.03 +
-                                5 +
-                                26,
+                          _buildInvisibleHeaderSpacer(
+                            screenWidth,
+                            screenHeight,
                           ),
+
+                          // Exactly matching Layer 3's height gap for perfect replacement
                           SizedBox(height: screenHeight * 0.16),
 
-                          // Header Text (Slides down from top)
+                          // Header Text
                           Transform.translate(
                             offset: Offset(
                               0,
@@ -830,16 +1563,16 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                             child: Text(
                               "Your top spends were",
                               style: GoogleFonts.montserrat(
-                                fontSize: screenWidth * 0.07,
+                                fontSize: screenWidth * 0.065,
                                 fontWeight: FontWeight.w600,
                                 color: const Color(0xFF2D2B3F),
                               ),
                             ),
                           ),
 
-                          SizedBox(height: screenHeight * 0.04),
+                          SizedBox(height: screenHeight * 0.05),
 
-                          // Transaction Cards List (Slides up from bottom)
+                          // Transaction Cards List
                           Align(
                             alignment: Alignment.center,
                             child: Transform.translate(
@@ -858,8 +1591,8 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                                       "Fri, 11 April 2025",
                                       PhosphorIcons.gasPump(),
                                       screenWidth,
+                                      screenHeight,
                                     ),
-                                    SizedBox(height: screenHeight * 0.02),
                                     _buildTransactionCard(
                                       "D-Mart",
                                       "Bank account",
@@ -867,8 +1600,8 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                                       "Fri, 11 April 2025",
                                       PhosphorIcons.shoppingCart(),
                                       screenWidth,
+                                      screenHeight,
                                     ),
-                                    SizedBox(height: screenHeight * 0.02),
                                     _buildTransactionCard(
                                       "Unknown Source",
                                       "Bank account",
@@ -876,6 +1609,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                                       "Fri, 11 April 2025",
                                       PhosphorIcons.currencyInr(),
                                       screenWidth,
+                                      screenHeight,
                                       isIncome: true,
                                     ),
                                   ],
@@ -884,7 +1618,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                             ),
                           ),
 
-                          SizedBox(height: screenHeight * 0.12),
+                          SizedBox(height: screenHeight * 0.04),
 
                           // Bottom Tip
                           Transform.translate(
@@ -894,7 +1628,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                             ),
                             child: Padding(
                               padding: EdgeInsets.only(
-                                bottom: screenHeight * 0.12,
+                                bottom: screenHeight * 0.1,
                               ),
                               child: Text(
                                 "Going early to bed can be a\nsolution for this!",
@@ -911,38 +1645,6 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                         ],
                       ),
                     ),
-
-                    // --- Floating Images (Cash & Bag) ---
-                    Positioned(
-                      top: screenHeight * 0.12,
-                      left: lerpDouble(
-                        -screenWidth * 0.5,
-                        -screenWidth * 0.15,
-                        tVal,
-                      ),
-                      child: Transform.rotate(
-                        angle: lerpDouble(0, 14 * math.pi / 180, linearVal)!,
-                        child: Image.asset(
-                          'assets/images/forest/spentwrap/cash.png',
-                          width: screenWidth * 0.35,
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      bottom: screenHeight * 0.12,
-                      right: lerpDouble(
-                        -screenWidth * 0.5,
-                        -screenWidth * 0.15,
-                        tVal,
-                      ),
-                      child: Transform.rotate(
-                        angle: lerpDouble(0, -14 * math.pi / 180, linearVal)!,
-                        child: Image.asset(
-                          'assets/images/forest/spentwrap/bag.png',
-                          width: screenWidth * 0.35,
-                        ),
-                      ),
-                    ),
                   ],
                 );
               },
@@ -954,40 +1656,71 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
 
   // --- Helper Widgets ---
 
+  // Perfectly reserves the space of the persistent header so Layer 3 & 4 content align properly
+  Widget _buildInvisibleHeaderSpacer(double screenWidth, double screenHeight) {
+    return Opacity(
+      opacity: 0.0,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(height: screenHeight * 0.05),
+          Text(
+            "April Spentwrap",
+            style: GoogleFonts.montserrat(
+              fontSize: screenWidth * 0.045,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          SizedBox(height: screenHeight * 0.03),
+          Container(height: 5), // Dash height
+        ],
+      ),
+    );
+  }
+
   Widget _buildTransactionCard(
     String title,
     String subtitle,
     String amount,
     String date,
     IconData icon,
-    double screenWidth, {
+    double screenWidth,
+    double screenHeight, {
     bool isIncome = false,
   }) {
     return Container(
-      padding: EdgeInsets.all(screenWidth * 0.04),
+      // Responsive vertical spacing
+      margin: EdgeInsets.only(bottom: screenHeight * 0.016),
+      width: double.infinity,
+      // Responsive height
+      height: screenHeight * 0.084,
+      // Responsive padding
+      padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.024),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 20,
-            spreadRadius: 0,
-            offset: const Offset(0, 10),
-          ),
-        ],
+        color: AppColors.inputFill,
+        borderRadius: BorderRadius.circular(15),
       ),
       child: Row(
         children: [
           Container(
-            padding: EdgeInsets.all(screenWidth * 0.03),
+            // Responsive box width/height
+            width: screenWidth * 0.133,
+            height: screenWidth * 0.133,
             decoration: BoxDecoration(
               color: AppColors.primaryGreen,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(9.63),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.colblack.withOpacity(0.05),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
-            child: PhosphorIcon(
+            child: Icon(
               icon,
               color: Colors.white,
+              // Responsive icon size
               size: screenWidth * 0.06,
             ),
           ),
@@ -995,12 +1728,13 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
                   title,
                   style: GoogleFonts.montserrat(
                     fontSize: screenWidth * 0.035,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w600,
                     color: Colors.black,
                   ),
                 ),
@@ -1018,13 +1752,14 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
           ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
                 amount,
                 style: GoogleFonts.montserrat(
                   fontSize: screenWidth * 0.035,
-                  fontWeight: FontWeight.w700,
-                  color: isIncome ? AppColors.primaryGreen : Colors.black,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black,
                 ),
               ),
               SizedBox(height: 2),
@@ -1043,7 +1778,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
     );
   }
 
-  // Responsive  Box
+  // Responsive Box
   Widget _buildGreenIconBox(IconData icon, double screenWidth) {
     return Container(
       width: screenWidth * 0.14, // Responsive box size

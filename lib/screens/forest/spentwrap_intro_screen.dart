@@ -409,7 +409,9 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (context) => const MainWrapper(initialIndex: 2), // <-- UPDATE THIS to your main wrapper class name if different!
+        builder: (context) => const MainWrapper(
+          initialIndex: 2,
+        ), // <-- UPDATE THIS to your main wrapper class name if different!
       ),
     );
   }
@@ -425,7 +427,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
           _currentPhase == WrapPhase.intro ||
               _currentPhase == WrapPhase.transition
           ? AppColors.primaryGreen
-          : Colors.white,
+          : AppColors.bgWhite,
       body: Listener(
         behavior: HitTestBehavior.opaque,
         onPointerDown: (event) {
@@ -580,7 +582,9 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                                       screenWidth * 0.035,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: Colors.black.withOpacity(0.40),
+                                      color: Colors.black.withOpacity(
+                                        0.40,
+                                      ),
                                       borderRadius: BorderRadius.circular(24),
                                     ),
                                     child: Column(
@@ -596,7 +600,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                                           ),
                                           child: Icon(
                                             PhosphorIcons.presentationChart(),
-                                            color: Colors.white,
+                                            color: AppColors.colwhite,
                                             size: screenWidth * 0.1,
                                           ),
                                         ),
@@ -607,7 +611,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                                           style: GoogleFonts.montserrat(
                                             fontSize: screenWidth * 0.055,
                                             fontWeight: FontWeight.w600,
-                                            color: Colors.white,
+                                            color: AppColors.colwhite,
                                           ),
                                         ),
                                         SizedBox(height: screenHeight * 0.01),
@@ -617,9 +621,8 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                                           style: GoogleFonts.montserrat(
                                             fontSize: screenWidth * 0.035,
                                             fontWeight: FontWeight.w500,
-                                            color: Colors.white.withOpacity(
-                                              0.46,
-                                            ),
+                                            color: AppColors.colwhite
+                                                .withOpacity(0.46),
                                             height: 1.4,
                                           ),
                                         ),
@@ -645,7 +648,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                                               style: GoogleFonts.montserrat(
                                                 fontSize: screenWidth * 0.04,
                                                 fontWeight: FontWeight.w500,
-                                                color: Colors.white,
+                                                color: AppColors.colwhite,
                                               ),
                                             ),
                                           ),
@@ -660,9 +663,8 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                                             onPressed: _remindMeLaterTransition,
                                             style: OutlinedButton.styleFrom(
                                               side: BorderSide(
-                                                color: Colors.white.withOpacity(
-                                                  1,
-                                                ),
+                                                color: AppColors.colwhite
+                                                    .withOpacity(1),
                                                 width: 1,
                                               ),
                                               shape: RoundedRectangleBorder(
@@ -675,7 +677,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                                               style: GoogleFonts.montserrat(
                                                 fontSize: screenWidth * 0.04,
                                                 fontWeight: FontWeight.w500,
-                                                color: Colors.white,
+                                                color: AppColors.colwhite,
                                               ),
                                             ),
                                           ),
@@ -710,7 +712,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                                   screenWidth * 0.15,
                                   intro,
                                 ),
-                                color: Colors.white,
+                                color: AppColors.colwhite,
                                 letterSpacing: 2.0,
                                 height: 1.0,
                               ),
@@ -760,8 +762,8 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                         child: Container(
                           width: 20,
                           height: 20,
-                          decoration: const BoxDecoration(
-                            color: Colors.white,
+                          decoration: BoxDecoration(
+                            color: AppColors.colwhite,
                             shape: BoxShape.circle,
                           ),
                         ),
@@ -812,7 +814,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                               style: GoogleFonts.montserrat(
                                 fontSize: screenWidth * 0.045,
                                 fontWeight: FontWeight.w600,
-                                color: Colors.black,
+                                color: AppColors.colblack,
                               ),
                             ),
                             SizedBox(height: screenHeight * 0.03),
@@ -944,7 +946,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                                       style: GoogleFonts.montserrat(
                                         fontSize: screenWidth * 0.06,
                                         fontWeight: FontWeight.w600,
-                                        color: const Color(0xFF2D2B3F),
+                                        color: AppColors.colblack,
                                       ),
                                     ),
                                     TextSpan(
@@ -953,7 +955,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                                         fontSize: screenWidth * 0.1,
                                         fontWeight: FontWeight.w700,
                                         height: 1.1,
-                                        color: const Color(0xFF2D2B3F),
+                                        color: AppColors.colblack,
                                       ),
                                     ),
                                     TextSpan(
@@ -961,7 +963,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                                       style: GoogleFonts.montserrat(
                                         fontSize: screenWidth * 0.06,
                                         fontWeight: FontWeight.w600,
-                                        color: const Color(0xFF2D2B3F),
+                                        color: AppColors.colblack,
                                       ),
                                     ),
                                   ],
@@ -1063,9 +1065,8 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                                               horizontal: screenWidth * 0.05,
                                             ),
                                             decoration: BoxDecoration(
-                                              color: Colors.white.withOpacity(
-                                                0.60,
-                                              ),
+                                              color: AppColors.colwhite
+                                                  .withOpacity(0.60),
                                               borderRadius:
                                                   BorderRadius.circular(19),
                                             ),
@@ -1077,7 +1078,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                                                     fontSize:
                                                         screenWidth * 0.06,
                                                     fontWeight: FontWeight.w600,
-                                                    color: Colors.black,
+                                                    color: AppColors.colblack,
                                                   ),
                                                 ),
                                                 SizedBox(
@@ -1090,7 +1091,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                                                     fontSize:
                                                         screenWidth * 0.035,
                                                     fontWeight: FontWeight.w500,
-                                                    color: Colors.grey.shade700,
+                                                    color: AppColors.subtext,
                                                     height: 1.4,
                                                   ),
                                                 ),
@@ -1123,7 +1124,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                                   style: GoogleFonts.montserrat(
                                     fontSize: screenWidth * 0.035,
                                     fontWeight: FontWeight.w500,
-                                    color: Colors.grey.shade500,
+                                    color: AppColors.subtext,
                                   ),
                                 ),
                               ),
@@ -1215,7 +1216,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                                 style: GoogleFonts.montserrat(
                                   fontSize: screenWidth * 0.065,
                                   fontWeight: FontWeight.w600,
-                                  color: const Color(0xFF2D2B3F),
+                                  color: AppColors.colblack,
                                 ),
                               ),
                             ),
@@ -1286,7 +1287,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                                   style: GoogleFonts.montserrat(
                                     fontSize: screenWidth * 0.035,
                                     fontWeight: FontWeight.w500,
-                                    color: Colors.grey.shade500,
+                                    color: AppColors.subtext,
                                     height: 1.4,
                                   ),
                                 ),
@@ -1378,7 +1379,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                                       style: GoogleFonts.montserrat(
                                         fontSize: screenWidth * 0.060,
                                         fontWeight: FontWeight.w600,
-                                        color: const Color(0xFF2D2B3F),
+                                        color: AppColors.colblack,
                                       ),
                                     ),
                                     TextSpan(
@@ -1386,7 +1387,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                                       style: GoogleFonts.montserrat(
                                         fontSize: screenWidth * 0.070,
                                         fontWeight: FontWeight.w800,
-                                        color: const Color(0xFF2D2B3F),
+                                        color: AppColors.colblack,
                                       ),
                                     ),
                                     TextSpan(
@@ -1394,7 +1395,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                                       style: GoogleFonts.montserrat(
                                         fontSize: screenWidth * 0.060,
                                         fontWeight: FontWeight.w600,
-                                        color: const Color(0xFF2D2B3F),
+                                        color: AppColors.colblack,
                                       ),
                                     ),
                                   ],
@@ -1438,7 +1439,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                                   style: GoogleFonts.montserrat(
                                     fontSize: screenWidth * 0.035,
                                     fontWeight: FontWeight.w500,
-                                    color: Colors.grey.shade500,
+                                    color: AppColors.subtext,
                                     height: 1.4,
                                   ),
                                 ),
@@ -1490,7 +1491,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                             style: GoogleFonts.montserrat(
                               fontSize: screenWidth * 0.06,
                               fontWeight: FontWeight.w600,
-                              color: const Color(0xFF2D2B3F),
+                              color: AppColors.colblack,
                             ),
                           ),
                         ),
@@ -1526,7 +1527,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                                       bottom: screenHeight * 0.04,
                                     ), // Breathing room at the bottom
                                     decoration: BoxDecoration(
-                                      color: Colors.white,
+                                      color: AppColors.colwhite,
                                       borderRadius: BorderRadius.circular(24),
                                       boxShadow: [
                                         BoxShadow(
@@ -1571,7 +1572,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                                                     fontSize:
                                                         screenWidth * 0.035,
                                                     fontWeight: FontWeight.w600,
-                                                    color: Colors.black,
+                                                    color: AppColors.colblack,
                                                   ),
                                                 ),
                                               ),
@@ -1580,7 +1581,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                                                 style: GoogleFonts.montserrat(
                                                   fontSize: screenWidth * 0.035,
                                                   fontWeight: FontWeight.w500,
-                                                  color: Colors.black,
+                                                  color: AppColors.colblack,
                                                 ),
                                               ),
                                             ],
@@ -1641,7 +1642,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                                     0.060, // Exact 0.06 sizing required
                                 fontWeight:
                                     FontWeight.w600, // 600 weight required
-                                color: const Color(0xFF2D2B3F),
+                                color: AppColors.colblack,
                               ),
                             ),
                           ),
@@ -1716,7 +1717,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                                             style: GoogleFonts.montserrat(
                                               fontSize: screenWidth * 0.04,
                                               fontWeight: FontWeight.w500,
-                                              color: Colors.white,
+                                              color: AppColors.colwhite,
                                             ),
                                           ),
                                         ),
@@ -1807,7 +1808,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
             ),
             child: Icon(
               icon,
-              color: Colors.white,
+              color: AppColors.colwhite,
               // Responsive icon size
               size: screenWidth * 0.055,
             ),
@@ -1823,7 +1824,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                   style: GoogleFonts.montserrat(
                     fontSize: screenWidth * 0.035,
                     fontWeight: FontWeight.w600,
-                    color: Colors.black,
+                    color: AppColors.colblack,
                   ),
                 ),
                 SizedBox(height: 2),
@@ -1832,7 +1833,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                   style: GoogleFonts.montserrat(
                     fontSize: screenWidth * 0.025,
                     fontWeight: FontWeight.w500,
-                    color: Colors.grey.shade500,
+                    color: AppColors.subtext,
                   ),
                 ),
               ],
@@ -1847,7 +1848,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                 style: GoogleFonts.montserrat(
                   fontSize: screenWidth * 0.035,
                   fontWeight: FontWeight.w600,
-                  color: Colors.black,
+                  color: AppColors.colblack,
                 ),
               ),
               SizedBox(height: 2),
@@ -1856,7 +1857,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                 style: GoogleFonts.montserrat(
                   fontSize: screenWidth * 0.025,
                   fontWeight: FontWeight.w500,
-                  color: Colors.grey.shade500,
+                  color: AppColors.subtext,
                 ),
               ),
             ],
@@ -1885,7 +1886,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
       child: Center(
         child: PhosphorIcon(
           icon,
-          color: Colors.white,
+          color: AppColors.colwhite,
           size: screenWidth * 0.08,
         ),
       ), // Responsive icon size
@@ -1972,7 +1973,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
       width: screenWidth * 0.75,
       padding: EdgeInsets.all(screenWidth * 0.06),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.colwhite,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
@@ -2000,7 +2001,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
           style: GoogleFonts.montserrat(
             fontSize: screenWidth * 0.035,
             fontWeight: isHeader ? FontWeight.w500 : FontWeight.w500,
-            color: isHeader ? Colors.black : Colors.grey.shade600,
+            color: isHeader ? AppColors.colblack : AppColors.subtext,
           ),
         ),
       ),
@@ -2021,7 +2022,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
           style: GoogleFonts.montserrat(
             fontSize: screenWidth * 0.035,
             fontWeight: FontWeight.w500,
-            color: Colors.white,
+            color: AppColors.colwhite,
           ),
         ),
       ),
@@ -2040,7 +2041,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
         foreground: Paint()
           ..style = PaintingStyle.stroke
           ..strokeWidth = 1.2
-          ..color = Colors.white.withOpacity(0.15),
+          ..color = AppColors.colwhite.withOpacity(0.15),
       ),
     );
   }
@@ -2076,7 +2077,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                 style: GoogleFonts.montserrat(
                   fontSize: screenWidth * 0.03,
                   fontWeight: FontWeight.w500,
-                  color: Colors.grey.shade600,
+                  color: AppColors.subtext,
                 ),
               ),
               SizedBox(height: 2),
@@ -2085,7 +2086,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                 style: GoogleFonts.montserrat(
                   fontSize: screenWidth * 0.05,
                   fontWeight: FontWeight.w700,
-                  color: Colors.black,
+                  color: AppColors.colblack,
                 ),
               ),
             ],
@@ -2104,7 +2105,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                 children: [
                   Icon(
                     Icons.trending_up,
-                    color: Colors.white,
+                    color: AppColors.colwhite,
                     size: screenWidth * 0.035,
                   ),
                   SizedBox(width: screenWidth * 0.01),
@@ -2112,7 +2113,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                     "Great",
                     style: GoogleFonts.montserrat(
                       fontSize: screenWidth * 0.03,
-                      color: Colors.white,
+                      color: AppColors.colwhite,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -2190,7 +2191,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                       style: GoogleFonts.poppins(
                         fontSize: screenWidth * 0.04,
                         fontWeight: FontWeight.w500,
-                        color: Colors.black,
+                        color: AppColors.colblack,
                       ),
                     ),
                   ),
@@ -2199,7 +2200,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                     style: GoogleFonts.montserrat(
                       fontSize: screenWidth * 0.038,
                       fontWeight: FontWeight.w600,
-                      color: Colors.black,
+                      color: AppColors.colblack,
                     ),
                   ),
                 ],

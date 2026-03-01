@@ -5,9 +5,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:intl/intl.dart';
 import '../../core/app_style.dart';
-import 'package:spentree/screens/forest/forest_screen.dart';
+import 'package:spentree/screens/main_wrapper.dart';
 
-// Added the 4th phase for Top Spends
 enum WrapPhase {
   intro,
   transition,
@@ -61,6 +60,19 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
 
   // Tracks which dash is currently active/filling (0 for Details, 1 for Top Spends)
   int _activeProgressIndex = 0;
+  int _maxVisitedLayer =
+      0; // Tracks if a layer has been seen to prevent re-animating
+  bool _isTransitioning = false; // Prevents bugs if user taps wildly
+  bool _isExitingForward = false;
+  DateTime? _tapDownTime;
+
+  final List<WrapPhase> _phaseOrder = [
+    WrapPhase.details,
+    WrapPhase.topSpends,
+    WrapPhase.strongestDay,
+    WrapPhase.treesGrown,
+    WrapPhase.summary,
+  ];
 
   // Tree Data for Layer 6
   final List<Map<String, String>> _treeTypes = [
@@ -175,80 +187,20 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
     // 5-Second Progress Bar Timer
     _progressCtrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 500),
+      duration: const Duration(seconds: 5),
     );
 
-    // Listener 1: When Layer 3 finishes entering, start the 5s progress bar
-    _detailsCtrl.addStatusListener((status) {
-      if (status == AnimationStatus.completed) {
-        _progressCtrl.forward();
-      }
+    // Entry triggers the timer
+    _detailsCtrl.addStatusListener((s) {
+      if (s == AnimationStatus.completed) _progressCtrl.forward();
     });
 
-    _topSpendsCtrl.addStatusListener((s) {
-      if (s == AnimationStatus.completed) {
-        _progressCtrl.reset();
-        setState(() => _activeProgressIndex = 1);
-        _progressCtrl.forward();
-      }
-    });
-    _strongestDayCtrl.addStatusListener((s) {
-      if (s == AnimationStatus.completed) {
-        _progressCtrl.reset();
-        setState(() => _activeProgressIndex = 2);
-        _progressCtrl.forward();
-      }
-    });
-    _treesGrownCtrl.addStatusListener((s) {
-      if (s == AnimationStatus.completed) {
-        _progressCtrl.reset();
-        setState(() => _activeProgressIndex = 3);
-        _progressCtrl.forward();
-      }
-    });
-    _summaryCtrl.addStatusListener((s) {
-      if (s == AnimationStatus.completed) {
-        _progressCtrl.reset();
-        setState(() => _activeProgressIndex = 4);
-        _progressCtrl.forward();
-      }
-    });
-
+    // Auto-Advance Logic
     _progressCtrl.addStatusListener((status) {
-      if (status == AnimationStatus.completed) {
-        if (_currentPhase == WrapPhase.details) {
-          _transitionToTopSpends();
-        } else if (_currentPhase == WrapPhase.topSpends) {
-          _transitionToStrongestDay();
-        } else if (_currentPhase == WrapPhase.strongestDay) {
-          _transitionToTreesGrown();
-        } else if (_currentPhase == WrapPhase.treesGrown) {
-          _transitionToSummary();
+      if (status == AnimationStatus.completed && !_isTransitioning) {
+        if (_activeProgressIndex < 4) {
+          _navigateLayer(_activeProgressIndex + 1, isAutoAdvance: true);
         }
-      }
-    });
-
-    _topSpendsCtrl.addStatusListener((status) {
-      if (status == AnimationStatus.completed) {
-        _progressCtrl.reset();
-        setState(() => _activeProgressIndex = 1);
-        _progressCtrl.forward();
-      }
-    });
-
-    _strongestDayCtrl.addStatusListener((status) {
-      if (status == AnimationStatus.completed) {
-        _progressCtrl.reset();
-        setState(() => _activeProgressIndex = 2);
-        _progressCtrl.forward();
-      }
-    });
-
-    _treesGrownCtrl.addStatusListener((status) {
-      if (status == AnimationStatus.completed) {
-        _progressCtrl.reset();
-        setState(() => _activeProgressIndex = 3);
-        _progressCtrl.forward();
       }
     });
 
@@ -287,87 +239,179 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
     super.dispose();
   }
 
-  // --- TRIGGERED WHEN "CHECKOUT" IS CLICKED ---
+  // --- SMART TAP & AUTO-ADVANCE NAVIGATION ENGINE ---
+  AnimationController _getEntryCtrl(int index) {
+    switch (index) {
+      case 0:
+        return _detailsCtrl;
+      case 1:
+        return _topSpendsCtrl;
+      case 2:
+        return _strongestDayCtrl;
+      case 3:
+        return _treesGrownCtrl;
+      case 4:
+        return _summaryCtrl;
+      default:
+        return _detailsCtrl;
+    }
+  }
+
+  AnimationController _getExitCtrl(int index) {
+    switch (index) {
+      case 0:
+        return _detailsExitCtrl;
+      case 1:
+        return _topSpendsExitCtrl;
+      case 2:
+        return _strongestDayExitCtrl;
+      case 3:
+        return _treesGrownExitCtrl;
+      case 4:
+        return _finalExitCtrl;
+      default:
+        return _detailsExitCtrl;
+    }
+  }
+
+  void _navigateLayer(int newIndex, {bool isAutoAdvance = false}) {
+    if (_isTransitioning) return;
+    _progressCtrl.stop();
+
+    bool isFirstTime = newIndex > _maxVisitedLayer;
+    _isExitingForward = newIndex > _activeProgressIndex;
+
+    if (isFirstTime) {
+      // PLAY SMOOTH EXIT/ENTRY ANIMATION ONLY ONCE
+      _isTransitioning = true;
+      _getExitCtrl(_activeProgressIndex).forward().then((_) {
+        _getEntryCtrl(_activeProgressIndex).reset();
+        _getExitCtrl(_activeProgressIndex).reset();
+
+        setState(() {
+          _activeProgressIndex = newIndex;
+          _currentPhase = _phaseOrder[newIndex];
+          _maxVisitedLayer = newIndex;
+        });
+
+        _progressCtrl.reset();
+        _isExitingForward = false;
+
+        _getEntryCtrl(newIndex).forward().then((_) {
+          _isTransitioning = false;
+          _progressCtrl.forward();
+        });
+      });
+    } else {
+      // ALREADY VISITED: INSTANT SNAP (No animation)
+      _getEntryCtrl(_activeProgressIndex).reset();
+      _getExitCtrl(_activeProgressIndex).reset();
+
+      setState(() {
+        _activeProgressIndex = newIndex;
+        _currentPhase = _phaseOrder[newIndex];
+      });
+
+      _getEntryCtrl(newIndex).value = 1.0; // Instantly place layer on screen
+      _progressCtrl.reset();
+      _isExitingForward = false;
+      _progressCtrl.forward();
+    }
+  }
+  // // --- GESTURE LOGIC (PAUSE / TAP LEFT / TAP RIGHT) ---
+  // void _handleTapDown(TapDownDetails details) {
+  //   if (_currentPhase != WrapPhase.intro &&
+  //       _currentPhase != WrapPhase.transition) {
+  //     _tapDownTime = DateTime.now();
+  //     _progressCtrl.stop(); // Pause the bar instantly
+  //   }
+  // }
+
+  // void _handleTapUp(TapUpDetails details, double screenWidth) {
+  //   if (_currentPhase == WrapPhase.intro ||
+  //       _currentPhase == WrapPhase.transition)
+  //     return;
+
+  //   final tapDuration = DateTime.now().difference(_tapDownTime!);
+
+  //   // If held for less than 200ms, it's a tap. Otherwise, it was a hold.
+  //   if (tapDuration.inMilliseconds < 200) {
+  //     if (details.globalPosition.dx < screenWidth / 2) {
+  //       // Tapped Left
+  //       if (_activeProgressIndex > 0) _navigateLayer(_activeProgressIndex - 1);
+  //     } else {
+  //       // Tapped Right
+  //       if (_activeProgressIndex < 4) _navigateLayer(_activeProgressIndex + 1);
+  //     }
+  //   } else {
+  //     // User let go after a long press, resume the bar smoothly
+  //     if (!_isTransitioning) _progressCtrl.forward();
+  //   }
+  // }
+
+  // --- TRANSITIONS TO FOREST PAGE ---
   void _startCheckoutTransition() {
+    _isTransitioning = true;
     _exitCtrl.forward().then((_) {
       setState(() => _currentPhase = WrapPhase.transition);
       _circleCtrl.forward().then((_) {
-        setState(() => _currentPhase = WrapPhase.details);
+        setState(() {
+          _currentPhase = WrapPhase.details;
+          _activeProgressIndex = 0;
+          _maxVisitedLayer = 0;
+        });
         Future.delayed(const Duration(milliseconds: 400), () {
-          if (mounted) _detailsCtrl.forward();
+          if (mounted) {
+            _detailsCtrl.forward().then((_) {
+              _isTransitioning = false;
+              _progressCtrl.forward();
+            });
+          }
         });
       });
     });
   }
 
-  // FIXED: Flawless "Remind Me Later" Fade & Slide Transition
   void _remindMeLaterTransition() {
+    if (_isTransitioning) return;
+    _isTransitioning = true;
+    _progressCtrl.stop();
     _remindExitCtrl.forward().then((_) {
-      Navigator.pushReplacement(
-        context,
-        PageRouteBuilder(
-          pageBuilder: (context, animation, secondaryAnimation) =>
-              const ForestScreen(isActive: true),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return FadeTransition(opacity: animation, child: child);
-          },
-          transitionDuration: const Duration(
-            milliseconds: 800,
-          ), // Smooth 0.8s fade
-        ),
-      );
+      _triggerStandardNavigation();
     });
   }
 
-  // --- TRANSITION FROM LAYER 3 TO LAYER 4 ---
-  void _transitionToTopSpends() {
-    // 1. Slide Layer 3 elements out
-    _detailsExitCtrl.forward().then((_) {
-      // 2. Change phase so Layer 4 renders
-      setState(() => _currentPhase = WrapPhase.topSpends);
-      // 3. Slide Layer 4 elements in
-      _topSpendsCtrl.forward();
-    });
-  }
-
-  void _transitionToStrongestDay() {
-    _topSpendsExitCtrl.forward().then((_) {
-      setState(() => _currentPhase = WrapPhase.strongestDay);
-      _strongestDayCtrl.forward();
-    });
-  }
-
-  void _transitionToTreesGrown() {
-    _strongestDayExitCtrl.forward().then((_) {
-      setState(() => _currentPhase = WrapPhase.treesGrown);
-      _treesGrownCtrl.forward();
-    });
-  }
-
-  void _transitionToSummary() {
-    _treesGrownExitCtrl.forward().then((_) {
-      setState(() => _currentPhase = WrapPhase.summary);
-      _summaryCtrl.forward();
-    });
-  }
-
-  // Called when "Go to Forest" is clicked
   void _goToForestFinalTransition() {
+    if (_isTransitioning) return;
+    _isTransitioning = true;
+    _progressCtrl.stop();
     _finalExitCtrl.forward().then((_) {
-      Navigator.pushReplacement(
-        context,
-        PageRouteBuilder(
-          pageBuilder: (context, animation, secondaryAnimation) =>
-              const ForestScreen(isActive: true),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return FadeTransition(opacity: animation, child: child);
-          },
-          transitionDuration: const Duration(
-            milliseconds: 800,
-          ), // Smooth 0.8s fade
-        ),
-      );
+      _triggerStandardNavigation();
     });
+  }
+
+  // FIXED: Restores MainWrapper (Navbar & Swipe logic) with a smooth Fade!
+  void _triggerStandardNavigation() {
+    // Navigator.pushReplacement(
+    //   context,
+    //   PageRouteBuilder(
+    //     // Pass the index of your Forest tab here (e.g., 1, 2, or 3 depending on your navbar order)
+    //     pageBuilder: (context, animation, secondaryAnimation) =>
+    //         const MainWrapper(initialIndex: 2),
+    //     transitionsBuilder: (context, animation, secondaryAnimation, child) {
+    //       return FadeTransition(opacity: animation, child: child);
+    //     },
+    //     transitionDuration: const Duration(
+    //       milliseconds: 800,
+    //     ), // Smooth 0.8s fade
+    //   ),
+    // );
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const MainWrapper(initialIndex: 2), // <-- UPDATE THIS to your main wrapper class name if different!
+      ),
+    );
   }
 
   @override
@@ -382,160 +426,1282 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
               _currentPhase == WrapPhase.transition
           ? AppColors.primaryGreen
           : Colors.white,
-      body: Stack(
-        children: [
-          // ==========================================
-          // LAYER 1: INTRO SCREEN (Only visible initially)
-          // ==========================================
+      body: Listener(
+        behavior: HitTestBehavior.opaque,
+        onPointerDown: (event) {
+          if (_currentPhase != WrapPhase.intro &&
+              _currentPhase != WrapPhase.transition) {
+            _tapDownTime = DateTime.now();
+            _progressCtrl.stop(); // Instantly pause exactly where it is
+          }
+        },
+        onPointerUp: (event) {
           if (_currentPhase == WrapPhase.intro ||
               _currentPhase == WrapPhase.transition)
-            AnimatedBuilder(
-              animation: Listenable.merge([
-                _introCtrl,
-                _exitCtrl,
-                _remindExitCtrl,
-              ]),
-              builder: (context, child) {
-                final intro = Curves.easeOutCubic.transform(_introCtrl.value);
-                final exit = Curves.easeIn.transform(_exitCtrl.value);
-                final remindExit = Curves.easeIn.transform(
-                  _remindExitCtrl.value,
-                );
+            return;
 
-                // Both CheckOut and Remind exits fade the background/trees
-                final val = intro * (1 - exit) * (1 - remindExit);
+          final tapDuration = DateTime.now().difference(_tapDownTime!);
+          if (tapDuration.inMilliseconds < 250) {
+            // It's a quick tap
+            if (event.position.dx < screenWidth / 2) {
+              if (_activeProgressIndex > 0)
+                _navigateLayer(_activeProgressIndex - 1);
+            } else {
+              if (_activeProgressIndex < 4)
+                _navigateLayer(_activeProgressIndex + 1);
+            }
+          } else {
+            // It was a long press hold. Resume!
+            if (!_isTransitioning) _progressCtrl.forward();
+          }
+        },
+        onPointerCancel: (event) {
+          if (_currentPhase != WrapPhase.intro &&
+              _currentPhase != WrapPhase.transition &&
+              !_isTransitioning) {
+            _progressCtrl.forward();
+          }
+        },
+        child: Stack(
+          children: [
+            // ==========================================
+            // LAYER 1: INTRO SCREEN (Only visible initially)
+            // ==========================================
+            if (_currentPhase == WrapPhase.intro ||
+                _currentPhase == WrapPhase.transition)
+              AnimatedBuilder(
+                animation: Listenable.merge([
+                  _introCtrl,
+                  _exitCtrl,
+                  _remindExitCtrl,
+                ]),
+                builder: (context, child) {
+                  final intro = Curves.easeOutCubic.transform(_introCtrl.value);
+                  final exit = Curves.easeIn.transform(_exitCtrl.value);
+                  final remindExit = Curves.easeIn.transform(
+                    _remindExitCtrl.value,
+                  );
 
-                // Both exits slide the center card down
-                final exitDownVal = (intro - exit - remindExit).clamp(0.0, 1.0);
+                  // Both CheckOut and Remind exits fade the background/trees
+                  final val = intro * (1 - exit) * (1 - remindExit);
 
-                final double treeWidth = screenWidth * 0.55;
-                final double forestWidth = screenWidth * 1.45;
+                  // Both exits slide the center card down
+                  final exitDownVal = (intro - exit - remindExit).clamp(
+                    0.0,
+                    1.0,
+                  );
 
-                return Stack(
-                  children: [
-                    // --- Hollow "WRAP" Texts ---
-                    Positioned(
-                      top: screenHeight * 0.20,
-                      left: lerpDouble(-screenWidth, -screenWidth * 0.25, val),
-                      child: Opacity(
-                        opacity: val,
-                        child: _buildHollowText(screenWidth),
-                      ),
-                    ),
-                    Positioned(
-                      bottom: screenHeight * 0.16,
-                      right: lerpDouble(-screenWidth, -screenWidth * 0.10, val),
-                      child: Opacity(
-                        opacity: val,
-                        child: _buildHollowText(screenWidth),
-                      ),
-                    ),
+                  final double treeWidth = screenWidth * 0.55;
+                  final double forestWidth = screenWidth * 1.45;
 
-                    // --- 2. Floating 3D Assets ---
-                    Positioned(
-                      top: screenHeight * 0.15,
-                      right: lerpDouble(-treeWidth, -(treeWidth * 0.50), val),
-                      width: treeWidth,
-                      child: Opacity(
-                        opacity: val,
-                        child: Image.asset(
-                          'assets/images/tree_1.png',
-                          fit: BoxFit.contain,
+                  return Stack(
+                    children: [
+                      // --- Hollow "WRAP" Texts ---
+                      Positioned(
+                        top: screenHeight * 0.20,
+                        left: lerpDouble(
+                          -screenWidth,
+                          -screenWidth * 0.25,
+                          val,
+                        ),
+                        child: Opacity(
+                          opacity: val,
+                          child: _buildHollowText(screenWidth),
                         ),
                       ),
-                    ),
-                    Positioned(
-                      bottom: -screenHeight * 0.002,
-                      left: lerpDouble(
-                        -forestWidth,
-                        -(forestWidth * 0.60),
-                        val,
-                      ),
-                      width: forestWidth,
-                      child: Opacity(
-                        opacity: val,
-                        child: Image.asset(
-                          'assets/images/full_forest_iso.png',
-                          fit: BoxFit.contain,
+                      Positioned(
+                        bottom: screenHeight * 0.16,
+                        right: lerpDouble(
+                          -screenWidth,
+                          -screenWidth * 0.10,
+                          val,
+                        ),
+                        child: Opacity(
+                          opacity: val,
+                          child: _buildHollowText(screenWidth),
                         ),
                       ),
-                    ),
 
-                    // --- Center Data Card ---
-                    Align(
-                      alignment: Alignment.center,
-                      child: Transform.translate(
-                        offset: Offset(
-                          0,
-                          (screenHeight * 1.2) * (1 - exitDownVal),
-                        ),
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: screenWidth * 0.08,
+                      // --- 2. Floating 3D Assets ---
+                      Positioned(
+                        top: screenHeight * 0.15,
+                        right: lerpDouble(-treeWidth, -(treeWidth * 0.50), val),
+                        width: treeWidth,
+                        child: Opacity(
+                          opacity: val,
+                          child: Image.asset(
+                            'assets/images/tree_1.png',
+                            fit: BoxFit.contain,
                           ),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(24),
+                        ),
+                      ),
+                      Positioned(
+                        bottom: -screenHeight * 0.002,
+                        left: lerpDouble(
+                          -forestWidth,
+                          -(forestWidth * 0.60),
+                          val,
+                        ),
+                        width: forestWidth,
+                        child: Opacity(
+                          opacity: val,
+                          child: Image.asset(
+                            'assets/images/full_forest_iso.png',
+                            fit: BoxFit.contain,
+                          ),
+                        ),
+                      ),
+
+                      // --- Center Data Card ---
+                      Align(
+                        alignment: Alignment.center,
+                        child: Transform.translate(
+                          offset: Offset(
+                            0,
+                            (screenHeight * 1.2) * (1 - exitDownVal),
+                          ),
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: screenWidth * 0.08,
                             ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(24),
-                              child: BackdropFilter(
-                                filter: ImageFilter.blur(
-                                  sigmaX: 15.0,
-                                  sigmaY: 15.0,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(24),
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(24),
+                                child: BackdropFilter(
+                                  filter: ImageFilter.blur(
+                                    sigmaX: 15.0,
+                                    sigmaY: 15.0,
+                                  ),
+                                  child: Container(
+                                    padding: EdgeInsets.all(
+                                      screenWidth * 0.035,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black.withOpacity(0.40),
+                                      borderRadius: BorderRadius.circular(24),
+                                    ),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Container(
+                                          padding: EdgeInsets.all(
+                                            screenWidth * 0.03,
+                                          ),
+                                          decoration: const BoxDecoration(
+                                            color: AppColors.primaryGreen,
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: Icon(
+                                            PhosphorIcons.presentationChart(),
+                                            color: Colors.white,
+                                            size: screenWidth * 0.1,
+                                          ),
+                                        ),
+                                        SizedBox(height: screenHeight * 0.02),
+                                        Text(
+                                          "September Spentwrap",
+                                          textAlign: TextAlign.center,
+                                          style: GoogleFonts.montserrat(
+                                            fontSize: screenWidth * 0.055,
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                        SizedBox(height: screenHeight * 0.01),
+                                        Text(
+                                          "See your performance in the\nlast month",
+                                          textAlign: TextAlign.center,
+                                          style: GoogleFonts.montserrat(
+                                            fontSize: screenWidth * 0.035,
+                                            fontWeight: FontWeight.w500,
+                                            color: Colors.white.withOpacity(
+                                              0.46,
+                                            ),
+                                            height: 1.4,
+                                          ),
+                                        ),
+                                        SizedBox(height: screenHeight * 0.02),
+
+                                        // Checkout Button
+                                        SizedBox(
+                                          width: double.infinity,
+                                          height: screenHeight * 0.06,
+                                          child: ElevatedButton(
+                                            onPressed: _startCheckoutTransition,
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor:
+                                                  AppColors.primaryGreen,
+                                              elevation: 0,
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(14),
+                                              ),
+                                            ),
+                                            child: Text(
+                                              "Checkout",
+                                              style: GoogleFonts.montserrat(
+                                                fontSize: screenWidth * 0.04,
+                                                fontWeight: FontWeight.w500,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        SizedBox(height: screenHeight * 0.01),
+
+                                        // Remind me later Button
+                                        SizedBox(
+                                          width: double.infinity,
+                                          height: screenHeight * 0.06,
+                                          child: OutlinedButton(
+                                            onPressed: _remindMeLaterTransition,
+                                            style: OutlinedButton.styleFrom(
+                                              side: BorderSide(
+                                                color: Colors.white.withOpacity(
+                                                  1,
+                                                ),
+                                                width: 1,
+                                              ),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(14),
+                                              ),
+                                            ),
+                                            child: Text(
+                                              "Remind me later",
+                                              style: GoogleFonts.montserrat(
+                                                fontSize: screenWidth * 0.04,
+                                                fontWeight: FontWeight.w500,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      // --- SPENTWRAP Title ---
+                      Align(
+                        alignment: Alignment(
+                          0,
+                          lerpDouble(0.0, -0.70, intro)! -
+                              lerpDouble(0.0, 1.5, remindExit)!,
+                        ),
+                        child: Opacity(
+                          opacity: (1.0 - remindExit).clamp(0.0, 1.0),
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              "SPENTWRAP",
+                              style: TextStyle(
+                                fontFamily: 'CalcioDemo',
+                                fontSize: lerpDouble(
+                                  screenWidth * 0.2,
+                                  screenWidth * 0.15,
+                                  intro,
+                                ),
+                                color: Colors.white,
+                                letterSpacing: 2.0,
+                                height: 1.0,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+
+            // ==========================================
+            // LAYER 2: CIRCLE TRANSITION
+            // ==========================================
+            if (_currentPhase == WrapPhase.transition)
+              AnimatedBuilder(
+                animation: _circleCtrl,
+                builder: (context, child) {
+                  final circleVal = _circleCtrl.value;
+
+                  double dropProgress = Curves.easeOutCubic.transform(
+                    (circleVal / 0.5).clamp(0.0, 1.0),
+                  );
+                  double expandProgress = Curves.easeInCirc.transform(
+                    ((circleVal - 0.5) / 0.5).clamp(0.0, 1.0),
+                  );
+
+                  double circleY = lerpDouble(
+                    topTextCenterY + 40,
+                    screenHeight / 2,
+                    dropProgress,
+                  )!;
+                  double scale = lerpDouble(
+                    1.0,
+                    screenHeight * 0.1,
+                    expandProgress,
+                  )!;
+
+                  return Positioned(
+                    top: circleY - 10,
+                    left: screenWidth / 2 - 10,
+                    child: Opacity(
+                      opacity: dropProgress,
+                      child: Transform.scale(
+                        scale: scale,
+                        child: Container(
+                          width: 20,
+                          height: 20,
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+
+            // ==========================================
+            // HEADER & PROGRESS BAR (PERSISTENT ACROSS LAYER 3 & 4)
+            // ==========================================
+            // if (_currentPhase != WrapPhase.intro && _currentPhase != WrapPhase.transition)
+            if (_currentPhase != WrapPhase.intro &&
+                _currentPhase != WrapPhase.transition)
+              AnimatedBuilder(
+                animation: Listenable.merge([
+                  _detailsCtrl,
+                  _progressCtrl,
+                  _finalExitCtrl,
+                ]),
+                builder: (context, child) {
+                  // Header ONLY animates in during the initial details entry.
+                  // It stays at value 1.0 permanently after that.
+                  final dVal = _activeProgressIndex == 0
+                      ? Curves.easeOutCubic.transform(_detailsCtrl.value)
+                      : 1.0;
+                  final pVal = _progressCtrl.value;
+                  final finalExit = Curves.easeInCubic.transform(
+                    _finalExitCtrl.value,
+                  );
+
+                  return SafeArea(
+                    child: Transform.translate(
+                      offset: Offset(
+                        0,
+                        lerpDouble(-screenHeight * 0.3, 0, dVal)! +
+                            lerpDouble(0, -screenHeight * 0.3, finalExit)!,
+                      ),
+                      child: Opacity(
+                        opacity: 1.0 - finalExit,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SizedBox(height: screenHeight * 0.05),
+                            Text(
+                              "April Spentwrap",
+                              style: GoogleFonts.montserrat(
+                                fontSize: screenWidth * 0.045,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black,
+                              ),
+                            ),
+                            SizedBox(height: screenHeight * 0.03),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: List.generate(5, (index) {
+                                // Logic to fill the progress bar left-to-right over 5 seconds
+                                double fillPercent = 0.0;
+                                if (index < _activeProgressIndex) {
+                                  fillPercent = 1.0; // Fully filled past bars
+                                } else if (index == _activeProgressIndex) {
+                                  fillPercent = pVal; // Currently filling bar
+                                }
+
+                                return Container(
+                                  margin: const EdgeInsets.symmetric(
+                                    horizontal: 4,
+                                  ),
+                                  width: screenWidth * 0.1,
+                                  height: 5,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.inputFill,
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: FractionallySizedBox(
+                                      widthFactor: fillPercent,
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          color: AppColors.primaryGreen,
+                                          borderRadius: BorderRadius.circular(
+                                            4,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+
+            // ==========================================
+            // LAYER 3: DETAILS SCREEN (Biggest Spending Zone)
+            // ==========================================
+            if (_currentPhase == WrapPhase.details)
+              AnimatedBuilder(
+                animation: Listenable.merge([_detailsCtrl, _detailsExitCtrl]),
+                builder: (context, child) {
+                  // Intro is 0 to 1, Exit is 0 to 1
+                  final intro = Curves.easeOutCubic.transform(
+                    _detailsCtrl.value,
+                  );
+                  final exit = Curves.easeInCubic.transform(
+                    _detailsExitCtrl.value,
+                  );
+
+                  // Active Val for sliding elements: Combines entry (0->1) and exit (1->0)
+                  final dVal = intro * (1 - exit);
+                  final linearVal =
+                      _detailsCtrl.value * (1 - _detailsExitCtrl.value);
+
+                  if (exit == 1.0) return const SizedBox.shrink();
+
+                  return Stack(
+                    children: [
+                      Positioned(
+                        top: screenHeight * 0.12,
+                        left: lerpDouble(
+                          -screenWidth * 0.5,
+                          -screenWidth * 0.15,
+                          dVal,
+                        ),
+                        child: Transform.rotate(
+                          angle: lerpDouble(0, 14 * math.pi / 180, linearVal)!,
+                          child: Image.asset(
+                            'assets/images/forest/spentwrap/food1.png',
+                            width: screenWidth * 0.35,
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        bottom: screenHeight * 0.12,
+                        right: lerpDouble(
+                          -screenWidth * 0.5,
+                          -screenWidth * 0.15,
+                          dVal,
+                        ),
+                        child: Transform.rotate(
+                          angle: lerpDouble(0, -14 * math.pi / 180, linearVal)!,
+                          child: Image.asset(
+                            'assets/images/forest/spentwrap/food2.png',
+                            width: screenWidth * 0.35,
+                          ),
+                        ),
+                      ),
+
+                      SafeArea(
+                        child: Column(
+                          children: [
+                            // Invisible placeholder to push content exactly below the persistent header
+                            _buildInvisibleHeaderSpacer(
+                              screenWidth,
+                              screenHeight,
+                            ),
+
+                            SizedBox(height: screenHeight * 0.12),
+
+                            // Biggest Spending Zone Text (Slides DOWN initially, slides UP on exit)
+                            Transform.translate(
+                              offset: Offset(
+                                0,
+                                lerpDouble(-screenHeight * 0.6, 0, intro)! +
+                                    lerpDouble(0, -screenHeight * 0.6, exit)!,
+                              ),
+                              child: RichText(
+                                textAlign: TextAlign.center,
+                                text: TextSpan(
+                                  children: [
+                                    TextSpan(
+                                      text: "Your ",
+                                      style: GoogleFonts.montserrat(
+                                        fontSize: screenWidth * 0.06,
+                                        fontWeight: FontWeight.w600,
+                                        color: const Color(0xFF2D2B3F),
+                                      ),
+                                    ),
+                                    TextSpan(
+                                      text: "BIGGEST\n",
+                                      style: GoogleFonts.montserrat(
+                                        fontSize: screenWidth * 0.1,
+                                        fontWeight: FontWeight.w700,
+                                        height: 1.1,
+                                        color: const Color(0xFF2D2B3F),
+                                      ),
+                                    ),
+                                    TextSpan(
+                                      text: "spending zone",
+                                      style: GoogleFonts.montserrat(
+                                        fontSize: screenWidth * 0.06,
+                                        fontWeight: FontWeight.w600,
+                                        color: const Color(0xFF2D2B3F),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+
+                            SizedBox(height: screenHeight * 0.08),
+
+                            // --- Center Data Box & Icons ---
+                            Align(
+                              alignment: Alignment.center,
+                              child: Stack(
+                                clipBehavior: Clip.none,
+                                alignment: Alignment.center,
+                                children: [
+                                  // Top Right Green Box (Slides left/right on entry/exit)
+                                  Positioned(
+                                    top: -26,
+                                    right: -40,
+                                    child: Transform.translate(
+                                      offset: Offset(
+                                        lerpDouble(screenWidth * 0.5, 0, dVal)!,
+                                        0,
+                                      ),
+                                      child: Transform.rotate(
+                                        angle: lerpDouble(
+                                          0,
+                                          21.47 * math.pi / 180,
+                                          linearVal,
+                                        )!,
+                                        child: _buildGreenIconBox(
+                                          PhosphorIcons.bowlSteam(),
+                                          screenWidth,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+
+                                  // Bottom Left Green Box (Slides left/right on entry/exit)
+                                  Positioned(
+                                    bottom: -16,
+                                    left: -40,
+                                    child: Transform.translate(
+                                      offset: Offset(
+                                        lerpDouble(
+                                          -screenWidth * 0.5,
+                                          0,
+                                          dVal,
+                                        )!,
+                                        0,
+                                      ),
+                                      child: Transform.rotate(
+                                        angle: lerpDouble(
+                                          0,
+                                          -25.87 * math.pi / 180,
+                                          linearVal,
+                                        )!,
+                                        child: _buildGreenIconBox(
+                                          PhosphorIconsRegular.wine,
+                                          screenWidth,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+
+                                  // --- THE ACTUAL BLURRED DATA BOX ---
+                                  Transform.translate(
+                                    offset: Offset(
+                                      0,
+                                      // Slides UP on entry, DOWN on exit
+                                      lerpDouble(screenHeight * 1.2, 0, dVal)!,
+                                    ),
+                                    child: Container(
+                                      width: screenWidth * 0.65,
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(19),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.black.withOpacity(
+                                              0.1,
+                                            ),
+                                            blurRadius: 30,
+                                            spreadRadius: 5,
+                                            offset: const Offset(0, 10),
+                                          ),
+                                        ],
+                                      ),
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(19),
+                                        child: BackdropFilter(
+                                          filter: ImageFilter.blur(
+                                            sigmaX: 5.0,
+                                            sigmaY: 5.0,
+                                          ),
+                                          child: Container(
+                                            padding: EdgeInsets.symmetric(
+                                              vertical: screenHeight * 0.03,
+                                              horizontal: screenWidth * 0.05,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white.withOpacity(
+                                                0.60,
+                                              ),
+                                              borderRadius:
+                                                  BorderRadius.circular(19),
+                                            ),
+                                            child: Column(
+                                              children: [
+                                                Text(
+                                                  "Food - ₹8,200",
+                                                  style: GoogleFonts.montserrat(
+                                                    fontSize:
+                                                        screenWidth * 0.06,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: Colors.black,
+                                                  ),
+                                                ),
+                                                SizedBox(
+                                                  height: screenHeight * 0.015,
+                                                ),
+                                                Text(
+                                                  "That's 33% of your total\nspending.",
+                                                  textAlign: TextAlign.center,
+                                                  style: GoogleFonts.montserrat(
+                                                    fontSize:
+                                                        screenWidth * 0.035,
+                                                    fontWeight: FontWeight.w500,
+                                                    color: Colors.grey.shade700,
+                                                    height: 1.4,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            SizedBox(height: screenHeight * 0.12),
+
+                            // Bottom Tip
+                            Transform.translate(
+                              offset: Offset(
+                                0,
+                                lerpDouble(screenHeight * 1.2, 0, dVal)!,
+                              ),
+                              child: Padding(
+                                padding: EdgeInsets.only(
+                                  bottom: screenHeight * 0.1,
+                                ),
+                                child: Text(
+                                  "Maybe you should join\ncooking classes",
+                                  textAlign: TextAlign.center,
+                                  style: GoogleFonts.montserrat(
+                                    fontSize: screenWidth * 0.035,
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.grey.shade500,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+
+            // ==========================================
+            // LAYER 4: NEW TOP SPENDS SCREEN
+            // ==========================================
+            if (_currentPhase == WrapPhase.topSpends)
+              AnimatedBuilder(
+                animation: Listenable.merge([
+                  _topSpendsCtrl,
+                  _topSpendsExitCtrl,
+                ]),
+                builder: (context, child) {
+                  final intro = Curves.easeOutCubic.transform(
+                    _topSpendsCtrl.value,
+                  );
+                  final exit = Curves.easeInCubic.transform(
+                    _topSpendsExitCtrl.value,
+                  );
+
+                  final tVal = intro * (1 - exit);
+                  final linearVal =
+                      _topSpendsCtrl.value * (1 - _topSpendsExitCtrl.value);
+
+                  if (exit == 1.0) return const SizedBox.shrink();
+
+                  return Stack(
+                    children: [
+                      // Floating Images rendered behind the content so they don't block the list
+                      Positioned(
+                        top: screenHeight * 0.12,
+                        left: lerpDouble(
+                          -screenWidth * 0.5,
+                          -screenWidth * 0.13,
+                          tVal,
+                        ),
+                        child: Transform.rotate(
+                          angle: lerpDouble(0, 14 * math.pi / 180, linearVal)!,
+                          child: Image.asset(
+                            'assets/images/forest/spentwrap/cash.png',
+                            width: screenWidth * 0.35,
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        bottom: screenHeight * 0.12,
+                        right: lerpDouble(
+                          -screenWidth * 0.5,
+                          -screenWidth * 0.13,
+                          tVal,
+                        ),
+                        child: Transform.rotate(
+                          angle: lerpDouble(0, -14 * math.pi / 180, linearVal)!,
+                          child: Image.asset(
+                            'assets/images/forest/spentwrap/bag.png',
+                            width: screenWidth * 0.35,
+                          ),
+                        ),
+                      ),
+
+                      SafeArea(
+                        child: Column(
+                          children: [
+                            _buildInvisibleHeaderSpacer(
+                              screenWidth,
+                              screenHeight,
+                            ),
+
+                            // Exactly matching Layer 3's height gap for perfect replacement
+                            SizedBox(height: screenHeight * 0.16),
+
+                            // Header Text
+                            Transform.translate(
+                              offset: Offset(
+                                0,
+                                lerpDouble(-screenHeight * 0.6, 0, tVal)!,
+                              ),
+                              child: Text(
+                                "Your top spends were",
+                                style: GoogleFonts.montserrat(
+                                  fontSize: screenWidth * 0.065,
+                                  fontWeight: FontWeight.w600,
+                                  color: const Color(0xFF2D2B3F),
+                                ),
+                              ),
+                            ),
+
+                            SizedBox(height: screenHeight * 0.05),
+
+                            // Transaction Cards List
+                            Align(
+                              alignment: Alignment.center,
+                              child: Transform.translate(
+                                offset: Offset(
+                                  0,
+                                  lerpDouble(screenHeight * 1.2, 0, tVal)!,
                                 ),
                                 child: Container(
-                                  padding: EdgeInsets.all(screenWidth * 0.035),
-                                  decoration: BoxDecoration(
-                                    color: Colors.black.withOpacity(0.40),
-                                    borderRadius: BorderRadius.circular(24),
+                                  width: screenWidth * 0.85,
+                                  child: Column(
+                                    children: [
+                                      _buildTransactionCard(
+                                        "Shell Petroleum",
+                                        "Bank account",
+                                        "- Rs. 1500",
+                                        "Fri, 11 April 2025",
+                                        PhosphorIcons.gasPump(),
+                                        screenWidth,
+                                        screenHeight,
+                                      ),
+                                      _buildTransactionCard(
+                                        "D-Mart",
+                                        "Bank account",
+                                        "- Rs. 2000",
+                                        "Fri, 11 April 2025",
+                                        PhosphorIcons.shoppingCart(),
+                                        screenWidth,
+                                        screenHeight,
+                                      ),
+                                      _buildTransactionCard(
+                                        "Unknown Source",
+                                        "Bank account",
+                                        "- Rs. 2000",
+                                        "Fri, 11 April 2025",
+                                        PhosphorIcons.currencyInr(),
+                                        screenWidth,
+                                        screenHeight,
+                                        isIncome: true,
+                                      ),
+                                    ],
                                   ),
+                                ),
+                              ),
+                            ),
+
+                            SizedBox(height: screenHeight * 0.04),
+
+                            // Bottom Tip
+                            Transform.translate(
+                              offset: Offset(
+                                0,
+                                lerpDouble(screenHeight * 1.2, 0, tVal)!,
+                              ),
+                              child: Padding(
+                                padding: EdgeInsets.only(
+                                  bottom: screenHeight * 0.1,
+                                ),
+                                child: Text(
+                                  "Going early to bed can be a\nsolution for this!",
+                                  textAlign: TextAlign.center,
+                                  style: GoogleFonts.montserrat(
+                                    fontSize: screenWidth * 0.035,
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.grey.shade500,
+                                    height: 1.4,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            // ==========================================
+            // LAYER 5: STRONGEST DAY SCREEN
+            // ==========================================
+            if (_currentPhase == WrapPhase.strongestDay)
+              AnimatedBuilder(
+                animation: Listenable.merge([
+                  _strongestDayCtrl,
+                  _strongestDayExitCtrl,
+                ]),
+                builder: (context, child) {
+                  final intro = Curves.easeOutCubic.transform(
+                    _strongestDayCtrl.value,
+                  );
+                  final exit = Curves.easeInCubic.transform(
+                    _strongestDayExitCtrl.value,
+                  );
+                  final sVal = intro * (1 - exit);
+                  final linearVal =
+                      _strongestDayCtrl.value *
+                      (1 - _strongestDayExitCtrl.value);
+                  if (exit == 1.0) return const SizedBox.shrink();
+
+                  return Stack(
+                    children: [
+                      // Floating Images (Calendar & Trophy)
+                      Positioned(
+                        top: screenHeight * 0.12,
+                        left: lerpDouble(
+                          -screenWidth * 0.5,
+                          -screenWidth * 0.15,
+                          sVal,
+                        ),
+                        child: Transform.rotate(
+                          angle: lerpDouble(0, 14 * math.pi / 180, linearVal)!,
+                          child: Image.asset(
+                            'assets/images/forest/spentwrap/calendar.png',
+                            width: screenWidth * 0.35,
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        bottom: screenHeight * 0.12,
+                        right: lerpDouble(
+                          -screenWidth * 0.5,
+                          -screenWidth * 0.15,
+                          sVal,
+                        ),
+                        child: Transform.rotate(
+                          angle: lerpDouble(0, -14 * math.pi / 180, linearVal)!,
+                          child: Image.asset(
+                            'assets/images/forest/spentwrap/trophy.png',
+                            width: screenWidth * 0.35,
+                          ),
+                        ),
+                      ),
+                      SafeArea(
+                        child: Column(
+                          children: [
+                            _buildInvisibleHeaderSpacer(
+                              screenWidth,
+                              screenHeight,
+                            ),
+                            SizedBox(height: screenHeight * 0.16),
+
+                            // Header Text
+                            Transform.translate(
+                              offset: Offset(
+                                0,
+                                lerpDouble(-screenHeight * 0.6, 0, sVal)!,
+                              ),
+                              child: RichText(
+                                textAlign: TextAlign.center,
+                                text: TextSpan(
+                                  children: [
+                                    TextSpan(
+                                      text: "Your ",
+                                      style: GoogleFonts.montserrat(
+                                        fontSize: screenWidth * 0.060,
+                                        fontWeight: FontWeight.w600,
+                                        color: const Color(0xFF2D2B3F),
+                                      ),
+                                    ),
+                                    TextSpan(
+                                      text: "Strongest ",
+                                      style: GoogleFonts.montserrat(
+                                        fontSize: screenWidth * 0.070,
+                                        fontWeight: FontWeight.w800,
+                                        color: const Color(0xFF2D2B3F),
+                                      ),
+                                    ),
+                                    TextSpan(
+                                      text: "day",
+                                      style: GoogleFonts.montserrat(
+                                        fontSize: screenWidth * 0.060,
+                                        fontWeight: FontWeight.w600,
+                                        color: const Color(0xFF2D2B3F),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            SizedBox(height: screenHeight * 0.04),
+
+                            // Calendar Box
+                            Align(
+                              alignment: Alignment.center,
+                              child: Transform.translate(
+                                offset: Offset(
+                                  0,
+                                  lerpDouble(screenHeight * 1.2, 0, sVal)!,
+                                ),
+                                child: _buildCalendarCard(
+                                  screenWidth: screenWidth,
+                                  year: 2025, // Set year dynamically here
+                                  month: 4, // Set month dynamically here
+                                  activeDay: 4,
+                                ),
+                              ),
+                            ),
+
+                            SizedBox(height: screenHeight * 0.04),
+
+                            // Bottom Tip
+                            Transform.translate(
+                              offset: Offset(
+                                0,
+                                lerpDouble(screenHeight * 1.2, 0, sVal)!,
+                              ),
+                              child: Padding(
+                                padding: EdgeInsets.only(
+                                  bottom: screenHeight * 0.1,
+                                ),
+                                child: Text(
+                                  "You spent only 20% of your\ndaily limit.",
+                                  textAlign: TextAlign.center,
+                                  style: GoogleFonts.montserrat(
+                                    fontSize: screenWidth * 0.035,
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.grey.shade500,
+                                    height: 1.4,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
+
+            // ==========================================
+            // LAYER 6: TREES GROWN SCREEN (NEW)
+            // ==========================================
+            if (_currentPhase == WrapPhase.treesGrown)
+              AnimatedBuilder(
+                animation: Listenable.merge([
+                  _treesGrownCtrl,
+                  _treesGrownExitCtrl,
+                ]),
+                builder: (context, child) {
+                  final intro = Curves.easeOutCubic.transform(
+                    _treesGrownCtrl.value,
+                  );
+                  final exit = Curves.easeInCubic.transform(
+                    _treesGrownExitCtrl.value,
+                  );
+
+                  if (exit == 1.0) return const SizedBox.shrink();
+
+                  return SafeArea(
+                    child: Column(
+                      children: [
+                        _buildInvisibleHeaderSpacer(screenWidth, screenHeight),
+                        // Reduced gap to match your UI image exactly
+                        SizedBox(height: screenHeight * 0.07),
+
+                        // Header Text (Slides down from top)
+                        Transform.translate(
+                          offset: Offset(
+                            0,
+                            lerpDouble(-screenHeight * 0.6, 0, intro)! +
+                                lerpDouble(0, -screenHeight * 0.6, exit)!,
+                          ),
+                          child: Text(
+                            "You planted ‘31 Trees’",
+                            style: GoogleFonts.montserrat(
+                              fontSize: screenWidth * 0.06,
+                              fontWeight: FontWeight.w600,
+                              color: const Color(0xFF2D2B3F),
+                            ),
+                          ),
+                        ),
+
+                        SizedBox(height: screenHeight * 0.01),
+
+                        // FittedBox ensures it scales cleanly on small screens without overflow or scrolling
+                        Expanded(
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Transform.translate(
+                              offset: Offset(
+                                0,
+                                lerpDouble(screenHeight * 1.2, 0, intro)! +
+                                    lerpDouble(0, screenHeight * 1.2, exit)!,
+                              ),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  // 1. Full Forest Image exactly as provided
+                                  Image.asset(
+                                    'assets/images/forest/fullgreen.png', // Uses your merged single image
+                                    width: screenWidth * 0.85,
+                                    fit: BoxFit.contain,
+                                  ),
+                                  SizedBox(height: screenHeight * 0.02),
+
+                                  // 2. White List Box
+                                  Container(
+                                    width: screenWidth * 0.85,
+                                    padding: EdgeInsets.all(screenWidth * 0.05),
+                                    margin: EdgeInsets.only(
+                                      bottom: screenHeight * 0.04,
+                                    ), // Breathing room at the bottom
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(24),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.08),
+                                          blurRadius: 30,
+                                          spreadRadius: 5,
+                                          offset: const Offset(0, 10),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: _treeTypes.asMap().entries.map((
+                                        entry,
+                                      ) {
+                                        int idx = entry.key;
+                                        var tree = entry.value;
+                                        bool isLast =
+                                            idx == _treeTypes.length - 1;
+
+                                        return Padding(
+                                          // Tightened spacing to match the UI image
+                                          padding: EdgeInsets.only(
+                                            bottom: isLast
+                                                ? 0
+                                                : screenHeight * 0.015,
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              Image.asset(
+                                                "assets/images/forest/${tree['image']}",
+                                                width: screenWidth * 0.08,
+                                                height: screenWidth * 0.08,
+                                              ),
+                                              SizedBox(
+                                                width: screenWidth * 0.03,
+                                              ),
+                                              Expanded(
+                                                child: Text(
+                                                  tree['name']!,
+                                                  style: GoogleFonts.montserrat(
+                                                    fontSize:
+                                                        screenWidth * 0.035,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: Colors.black,
+                                                  ),
+                                                ),
+                                              ),
+                                              Text(
+                                                "- ${tree['count']}",
+                                                style: GoogleFonts.montserrat(
+                                                  fontSize: screenWidth * 0.035,
+                                                  fontWeight: FontWeight.w500,
+                                                  color: Colors.black,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      }).toList(),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            // ==========================================
+            // LAYER 7: SUMMARY SCREEN (GRAND FINALE)
+            // ==========================================
+            if (_currentPhase == WrapPhase.summary)
+              AnimatedBuilder(
+                animation: Listenable.merge([_summaryCtrl, _finalExitCtrl]),
+                builder: (context, child) {
+                  final intro = Curves.easeOutCubic.transform(
+                    _summaryCtrl.value,
+                  );
+                  final exit = Curves.easeInCubic.transform(
+                    _finalExitCtrl.value,
+                  );
+
+                  return Opacity(
+                    // Fade out the entire layer during final transition
+                    opacity: (1.0 - exit).clamp(0.0, 1.0),
+                    child: SafeArea(
+                      child: Column(
+                        children: [
+                          _buildInvisibleHeaderSpacer(
+                            screenWidth,
+                            screenHeight,
+                          ),
+                          SizedBox(height: screenHeight * 0.05),
+
+                          // Header Text
+                          Transform.translate(
+                            // On exit, text slides UP
+                            offset: Offset(
+                              0,
+                              lerpDouble(-screenHeight * 0.6, 0, intro)! +
+                                  lerpDouble(0, -screenHeight * 0.6, exit)!,
+                            ),
+                            child: Text(
+                              "April's Summary",
+                              style: GoogleFonts.montserrat(
+                                fontSize:
+                                    screenWidth *
+                                    0.060, // Exact 0.06 sizing required
+                                fontWeight:
+                                    FontWeight.w600, // 600 weight required
+                                color: const Color(0xFF2D2B3F),
+                              ),
+                            ),
+                          ),
+
+                          SizedBox(height: screenHeight * 0.03),
+
+                          Expanded(
+                            // Using FittedBox + Constrained width ensures NO scrolling, perfectly scaling to fit any screen!
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.topCenter,
+                              child: Transform.translate(
+                                // Main content slides UP on entry, DOWN on final exit
+                                offset: Offset(
+                                  0,
+                                  lerpDouble(screenHeight * 1.2, 0, intro)! +
+                                      lerpDouble(0, screenHeight * 1.2, exit)!,
+                                ),
+                                child: SizedBox(
+                                  width:
+                                      screenWidth *
+                                      0.85, // Enforces exact layout constraint for internal elements
                                   child: Column(
                                     mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
-                                      Container(
-                                        padding: EdgeInsets.all(
-                                          screenWidth * 0.03,
-                                        ),
-                                        decoration: const BoxDecoration(
-                                          color: AppColors.primaryGreen,
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: Icon(
-                                          PhosphorIcons.presentationChart(),
-                                          color: Colors.white,
-                                          size: screenWidth * 0.1,
-                                        ),
+                                      _buildSummaryCard(
+                                        "April's Expense",
+                                        "Rs. 75,000",
+                                        screenWidth,
+                                        screenHeight,
+                                        isExpense: true,
                                       ),
-                                      SizedBox(height: screenHeight * 0.02),
-                                      Text(
-                                        "September Spentwrap",
-                                        textAlign: TextAlign.center,
-                                        style: GoogleFonts.montserrat(
-                                          fontSize: screenWidth * 0.055,
-                                          fontWeight: FontWeight.w600,
-                                          color: Colors.white,
-                                        ),
+                                      SizedBox(height: screenHeight * 0.015),
+                                      _buildSummaryCard(
+                                        "Average Daily Expense",
+                                        "Rs. 3,500 / 5,000",
+                                        screenWidth,
+                                        screenHeight,
                                       ),
-                                      SizedBox(height: screenHeight * 0.01),
-                                      Text(
-                                        "See your performance in the\nlast month",
-                                        textAlign: TextAlign.center,
-                                        style: GoogleFonts.montserrat(
-                                          fontSize: screenWidth * 0.035,
-                                          fontWeight: FontWeight.w500,
-                                          color: Colors.white.withOpacity(0.46),
-                                          height: 1.4,
-                                        ),
-                                      ),
-                                      SizedBox(height: screenHeight * 0.02),
 
-                                      // Checkout Button
+                                      SizedBox(height: screenHeight * 0.03),
+                                      _buildMultiSegmentProgressBar(
+                                        screenWidth,
+                                      ),
+                                      SizedBox(height: screenHeight * 0.03),
+                                      _buildCategoryList(
+                                        screenWidth,
+                                        screenHeight,
+                                      ),
+
+                                      SizedBox(height: screenHeight * 0.04),
+
+                                      // Go To Forest Button
                                       SizedBox(
                                         width: double.infinity,
-                                        height: screenHeight * 0.06,
+                                        height: screenHeight * 0.065,
                                         child: ElevatedButton(
-                                          onPressed: _startCheckoutTransition,
+                                          onPressed: _goToForestFinalTransition,
                                           style: ElevatedButton.styleFrom(
                                             backgroundColor:
                                                 AppColors.primaryGreen,
@@ -546,7 +1712,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                                             ),
                                           ),
                                           child: Text(
-                                            "Checkout",
+                                            "Go to Forest",
                                             style: GoogleFonts.montserrat(
                                               fontSize: screenWidth * 0.04,
                                               fontWeight: FontWeight.w500,
@@ -555,1064 +1721,23 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                                           ),
                                         ),
                                       ),
-                                      SizedBox(height: screenHeight * 0.01),
-
-                                      // Remind me later Button
                                       SizedBox(
-                                        width: double.infinity,
-                                        height: screenHeight * 0.06,
-                                        child: OutlinedButton(
-                                          onPressed: _remindMeLaterTransition,
-                                          style: OutlinedButton.styleFrom(
-                                            side: BorderSide(
-                                              color: Colors.white.withOpacity(
-                                                1,
-                                              ),
-                                              width: 1,
-                                            ),
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(14),
-                                            ),
-                                          ),
-                                          child: Text(
-                                            "Remind me later",
-                                            style: GoogleFonts.montserrat(
-                                              fontSize: screenWidth * 0.04,
-                                              fontWeight: FontWeight.w500,
-                                              color: Colors.white,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
+                                        height: screenHeight * 0.05,
+                                      ), // Bottom padding
                                     ],
                                   ),
                                 ),
                               ),
                             ),
                           ),
-                        ),
-                      ),
-                    ),
-
-                    // --- SPENTWRAP Title ---
-                    Align(
-                      alignment: Alignment(
-                        0,
-                        lerpDouble(0.0, -0.70, intro)! -
-                            lerpDouble(0.0, 1.5, remindExit)!,
-                      ),
-                      child: Opacity(
-                        opacity: (1.0 - remindExit).clamp(0.0, 1.0),
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(
-                            "SPENTWRAP",
-                            style: TextStyle(
-                              fontFamily: 'CalcioDemo',
-                              fontSize: lerpDouble(
-                                screenWidth * 0.2,
-                                screenWidth * 0.15,
-                                intro,
-                              ),
-                              color: Colors.white,
-                              letterSpacing: 2.0,
-                              height: 1.0,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                );
-              },
-            ),
-
-          // ==========================================
-          // LAYER 2: CIRCLE TRANSITION
-          // ==========================================
-          if (_currentPhase == WrapPhase.transition)
-            AnimatedBuilder(
-              animation: _circleCtrl,
-              builder: (context, child) {
-                final circleVal = _circleCtrl.value;
-
-                double dropProgress = Curves.easeOutCubic.transform(
-                  (circleVal / 0.5).clamp(0.0, 1.0),
-                );
-                double expandProgress = Curves.easeInCirc.transform(
-                  ((circleVal - 0.5) / 0.5).clamp(0.0, 1.0),
-                );
-
-                double circleY = lerpDouble(
-                  topTextCenterY + 40,
-                  screenHeight / 2,
-                  dropProgress,
-                )!;
-                double scale = lerpDouble(
-                  1.0,
-                  screenHeight * 0.1,
-                  expandProgress,
-                )!;
-
-                return Positioned(
-                  top: circleY - 10,
-                  left: screenWidth / 2 - 10,
-                  child: Opacity(
-                    opacity: dropProgress,
-                    child: Transform.scale(
-                      scale: scale,
-                      child: Container(
-                        width: 20,
-                        height: 20,
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-
-          // ==========================================
-          // HEADER & PROGRESS BAR (PERSISTENT ACROSS LAYER 3 & 4)
-          // ==========================================
-          // if (_currentPhase != WrapPhase.intro && _currentPhase != WrapPhase.transition)
-          if (_currentPhase != WrapPhase.intro &&
-              _currentPhase != WrapPhase.transition)
-            AnimatedBuilder(
-              animation: Listenable.merge([
-                _detailsCtrl,
-                _progressCtrl,
-                _finalExitCtrl,
-              ]),
-              builder: (context, child) {
-                // Header ONLY animates in during the initial details entry.
-                // It stays at value 1.0 permanently after that.
-                final dVal = Curves.easeOutCubic.transform(_detailsCtrl.value);
-                final pVal = _progressCtrl.value;
-                final finalExit = Curves.easeInCubic.transform(
-                  _finalExitCtrl.value,
-                );
-
-                return SafeArea(
-                  child: Transform.translate(
-                    offset: Offset(
-                      0,
-                      lerpDouble(-screenHeight * 0.3, 0, dVal)! +
-                          lerpDouble(0, -screenHeight * 0.3, finalExit)!,
-                    ),
-                    child: Opacity(
-                      opacity: 1.0 - finalExit,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          SizedBox(height: screenHeight * 0.05),
-                          Text(
-                            "April Spentwrap",
-                            style: GoogleFonts.montserrat(
-                              fontSize: screenWidth * 0.045,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black,
-                            ),
-                          ),
-                          SizedBox(height: screenHeight * 0.03),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: List.generate(5, (index) {
-                              // Logic to fill the progress bar left-to-right over 5 seconds
-                              double fillPercent = 0.0;
-                              if (index < _activeProgressIndex) {
-                                fillPercent = 1.0; // Fully filled past bars
-                              } else if (index == _activeProgressIndex) {
-                                fillPercent = pVal; // Currently filling bar
-                              }
-
-                              return Container(
-                                margin: const EdgeInsets.symmetric(
-                                  horizontal: 4,
-                                ),
-                                width: screenWidth * 0.1,
-                                height: 5,
-                                decoration: BoxDecoration(
-                                  color: AppColors.inputFill,
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Align(
-                                  alignment: Alignment.centerLeft,
-                                  child: FractionallySizedBox(
-                                    widthFactor: fillPercent,
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        color: AppColors.primaryGreen,
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              );
-                            }),
-                          ),
                         ],
                       ),
                     ),
-                  ),
-                );
-              },
-            ),
-
-          // ==========================================
-          // LAYER 3: DETAILS SCREEN (Biggest Spending Zone)
-          // ==========================================
-          if (_currentPhase == WrapPhase.details)
-            AnimatedBuilder(
-              animation: Listenable.merge([_detailsCtrl, _detailsExitCtrl]),
-              builder: (context, child) {
-                // Intro is 0 to 1, Exit is 0 to 1
-                final intro = Curves.easeOutCubic.transform(_detailsCtrl.value);
-                final exit = Curves.easeInCubic.transform(
-                  _detailsExitCtrl.value,
-                );
-
-                // Active Val for sliding elements: Combines entry (0->1) and exit (1->0)
-                final dVal = intro * (1 - exit);
-                final linearVal =
-                    _detailsCtrl.value * (1 - _detailsExitCtrl.value);
-
-                if (exit == 1.0) return const SizedBox.shrink();
-
-                return Stack(
-                  children: [
-                    Positioned(
-                      top: screenHeight * 0.12,
-                      left: lerpDouble(
-                        -screenWidth * 0.5,
-                        -screenWidth * 0.15,
-                        dVal,
-                      ),
-                      child: Transform.rotate(
-                        angle: lerpDouble(0, 14 * math.pi / 180, linearVal)!,
-                        child: Image.asset(
-                          'assets/images/forest/spentwrap/food1.png',
-                          width: screenWidth * 0.35,
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      bottom: screenHeight * 0.12,
-                      right: lerpDouble(
-                        -screenWidth * 0.5,
-                        -screenWidth * 0.15,
-                        dVal,
-                      ),
-                      child: Transform.rotate(
-                        angle: lerpDouble(0, -14 * math.pi / 180, linearVal)!,
-                        child: Image.asset(
-                          'assets/images/forest/spentwrap/food2.png',
-                          width: screenWidth * 0.35,
-                        ),
-                      ),
-                    ),
-
-                    SafeArea(
-                      child: Column(
-                        children: [
-                          // Invisible placeholder to push content exactly below the persistent header
-                          _buildInvisibleHeaderSpacer(
-                            screenWidth,
-                            screenHeight,
-                          ),
-
-                          SizedBox(height: screenHeight * 0.12),
-
-                          // Biggest Spending Zone Text (Slides DOWN initially, slides UP on exit)
-                          Transform.translate(
-                            offset: Offset(
-                              0,
-                              lerpDouble(-screenHeight * 0.6, 0, intro)! +
-                                  lerpDouble(0, -screenHeight * 0.6, exit)!,
-                            ),
-                            child: RichText(
-                              textAlign: TextAlign.center,
-                              text: TextSpan(
-                                children: [
-                                  TextSpan(
-                                    text: "Your ",
-                                    style: GoogleFonts.montserrat(
-                                      fontSize: screenWidth * 0.06,
-                                      fontWeight: FontWeight.w600,
-                                      color: const Color(0xFF2D2B3F),
-                                    ),
-                                  ),
-                                  TextSpan(
-                                    text: "BIGGEST\n",
-                                    style: GoogleFonts.montserrat(
-                                      fontSize: screenWidth * 0.1,
-                                      fontWeight: FontWeight.w700,
-                                      height: 1.1,
-                                      color: const Color(0xFF2D2B3F),
-                                    ),
-                                  ),
-                                  TextSpan(
-                                    text: "spending zone",
-                                    style: GoogleFonts.montserrat(
-                                      fontSize: screenWidth * 0.06,
-                                      fontWeight: FontWeight.w600,
-                                      color: const Color(0xFF2D2B3F),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-
-                          SizedBox(height: screenHeight * 0.08),
-
-                          // --- Center Data Box & Icons ---
-                          Align(
-                            alignment: Alignment.center,
-                            child: Stack(
-                              clipBehavior: Clip.none,
-                              alignment: Alignment.center,
-                              children: [
-                                // Top Right Green Box (Slides left/right on entry/exit)
-                                Positioned(
-                                  top: -26,
-                                  right: -40,
-                                  child: Transform.translate(
-                                    offset: Offset(
-                                      lerpDouble(screenWidth * 0.5, 0, dVal)!,
-                                      0,
-                                    ),
-                                    child: Transform.rotate(
-                                      angle: lerpDouble(
-                                        0,
-                                        21.47 * math.pi / 180,
-                                        linearVal,
-                                      )!,
-                                      child: _buildGreenIconBox(
-                                        PhosphorIcons.bowlSteam(),
-                                        screenWidth,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-
-                                // Bottom Left Green Box (Slides left/right on entry/exit)
-                                Positioned(
-                                  bottom: -16,
-                                  left: -40,
-                                  child: Transform.translate(
-                                    offset: Offset(
-                                      lerpDouble(-screenWidth * 0.5, 0, dVal)!,
-                                      0,
-                                    ),
-                                    child: Transform.rotate(
-                                      angle: lerpDouble(
-                                        0,
-                                        -25.87 * math.pi / 180,
-                                        linearVal,
-                                      )!,
-                                      child: _buildGreenIconBox(
-                                        PhosphorIconsRegular.wine,
-                                        screenWidth,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-
-                                // --- THE ACTUAL BLURRED DATA BOX ---
-                                Transform.translate(
-                                  offset: Offset(
-                                    0,
-                                    // Slides UP on entry, DOWN on exit
-                                    lerpDouble(screenHeight * 1.2, 0, dVal)!,
-                                  ),
-                                  child: Container(
-                                    width: screenWidth * 0.65,
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(19),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.black.withOpacity(0.1),
-                                          blurRadius: 30,
-                                          spreadRadius: 5,
-                                          offset: const Offset(0, 10),
-                                        ),
-                                      ],
-                                    ),
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(19),
-                                      child: BackdropFilter(
-                                        filter: ImageFilter.blur(
-                                          sigmaX: 5.0,
-                                          sigmaY: 5.0,
-                                        ),
-                                        child: Container(
-                                          padding: EdgeInsets.symmetric(
-                                            vertical: screenHeight * 0.03,
-                                            horizontal: screenWidth * 0.05,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: Colors.white.withOpacity(
-                                              0.60,
-                                            ),
-                                            borderRadius: BorderRadius.circular(
-                                              19,
-                                            ),
-                                          ),
-                                          child: Column(
-                                            children: [
-                                              Text(
-                                                "Food - ₹8,200",
-                                                style: GoogleFonts.montserrat(
-                                                  fontSize: screenWidth * 0.06,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: Colors.black,
-                                                ),
-                                              ),
-                                              SizedBox(
-                                                height: screenHeight * 0.015,
-                                              ),
-                                              Text(
-                                                "That's 33% of your total\nspending.",
-                                                textAlign: TextAlign.center,
-                                                style: GoogleFonts.montserrat(
-                                                  fontSize: screenWidth * 0.035,
-                                                  fontWeight: FontWeight.w500,
-                                                  color: Colors.grey.shade700,
-                                                  height: 1.4,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          SizedBox(height: screenHeight * 0.12),
-
-                          // Bottom Tip
-                          Transform.translate(
-                            offset: Offset(
-                              0,
-                              lerpDouble(screenHeight * 1.2, 0, dVal)!,
-                            ),
-                            child: Padding(
-                              padding: EdgeInsets.only(
-                                bottom: screenHeight * 0.1,
-                              ),
-                              child: Text(
-                                "Maybe you should join\ncooking classes",
-                                textAlign: TextAlign.center,
-                                style: GoogleFonts.montserrat(
-                                  fontSize: screenWidth * 0.035,
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.grey.shade500,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                );
-              },
-            ),
-
-          // ==========================================
-          // LAYER 4: NEW TOP SPENDS SCREEN
-          // ==========================================
-          if (_currentPhase == WrapPhase.topSpends)
-            AnimatedBuilder(
-              animation: Listenable.merge([_topSpendsCtrl, _topSpendsExitCtrl]),
-              builder: (context, child) {
-                final intro = Curves.easeOutCubic.transform(
-                  _topSpendsCtrl.value,
-                );
-                final exit = Curves.easeInCubic.transform(
-                  _topSpendsExitCtrl.value,
-                );
-
-                final tVal = intro * (1 - exit);
-                final linearVal =
-                    _topSpendsCtrl.value * (1 - _topSpendsExitCtrl.value);
-
-                if (exit == 1.0) return const SizedBox.shrink();
-
-                return Stack(
-                  children: [
-                    // Floating Images rendered behind the content so they don't block the list
-                    Positioned(
-                      top: screenHeight * 0.12,
-                      left: lerpDouble(
-                        -screenWidth * 0.5,
-                        -screenWidth * 0.13,
-                        tVal,
-                      ),
-                      child: Transform.rotate(
-                        angle: lerpDouble(0, 14 * math.pi / 180, linearVal)!,
-                        child: Image.asset(
-                          'assets/images/forest/spentwrap/cash.png',
-                          width: screenWidth * 0.35,
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      bottom: screenHeight * 0.12,
-                      right: lerpDouble(
-                        -screenWidth * 0.5,
-                        -screenWidth * 0.13,
-                        tVal,
-                      ),
-                      child: Transform.rotate(
-                        angle: lerpDouble(0, -14 * math.pi / 180, linearVal)!,
-                        child: Image.asset(
-                          'assets/images/forest/spentwrap/bag.png',
-                          width: screenWidth * 0.35,
-                        ),
-                      ),
-                    ),
-
-                    SafeArea(
-                      child: Column(
-                        children: [
-                          _buildInvisibleHeaderSpacer(
-                            screenWidth,
-                            screenHeight,
-                          ),
-
-                          // Exactly matching Layer 3's height gap for perfect replacement
-                          SizedBox(height: screenHeight * 0.16),
-
-                          // Header Text
-                          Transform.translate(
-                            offset: Offset(
-                              0,
-                              lerpDouble(-screenHeight * 0.6, 0, tVal)!,
-                            ),
-                            child: Text(
-                              "Your top spends were",
-                              style: GoogleFonts.montserrat(
-                                fontSize: screenWidth * 0.065,
-                                fontWeight: FontWeight.w600,
-                                color: const Color(0xFF2D2B3F),
-                              ),
-                            ),
-                          ),
-
-                          SizedBox(height: screenHeight * 0.05),
-
-                          // Transaction Cards List
-                          Align(
-                            alignment: Alignment.center,
-                            child: Transform.translate(
-                              offset: Offset(
-                                0,
-                                lerpDouble(screenHeight * 1.2, 0, tVal)!,
-                              ),
-                              child: Container(
-                                width: screenWidth * 0.85,
-                                child: Column(
-                                  children: [
-                                    _buildTransactionCard(
-                                      "Shell Petroleum",
-                                      "Bank account",
-                                      "- Rs. 1500",
-                                      "Fri, 11 April 2025",
-                                      PhosphorIcons.gasPump(),
-                                      screenWidth,
-                                      screenHeight,
-                                    ),
-                                    _buildTransactionCard(
-                                      "D-Mart",
-                                      "Bank account",
-                                      "- Rs. 2000",
-                                      "Fri, 11 April 2025",
-                                      PhosphorIcons.shoppingCart(),
-                                      screenWidth,
-                                      screenHeight,
-                                    ),
-                                    _buildTransactionCard(
-                                      "Unknown Source",
-                                      "Bank account",
-                                      "- Rs. 2000",
-                                      "Fri, 11 April 2025",
-                                      PhosphorIcons.currencyInr(),
-                                      screenWidth,
-                                      screenHeight,
-                                      isIncome: true,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-
-                          SizedBox(height: screenHeight * 0.04),
-
-                          // Bottom Tip
-                          Transform.translate(
-                            offset: Offset(
-                              0,
-                              lerpDouble(screenHeight * 1.2, 0, tVal)!,
-                            ),
-                            child: Padding(
-                              padding: EdgeInsets.only(
-                                bottom: screenHeight * 0.1,
-                              ),
-                              child: Text(
-                                "Going early to bed can be a\nsolution for this!",
-                                textAlign: TextAlign.center,
-                                style: GoogleFonts.montserrat(
-                                  fontSize: screenWidth * 0.035,
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.grey.shade500,
-                                  height: 1.4,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                );
-              },
-            ),
-          // ==========================================
-          // LAYER 5: STRONGEST DAY SCREEN
-          // ==========================================
-          if (_currentPhase == WrapPhase.strongestDay)
-            AnimatedBuilder(
-              animation: Listenable.merge([
-                _strongestDayCtrl,
-                _strongestDayExitCtrl,
-              ]),
-              builder: (context, child) {
-                final intro = Curves.easeOutCubic.transform(
-                  _strongestDayCtrl.value,
-                );
-                final exit = Curves.easeInCubic.transform(
-                  _strongestDayExitCtrl.value,
-                );
-                final sVal = intro * (1 - exit);
-                final linearVal =
-                    _strongestDayCtrl.value * (1 - _strongestDayExitCtrl.value);
-                if (exit == 1.0) return const SizedBox.shrink();
-
-                return Stack(
-                  children: [
-                    // Floating Images (Calendar & Trophy)
-                    Positioned(
-                      top: screenHeight * 0.12,
-                      left: lerpDouble(
-                        -screenWidth * 0.5,
-                        -screenWidth * 0.15,
-                        sVal,
-                      ),
-                      child: Transform.rotate(
-                        angle: lerpDouble(0, 14 * math.pi / 180, linearVal)!,
-                        child: Image.asset(
-                          'assets/images/forest/spentwrap/calendar.png',
-                          width: screenWidth * 0.35,
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      bottom: screenHeight * 0.12,
-                      right: lerpDouble(
-                        -screenWidth * 0.5,
-                        -screenWidth * 0.15,
-                        sVal,
-                      ),
-                      child: Transform.rotate(
-                        angle: lerpDouble(0, -14 * math.pi / 180, linearVal)!,
-                        child: Image.asset(
-                          'assets/images/forest/spentwrap/trophy.png',
-                          width: screenWidth * 0.35,
-                        ),
-                      ),
-                    ),
-                    SafeArea(
-                      child: Column(
-                        children: [
-                          _buildInvisibleHeaderSpacer(
-                            screenWidth,
-                            screenHeight,
-                          ),
-                          SizedBox(height: screenHeight * 0.16),
-
-                          // Header Text
-                          Transform.translate(
-                            offset: Offset(
-                              0,
-                              lerpDouble(-screenHeight * 0.6, 0, sVal)!,
-                            ),
-                            child: RichText(
-                              textAlign: TextAlign.center,
-                              text: TextSpan(
-                                children: [
-                                  TextSpan(
-                                    text: "Your ",
-                                    style: GoogleFonts.montserrat(
-                                      fontSize: screenWidth * 0.060,
-                                      fontWeight: FontWeight.w600,
-                                      color: const Color(0xFF2D2B3F),
-                                    ),
-                                  ),
-                                  TextSpan(
-                                    text: "Strongest ",
-                                    style: GoogleFonts.montserrat(
-                                      fontSize: screenWidth * 0.070,
-                                      fontWeight: FontWeight.w800,
-                                      color: const Color(0xFF2D2B3F),
-                                    ),
-                                  ),
-                                  TextSpan(
-                                    text: "day",
-                                    style: GoogleFonts.montserrat(
-                                      fontSize: screenWidth * 0.060,
-                                      fontWeight: FontWeight.w600,
-                                      color: const Color(0xFF2D2B3F),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          SizedBox(height: screenHeight * 0.04),
-
-                          // Calendar Box
-                          Align(
-                            alignment: Alignment.center,
-                            child: Transform.translate(
-                              offset: Offset(
-                                0,
-                                lerpDouble(screenHeight * 1.2, 0, sVal)!,
-                              ),
-                              child: _buildCalendarCard(
-                                screenWidth: screenWidth,
-                                year: 2025, // Set year dynamically here
-                                month: 4, // Set month dynamically here
-                                activeDay: 4,
-                              ),
-                            ),
-                          ),
-
-                          SizedBox(height: screenHeight * 0.04),
-
-                          // Bottom Tip
-                          Transform.translate(
-                            offset: Offset(
-                              0,
-                              lerpDouble(screenHeight * 1.2, 0, sVal)!,
-                            ),
-                            child: Padding(
-                              padding: EdgeInsets.only(
-                                bottom: screenHeight * 0.1,
-                              ),
-                              child: Text(
-                                "You spent only 20% of your\ndaily limit.",
-                                textAlign: TextAlign.center,
-                                style: GoogleFonts.montserrat(
-                                  fontSize: screenWidth * 0.035,
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.grey.shade500,
-                                  height: 1.4,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                );
-              },
-            ),
-
-          // ==========================================
-          // LAYER 6: TREES GROWN SCREEN (NEW)
-          // ==========================================
-          if (_currentPhase == WrapPhase.treesGrown)
-            AnimatedBuilder(
-              animation: Listenable.merge([
-                _treesGrownCtrl,
-                _treesGrownExitCtrl,
-              ]),
-              builder: (context, child) {
-                final intro = Curves.easeOutCubic.transform(
-                  _treesGrownCtrl.value,
-                );
-                final exit = Curves.easeInCubic.transform(
-                  _treesGrownExitCtrl.value,
-                );
-
-                if (exit == 1.0) return const SizedBox.shrink();
-
-                return SafeArea(
-                  child: Column(
-                    children: [
-                      _buildInvisibleHeaderSpacer(screenWidth, screenHeight),
-                      // Reduced gap to match your UI image exactly
-                      SizedBox(height: screenHeight * 0.07),
-
-                      // Header Text (Slides down from top)
-                      Transform.translate(
-                        offset: Offset(
-                          0,
-                          lerpDouble(-screenHeight * 0.6, 0, intro)! +
-                              lerpDouble(0, -screenHeight * 0.6, exit)!,
-                        ),
-                        child: Text(
-                          "You planted ‘31 Trees’",
-                          style: GoogleFonts.montserrat(
-                            fontSize: screenWidth * 0.065,
-                            fontWeight: FontWeight.w700,
-                            color: const Color(0xFF2D2B3F),
-                          ),
-                        ),
-                      ),
-
-                      SizedBox(height: screenHeight * 0.03),
-
-                      // FittedBox ensures it scales cleanly on small screens without overflow or scrolling
-                      Expanded(
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Transform.translate(
-                            offset: Offset(
-                              0,
-                              lerpDouble(screenHeight * 1.2, 0, intro)! +
-                                  lerpDouble(0, screenHeight * 1.2, exit)!,
-                            ),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                // 1. Full Forest Image exactly as provided
-                                Image.asset(
-                                  'assets/images/forest/fullgreen.png', // Uses your merged single image
-                                  width: screenWidth * 0.85,
-                                  fit: BoxFit.contain,
-                                ),
-                                SizedBox(height: screenHeight * 0.02),
-
-                                // 2. White List Box
-                                Container(
-                                  width: screenWidth * 0.85,
-                                  padding: EdgeInsets.all(screenWidth * 0.05),
-                                  margin: EdgeInsets.only(
-                                    bottom: screenHeight * 0.04,
-                                  ), // Breathing room at the bottom
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(24),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withOpacity(0.08),
-                                        blurRadius: 30,
-                                        spreadRadius: 5,
-                                        offset: const Offset(0, 10),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: _treeTypes.asMap().entries.map((
-                                      entry,
-                                    ) {
-                                      int idx = entry.key;
-                                      var tree = entry.value;
-                                      bool isLast =
-                                          idx == _treeTypes.length - 1;
-
-                                      return Padding(
-                                        // Tightened spacing to match the UI image
-                                        padding: EdgeInsets.only(
-                                          bottom: isLast
-                                              ? 0
-                                              : screenHeight * 0.015,
-                                        ),
-                                        child: Row(
-                                          children: [
-                                            Image.asset(
-                                              "assets/images/forest/${tree['image']}",
-                                              width: screenWidth * 0.08,
-                                              height: screenWidth * 0.08,
-                                            ),
-                                            SizedBox(width: screenWidth * 0.03),
-                                            Expanded(
-                                              child: Text(
-                                                tree['name']!,
-                                                style: GoogleFonts.montserrat(
-                                                  fontSize: screenWidth * 0.035,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: Colors.black,
-                                                ),
-                                              ),
-                                            ),
-                                            Text(
-                                              "- ${tree['count']}",
-                                              style: GoogleFonts.montserrat(
-                                                fontSize: screenWidth * 0.035,
-                                                fontWeight: FontWeight.w500,
-                                                color: Colors.black,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      );
-                                    }).toList(),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
-          // ==========================================
-          // LAYER 7: SUMMARY SCREEN (GRAND FINALE)
-          // ==========================================
-          if (_currentPhase == WrapPhase.summary)
-            AnimatedBuilder(
-              animation: Listenable.merge([_summaryCtrl, _finalExitCtrl]),
-              builder: (context, child) {
-                final intro = Curves.easeOutCubic.transform(_summaryCtrl.value);
-                final exit = Curves.easeInCubic.transform(_finalExitCtrl.value);
-
-                return Opacity(
-                  // Fade out the entire layer during final transition
-                  opacity: (1.0 - exit).clamp(0.0, 1.0),
-                  child: SafeArea(
-                    child: Column(
-                      children: [
-                        _buildInvisibleHeaderSpacer(screenWidth, screenHeight),
-                        SizedBox(height: screenHeight * 0.05),
-
-                        // Header Text
-                        Transform.translate(
-                          // On exit, text slides UP
-                          offset: Offset(
-                            0,
-                            lerpDouble(-screenHeight * 0.6, 0, intro)! +
-                                lerpDouble(0, -screenHeight * 0.6, exit)!,
-                          ),
-                          child: Text(
-                            "April's Summary",
-                            style: GoogleFonts.montserrat(
-                              fontSize:
-                                  screenWidth *
-                                  0.060, // Exact 0.06 sizing required
-                              fontWeight:
-                                  FontWeight.w600, // 600 weight required
-                              color: const Color(0xFF2D2B3F),
-                            ),
-                          ),
-                        ),
-
-                        SizedBox(height: screenHeight * 0.03),
-
-                        Expanded(
-                          // Using FittedBox + Constrained width ensures NO scrolling, perfectly scaling to fit any screen!
-                          child: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            alignment: Alignment.topCenter,
-                            child: Transform.translate(
-                              // Main content slides UP on entry, DOWN on final exit
-                              offset: Offset(
-                                0,
-                                lerpDouble(screenHeight * 1.2, 0, intro)! +
-                                    lerpDouble(0, screenHeight * 1.2, exit)!,
-                              ),
-                              child: SizedBox(
-                                width:
-                                    screenWidth *
-                                    0.85, // Enforces exact layout constraint for internal elements
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    _buildSummaryCard(
-                                      "April's Expense",
-                                      "Rs. 75,000",
-                                      screenWidth,
-                                      screenHeight,
-                                      isExpense: true,
-                                    ),
-                                    SizedBox(height: screenHeight * 0.015),
-                                    _buildSummaryCard(
-                                      "Average Daily Expense",
-                                      "Rs. 3,500 / 5,000",
-                                      screenWidth,
-                                      screenHeight,
-                                    ),
-
-                                    SizedBox(height: screenHeight * 0.03),
-                                    _buildMultiSegmentProgressBar(screenWidth),
-                                    SizedBox(height: screenHeight * 0.03),
-                                    _buildCategoryList(
-                                      screenWidth,
-                                      screenHeight,
-                                    ),
-
-                                    SizedBox(height: screenHeight * 0.04),
-
-                                    // Go To Forest Button
-                                    SizedBox(
-                                      width: double.infinity,
-                                      height: screenHeight * 0.065,
-                                      child: ElevatedButton(
-                                        onPressed: _goToForestFinalTransition,
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor:
-                                              AppColors.primaryGreen,
-                                          elevation: 0,
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              14,
-                                            ),
-                                          ),
-                                        ),
-                                        child: Text(
-                                          "Go to Forest",
-                                          style: GoogleFonts.montserrat(
-                                            fontSize: screenWidth * 0.04,
-                                            fontWeight: FontWeight.w500,
-                                            color: Colors.white,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    SizedBox(
-                                      height: screenHeight * 0.05,
-                                    ), // Bottom padding
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-        ],
+                  );
+                },
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -1988,7 +2113,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                     style: GoogleFonts.montserrat(
                       fontSize: screenWidth * 0.03,
                       color: Colors.white,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ],

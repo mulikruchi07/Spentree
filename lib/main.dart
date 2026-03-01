@@ -133,6 +133,8 @@
 // }
 
 import 'package:flutter/material.dart';
+import 'package:spentree/screens/dashboard/dashboard_screen.dart';
+import 'package:spentree/screens/main_wrapper.dart';
 import 'core/app_style.dart';
 import 'screens/forest/spentwrap_intro_screen.dart';
 
@@ -171,7 +173,7 @@ class MyApp extends StatelessWidget {
             scaffoldBackgroundColor: AppColors.bgWhite,
           ),
 
-          home: const SpentWrapScreen(),
+          home: const MainWrapper(initialIndex: 0),
         );
       },
     );

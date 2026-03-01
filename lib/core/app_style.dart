@@ -49,6 +49,9 @@ class AppColors {
       isDarkMode ? const Color(0xFF000000) : const Color(0xFFFFFFFF);
   static Color get colblack =>
       isDarkMode ? const Color(0xFFFFFFFF) : const Color(0xFF000000);
+  
+  static Color get navbar =>
+      isDarkMode ? const Color(0xFF343434) : const Color(0xFFFFFFFF);
 
   static Color get bgWhite =>
       isDarkMode ? const Color(0xFF161616) : const Color(0xFFFFFFFF);

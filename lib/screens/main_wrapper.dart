@@ -37,7 +37,13 @@ class _MainWrapperState extends State<MainWrapper> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     _pageController = PageController(initialPage: _selectedIndex);
     _syncLockState();
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        systemNavigationBarColor: Colors.transparent,
+        systemNavigationBarDividerColor: Colors.transparent,
+      ),
+    );
   }
 
   @override
@@ -179,7 +185,7 @@ class _MainWrapperState extends State<MainWrapper> with WidgetsBindingObserver {
 
   Widget _buildFloatingNavbar() {
     final media = MediaQuery.of(context);
-    final bottomInset = media.padding.bottom;
+    final bottomInset = MediaQuery.of(context).padding.bottom;
     final width = media.size.width;
     final horizontalPadding = width * 0.06;
 
@@ -187,50 +193,48 @@ class _MainWrapperState extends State<MainWrapper> with WidgetsBindingObserver {
       left: horizontalPadding,
       right: horizontalPadding,
       bottom: bottomInset + 16,
-      child: SafeArea(
-        child: Container(
-          height: 64,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(60),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.18),
-                blurRadius: 16,
-                spreadRadius: 0,
-                offset: const Offset(0, 6),
+      child: Container(
+        height: 64,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(60),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.18),
+              blurRadius: 16,
+              spreadRadius: 0,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(60),
+          child: Stack(
+            children: [
+              // PURE GLASS (ONLY BLUR + COLOR)
+              BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                child: Container(color: AppColors.navbar.withOpacity(0.20)),
+              ),
+
+              // EDGE LIGHT
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: CustomPaint(painter: _FigmaEdgeAccuratePainter()),
+                ),
+              ),
+
+              // NAV ITEMS
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildNavItem(0, PhosphorIcons.house),
+                  _buildNavItem(1, PhosphorIcons.chartPieSlice),
+                  _buildNavItem(2, PhosphorIcons.treeEvergreen),
+                  _buildNavItem(3, PhosphorIcons.trophy),
+                  _buildNavItem(4, PhosphorIcons.user),
+                ],
               ),
             ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(60),
-            child: Stack(
-              children: [
-                // PURE GLASS (ONLY BLUR + COLOR)
-                BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                  child: Container(color: AppColors.navbar.withOpacity(0.20)),
-                ),
-
-                // EDGE LIGHT
-                Positioned.fill(
-                  child: IgnorePointer(
-                    child: CustomPaint(painter: _FigmaEdgeAccuratePainter()),
-                  ),
-                ),
-
-                // NAV ITEMS
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _buildNavItem(0, PhosphorIcons.house),
-                    _buildNavItem(1, PhosphorIcons.chartPieSlice),
-                    _buildNavItem(2, PhosphorIcons.treeEvergreen),
-                    _buildNavItem(3, PhosphorIcons.trophy),
-                    _buildNavItem(4, PhosphorIcons.user),
-                  ],
-                ),
-              ],
-            ),
           ),
         ),
       ),

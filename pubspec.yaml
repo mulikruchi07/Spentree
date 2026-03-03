@@ -44,6 +44,7 @@ flutter:
     - assets/icons/navbg.png
     - assets/icons/dnavbg.png
     - assets/images/
+    - assets/images/dashboard/
     - assets/images/forest/
     - assets/icons/home.png
     - assets/icons/home_filled.png

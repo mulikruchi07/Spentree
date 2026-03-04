@@ -137,8 +137,13 @@ import 'package:spentree/screens/dashboard/dashboard_screen.dart';
 import 'package:spentree/screens/main_wrapper.dart';
 import 'core/app_style.dart';
 import 'screens/forest/spentwrap_intro_screen.dart';
+import 'core/transaction_service.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Start fetching SMS in the background immediately
+  await TransactionService().initService();
   runApp(const MyApp());
 }
 

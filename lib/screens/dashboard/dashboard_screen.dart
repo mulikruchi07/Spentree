@@ -766,7 +766,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   late DateTime _today;
   bool _isPickerOpen = false;
 
-  late int limit;
+  int limit = 1000;
   double pendingLimit = 0.0;
 
   final double cardRadius = 15.0;

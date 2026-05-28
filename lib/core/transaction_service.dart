@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -39,6 +40,11 @@ class TransactionService extends ChangeNotifier {
   List<Transaction> get allTransactions => _allTransactions;
 
   Future<void> initService() async {
+    if (kIsWeb) {
+      isLoading = false;
+      notifyListeners();
+      return;
+    }
     var status = await Permission.sms.status;
     if (!status.isGranted) {
       await Permission.sms.request();

@@ -144,11 +144,11 @@ void main() async {
 
   // Start fetching SMS in the background immediately
   await TransactionService().initService();
-  runApp(const MyApp());
+  runApp(const MyApp(startScreen: SizedBox()));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  const MyApp({super.key, required SizedBox startScreen});
 
   @override
   Widget build(BuildContext context) {
@@ -178,7 +178,7 @@ class MyApp extends StatelessWidget {
             scaffoldBackgroundColor: AppColors.bgWhite,
           ),
 
-          home: const MainWrapper(initialIndex: 0),
+          home: const MainWrapper(initialIndex: 3),
         );
       },
     );

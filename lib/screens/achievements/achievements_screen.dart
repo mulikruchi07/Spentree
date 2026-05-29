@@ -5,6 +5,7 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 // import 'package:flutter_svg/flutter_svg.dart'; // Required for SVG rendering
 import '../../core/app_style.dart';
 import '../../core/user_data.dart'; // Assumes you have this for UserData.userName / UserData.profileImageUrl
+import 'deals_screen.dart';
 
 class AchievementsScreen extends StatefulWidget {
   const AchievementsScreen({super.key});
@@ -184,10 +185,34 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
             ),
           ],
         ),
-        Icon(
-          PhosphorIcons.gift(), // Matching the gift icon from Figma
-          size: 36,
-          color: AppColors.colblack,
+        GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const DealsScreen()),
+            );
+          },
+          child: Stack(
+            clipBehavior: Clip
+                .none, // Allows the dot to sit slightly outside the icon bounds
+            children: [
+              Icon(PhosphorIcons.gift(), size: 36, color: AppColors.colblack),
+              Positioned(
+                top: 0,
+                right: 0,
+                child: Container(
+                  width: 10,
+                  height: 10,
+                  decoration: BoxDecoration(
+                    color: Colors.red,
+                    shape: BoxShape.circle,
+                    // Adds a tiny white border around the red dot so it pops against the icon lines
+                    border: Border.all(color: AppColors.bgWhite, width: 1.5),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ],
     );

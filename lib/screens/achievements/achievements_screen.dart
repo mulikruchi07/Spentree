@@ -89,7 +89,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
               _buildProfileSection(screenWidth),
 
               // Explicit gap of 18 from progress bar to Upcoming level text
-              const SizedBox(height: 18),
+              const SizedBox(height: 22),
 
               // 3. Upcoming Level Card
               Text(
@@ -100,11 +100,11 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                   color: AppColors.colblack,
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 18),
               _buildUpcomingLevelCard(screenWidth),
 
               // Explicit gap of 26 from upcoming card to milestone text
-              const SizedBox(height: 26),
+              const SizedBox(height: 30),
 
               // 4. Milestone Collection Header
               Row(
@@ -130,7 +130,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
               ),
 
               // Explicit gap of 16 from milestone header to first card
-              const SizedBox(height: 16),
+              const SizedBox(height: 18),
 
               // 5. Milestone List
               ListView.builder(
@@ -144,7 +144,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
               ),
 
               // Explicit gap of 26 from last card to footer
-              const SizedBox(height: 26),
+              const SizedBox(height: 16),
 
               // 6. Footer
               _buildFooter(context),
@@ -212,8 +212,8 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
           children: [
             // Avatar with Badge
             SizedBox(
-              width: 95, // Extra space to let the badge float outside
-              height: 95,
+              width: 90, // Extra space to let the badge float outside
+              height: 90,
               child: Stack(
                 clipBehavior: Clip.none,
                 children: [
@@ -221,25 +221,51 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                   Align(
                     alignment: Alignment.centerLeft,
                     child: Container(
-                      width: 80,
-                      height: 80,
+                      width: 90,
+                      height: 90,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: AppColors.inputFill, // Light grey background
-                        image: hasProfilePic
-                            ? const DecorationImage(
-                                image: NetworkImage("YOUR_BACKEND_URL_HERE"),
-                                fit: BoxFit.cover,
-                              )
-                            : null,
+                        color: AppColors.primaryGreen, // Outer green ring
                       ),
-                      child: !hasProfilePic
-                          ? Icon(
-                              PhosphorIcons.user(PhosphorIconsStyle.fill),
-                              size: 40,
-                              color: AppColors.grey600, // Default human profile
-                            )
-                          : null,
+
+                      child: Padding(
+                        padding: const EdgeInsets.all(
+                          1.5,
+                        ), // White gap thickness
+                        child: Container(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: AppColors.colwhite, // White middle ring
+                          ),
+
+                          child: Padding(
+                            padding: const EdgeInsets.all(6.5),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: AppColors.inputFill,
+                                image: hasProfilePic
+                                    ? const DecorationImage(
+                                        image: NetworkImage(
+                                          "YOUR_BACKEND_URL_HERE",
+                                        ),
+                                        fit: BoxFit.cover,
+                                      )
+                                    : null,
+                              ),
+                              child: !hasProfilePic
+                                  ? Icon(
+                                      PhosphorIcons.user(
+                                        PhosphorIconsStyle.fill,
+                                      ),
+                                      size: 40,
+                                      color: AppColors.grey600,
+                                    )
+                                  : null,
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                   // Level Badge (The '2')
@@ -248,8 +274,8 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                     top: 5,
                     right: 0,
                     child: Container(
-                      width: 24,
-                      height: 24,
+                      width: 22,
+                      height: 22,
                       decoration: BoxDecoration(
                         color: AppColors.primaryGreen,
                         shape: BoxShape.circle,
@@ -263,7 +289,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                           "2",
                           style: GoogleFonts.montserrat(
                             fontSize: 12,
-                            fontWeight: FontWeight.w700,
+                            fontWeight: FontWeight.w600,
                             color: AppColors.colwhite,
                           ),
                         ),
@@ -283,12 +309,12 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                   Text(
                     userName,
                     style: GoogleFonts.montserrat(
-                      fontSize: 20,
+                      fontSize: 22,
                       fontWeight: FontWeight.w600, // SemiBold
                       color: AppColors.colblack,
                     ),
                   ),
-                  const SizedBox(height: 3), // Exact distance of 3
+                  const SizedBox(height: 4), // Exact distance of 3
                   Row(
                     children: [
                       Icon(
@@ -313,7 +339,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
           ],
         ),
 
-        const SizedBox(height: 20),
+        const SizedBox(height: 16),
 
         // Progress Bar Info
         Row(
@@ -341,7 +367,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
 
         // Custom Pill Progress Bar (Exact dimensions)
         Container(
-          height: 16.32,
+          height: 17.32,
           width: double.infinity,
           decoration: BoxDecoration(
             color: const Color(0xFFD9D9D9), // Light grey track
@@ -367,7 +393,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
   Widget _buildUpcomingLevelCard(double screenWidth) {
     return Container(
       width: double.infinity,
-      height: 76.0, // Matches boxHeight reference
+      height: 78.0, // Matches boxHeight reference
       padding: const EdgeInsets.symmetric(horizontal: 10),
       decoration: BoxDecoration(
         color: AppColors.inputFill, // #F5F5F5 grey from app_style
@@ -377,8 +403,8 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
         children: [
           // Icon Box with Light Blurred Image & Lock
           Container(
-            width: 55,
-            height: 55,
+            width: 60,
+            height: 60,
             decoration: BoxDecoration(
               color: AppColors.iconbox,
               borderRadius: BorderRadius.circular(9.63),
@@ -404,7 +430,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                 // Lock Icon on top
                 Icon(
                   PhosphorIcons.lockKey(),
-                  size: 28,
+                  size: 30,
                   color: AppColors.colblack,
                 ),
               ],
@@ -454,9 +480,9 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
   Widget _buildMilestoneCard(Map<String, dynamic> data, double screenWidth) {
     // Gap of 16 set via margin bottom
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 18),
       width: double.infinity,
-      height: 76.0, // Matches boxHeight reference
+      height: 78.0, // Matches boxHeight reference
       padding: const EdgeInsets.symmetric(horizontal: 10),
       decoration: BoxDecoration(
         color: AppColors.inputFill,
@@ -466,8 +492,8 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
         children: [
           // SVG Image Box matching reference exactly
           Container(
-            width: 55,
-            height: 55,
+            width: 60,
+            height: 60,
             decoration: BoxDecoration(
               color: AppColors.iconbox,
               borderRadius: BorderRadius.circular(9.63),
@@ -481,7 +507,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
             ),
             // SvgPicture handles the vector assets
             child: Center(
-              child: Image.asset(data['image'], width: 28, height: 28),
+              child: Image.asset(data['image'], width: 42, height: 4),
             ),
           ),
           const SizedBox(width: 16),

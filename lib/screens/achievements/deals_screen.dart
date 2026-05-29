@@ -1,18 +1,16 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
-import '../../core/app_style.dart';
+import 'package:spentree/core/app_style.dart';
 
-// --- DATA MODEL ---
-// Use this model to easily plug in your backend API data later
+// --- DATA MODEL FOR DYNAMIC RENDERING ---
 class DealModel {
   final String brandLogo;
   final String productImage;
   final String offerTitle;
   final String offerSubtitle;
-  final bool
-  isClaimable; // true = Green 'Claim' button | false = Grey 'Unlock' button
-  final String? description; // Specific to the large "Deal of the day" card
+  final bool isClaimable;
+  final String? description;
 
   DealModel({
     required this.brandLogo,
@@ -32,49 +30,49 @@ class DealsScreen extends StatefulWidget {
 }
 
 class _DealsScreenState extends State<DealsScreen> {
-  // --- MOCK DATA ---
+  // Mock Data Sets mapped to external sources
   final List<DealModel> _crowdFavourites = [
     DealModel(
-      brandLogo: 'assets/images/deals/puma_logo.png',
-      productImage: 'assets/images/deals/puma_shoes.png',
+      brandLogo: 'assets/images/deals/logo.png',
+      productImage: 'assets/images/deals/items.png',
       offerTitle: 'Flat 10% off',
       offerSubtitle: 'on motorsport\nsneakers',
       isClaimable: true,
     ),
     DealModel(
-      brandLogo: 'assets/images/deals/giva_logo.png',
-      productImage: 'assets/images/deals/giva_jewelry.png',
+      brandLogo: 'assets/images/deals/logo.png',
+      productImage: 'assets/images/deals/items.png',
       offerTitle: 'Flat 15% off',
       offerSubtitle: 'on collection of\nsilver jewellery',
       isClaimable: true,
     ),
     DealModel(
-      brandLogo: 'assets/images/deals/mamaearth_logo.png',
-      productImage: 'assets/images/deals/mamaearth_product.png',
+      brandLogo: 'assets/images/deals/logo.png',
+      productImage: 'assets/images/deals/items.png',
       offerTitle: 'Upto 10% off',
       offerSubtitle: 'on face products',
-      isClaimable: true,
-    ),
-    DealModel(
-      brandLogo: 'assets/images/deals/boat_logo.png',
-      productImage: 'assets/images/deals/boat_earbuds.png',
-      offerTitle: 'Flat Rs.500 off',
-      offerSubtitle: 'on Nirvana range\nTWS',
       isClaimable: true,
     ),
   ];
 
   final List<DealModel> _memberDrops = [
     DealModel(
-      brandLogo: 'assets/images/deals/mamaearth_logo.png',
-      productImage: 'assets/images/deals/mamaearth_bundle.png',
+      brandLogo: 'assets/images/deals/logo.png',
+      productImage: 'assets/images/deals/items.png',
       offerTitle: 'Free Product',
       offerSubtitle: 'on purchase of 2499\nor above',
       isClaimable: false,
     ),
     DealModel(
-      brandLogo: 'assets/images/deals/tripadvisor_logo.png',
-      productImage: 'assets/images/deals/japan_cherry.png',
+      brandLogo: 'assets/images/deals/logo.png',
+      productImage: 'assets/images/deals/items.png',
+      offerTitle: 'Upto 30% off',
+      offerSubtitle: 'on Japan Cherry\nBlossoms',
+      isClaimable: false,
+    ),
+    DealModel(
+      brandLogo: 'assets/images/deals/logo.png',
+      productImage: 'assets/images/deals/items.png',
       offerTitle: 'Upto 30% off',
       offerSubtitle: 'on Japan Cherry\nBlossoms',
       isClaimable: false,
@@ -82,10 +80,10 @@ class _DealsScreenState extends State<DealsScreen> {
   ];
 
   final DealModel _dealOfTheDay = DealModel(
-    brandLogo: 'assets/images/deals/goboult_logo.png',
-    productImage: 'assets/images/deals/goboult_headphones.png',
+    brandLogo: 'assets/images/deals/logo.png',
+    productImage: 'assets/images/deals/items.png',
     offerTitle: 'Flat 50% off',
-    offerSubtitle: 'on Headphones',
+    offerSubtitle: 'on earphones',
     description:
         'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna.',
     isClaimable: false,
@@ -102,7 +100,7 @@ class _DealsScreenState extends State<DealsScreen> {
           children: [
             const SizedBox(height: 70),
 
-            // --- 1. HEADER ---
+            // --- MAIN HEADER ---
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24.0),
               child: Column(
@@ -128,23 +126,14 @@ class _DealsScreenState extends State<DealsScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 32),
 
-            // --- 2. CROWD FAVOURITES ---
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: Text(
-                "Crowd Favourites",
-                style: GoogleFonts.poppins(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.colblack,
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 30),
+
+            // --- SECTION 1: CROWD FAVOURITES ---
+            _buildSectionHeader("Crowd Favourites", showStar: false),
+            const SizedBox(height: 14),
             SizedBox(
-              height: 250, // Card height + shadow padding
+              height: 228,
               child: ListView.builder(
                 padding: const EdgeInsets.symmetric(horizontal: 24.0),
                 scrollDirection: Axis.horizontal,
@@ -152,39 +141,19 @@ class _DealsScreenState extends State<DealsScreen> {
                 itemCount: _crowdFavourites.length,
                 itemBuilder: (context, index) {
                   return Padding(
-                    padding: const EdgeInsets.only(right: 16.0),
-                    child: _buildSmallTicketCard(_crowdFavourites[index]),
+                    padding: const EdgeInsets.only(right: 15.0, bottom: 8),
+                    child: _buildSmallDealCard(_crowdFavourites[index]),
                   );
                 },
               ),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 40),
 
-            // --- 3. MEMBER ONLY DROPS ---
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: Row(
-                children: [
-                  Text(
-                    "Member only drops",
-                    style: GoogleFonts.poppins(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.colblack,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Icon(
-                    PhosphorIcons.star(PhosphorIconsStyle.fill),
-                    color: AppColors.primaryGreen,
-                    size: 20,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
+            // --- SECTION 2: MEMBER ONLY DROPS ---
+            _buildSectionHeader("Member only drops", showStar: true),
+            const SizedBox(height: 14),
             SizedBox(
-              height: 250,
+              height: 228,
               child: ListView.builder(
                 padding: const EdgeInsets.symmetric(horizontal: 24.0),
                 scrollDirection: Axis.horizontal,
@@ -192,181 +161,221 @@ class _DealsScreenState extends State<DealsScreen> {
                 itemCount: _memberDrops.length,
                 itemBuilder: (context, index) {
                   return Padding(
-                    padding: const EdgeInsets.only(right: 16.0),
-                    child: _buildSmallTicketCard(_memberDrops[index]),
+                    padding: const EdgeInsets.only(right: 15.0, bottom: 8.0),
+                    child: _buildSmallDealCard(_memberDrops[index]),
                   );
                 },
               ),
             ),
-            const SizedBox(height: 32),
-
-            // --- 4. DEAL OF THE DAY ---
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: Row(
-                children: [
-                  Text(
-                    "Deal of the day",
-                    style: GoogleFonts.poppins(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.colblack,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Icon(
-                    PhosphorIcons.star(PhosphorIconsStyle.fill),
-                    color: AppColors.primaryGreen,
-                    size: 20,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: _buildBigTicketCard(_dealOfTheDay),
-            ),
             const SizedBox(height: 40),
 
-            // --- 5. FOOTER ---
+            // --- SECTION 3: DEAL OF THE DAY ---
+            _buildSectionHeader("Deal of the day", showStar: true),
+            const SizedBox(height: 14),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: _buildBigDealCard(_dealOfTheDay),
+            ),
+            const SizedBox(height: 70),
+
+            // --- FOOTER ---
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24.0),
               child: _buildFooter(),
             ),
-            const SizedBox(height: 120),
+            const SizedBox(height: 70),
           ],
         ),
       ),
     );
   }
 
-  // ==========================================
-  // WIDGET BUILDERS
-  // ==========================================
+  // --- REUSABLE HEADER COMPONENT WITH ENCLOSED ICON ---
+  Widget _buildSectionHeader(String title, {required bool showStar}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text(
+            title,
+            style: GoogleFonts.poppins(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: AppColors.colblack,
+            ),
+          ),
+          if (showStar) ...[
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.all(3),
+              decoration: const BoxDecoration(
+                color: AppColors.primaryGreen,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.star, color: Colors.white, size: 10),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
 
-  Widget _buildSmallTicketCard(DealModel deal) {
-    const double cardWidth = 150.0;
-    const double cardHeight = 230.0;
-    const double cutoutY = 125.0; // The exact Y position of the dotted line
+  // --- SMALL CARD IMPLEMENTATION (152W x 202H) ---
+  Widget _buildSmallDealCard(DealModel deal) {
+    const double cardWidth = 152.0;
+    const double cardHeight = 202.0;
+    const double cornerRadius = 11.44;
+
+    // --- ABSOLUTE PIXEL MATH ---
+    // This physically locks the layout. There is NO room for Flutter to scale or shift.
+    // Total Height: 202
+    // Y: 0 to 85      -> Image (85px)
+    // Y: 85 to 93     -> Gap 1 (8px)
+    // Y: 93 to 114    -> Logo (21px)
+    // Y: 114 to 122   -> Gap 2 (8px)
+    // Y: 122          -> EXACT CENTER (Divider + Semicircle)
+    // Y: 122 to 130   -> Gap 3 (8px)
+    // Y: 130 to 160   -> Text Area (30px)
+    // Y: 160 to 168   -> Gap 4 (8px)
+    // Y: 168 to 194   -> Button (26px)
+    // Y: 194 to 202   -> Gap 5 (8px)
+
+    const double dividerY = 122.0;
 
     return CustomPaint(
-      painter: TicketShadowPainter(
-        clipper: TicketClipper(cutoutPosition: cutoutY),
-      ),
+      painter: TicketOuterShadowPainter(cornerRadius: cornerRadius),
       child: ClipPath(
-        clipper: TicketClipper(cutoutPosition: cutoutY),
+        clipper: TicketShapeClipper(
+          cornerRadius: cornerRadius,
+          cutoutRadius: 8.0,
+          absoluteCutoutY: dividerY, // Locks the semicircles to exactly 122.0px
+        ),
         child: Container(
           width: cardWidth,
           height: cardHeight,
-          color: Colors.white,
+          color: const Color(0xFFFFFFFF),
           child: Stack(
             children: [
-              Column(
-                children: [
-                  // 1. Product Image (Top half)
-                  Container(
-                    height: 85,
-                    width: double.infinity,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFF5F5F5), // Fallback color
-                    ),
-                    child: Image.asset(
-                      deal.productImage,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) =>
-                          const Icon(Icons.image, color: Colors.grey),
-                    ),
+              // 1. PRODUCT IMAGE
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                height: 85.0,
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(cornerRadius),
+                    topRight: Radius.circular(cornerRadius),
                   ),
-
-                  // 2. Brand Logo
-                  const SizedBox(height: 8),
-                  SizedBox(
-                    height: 22,
-                    child: Image.asset(
-                      deal.brandLogo,
-                      fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) => Text(
-                        "LOGO",
-                        style: GoogleFonts.montserrat(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
+                  child: Image.asset(
+                    deal.productImage,
+                    fit: BoxFit.cover,
+                    errorBuilder: (c, e, s) =>
+                        Container(color: Colors.grey.shade200),
                   ),
-
-                  // 3. Spacing for the dotted line cutouts
-                  const SizedBox(height: 16),
-
-                  // 4. Offer Details
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                    child: Column(
-                      children: [
-                        Text(
-                          deal.offerTitle,
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.montserrat(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.colblack,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          deal.offerSubtitle,
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.montserrat(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w500,
-                            color: AppColors.white500,
-                            height: 1.2,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const Spacer(),
-
-                  // 5. Button
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12.0,
-                      vertical: 12.0,
-                    ),
-                    child: Container(
-                      width: double.infinity,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: deal.isClaimable
-                            ? AppColors.primaryGreen
-                            : const Color(0xFFBDBDBD),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Center(
-                        child: Text(
-                          deal.isClaimable ? "Claim" : "Unlock",
-                          style: GoogleFonts.montserrat(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
 
-              // Custom Horizontal Dotted Line exactly aligned with cutouts
+              // 2. BRAND LOGO (Exactly at Y=93)
               Positioned(
-                top: cutoutY,
-                left: 10, // Avoid overlapping the cutout arcs
-                right: 10,
+                top: 93.0,
+                left: 0,
+                right: 0,
+                height: 21.0,
+                child: Center(
+                  child: Image.asset(
+                    deal.brandLogo,
+                    height: 21.0,
+                    fit: BoxFit.contain,
+                    errorBuilder: (c, e, s) => const SizedBox(),
+                  ),
+                ),
+              ),
+
+              // 3. DOTTED DIVIDER LINE (Exactly at Y=122.0)
+              Positioned(
+                top: dividerY - (0.48 / 2),
+                left: 12,
+                right: 12,
                 child: CustomPaint(
-                  painter: DottedLinePainter(),
+                  painter: SharedDottedLinePainter(isVertical: false),
                   size: const Size(double.infinity, 1),
+                ),
+              ),
+
+              // 4. TEXT BLOCK (Exactly at Y=130)
+              Positioned(
+                top: 135.0,
+                left: 8,
+                right: 8,
+                height: 30.0,
+                child: FittedBox(
+                  fit: BoxFit
+                      .scaleDown, // Prevents pixel overflow on any screen size
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        deal.offerTitle,
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.montserrat(
+                          fontSize: 10.84, // Requested size
+                          fontWeight: FontWeight.w600, // SemiBold
+                          color: AppColors.colblack,
+                          height: 1.1,
+                        ),
+                      ),
+                      const SizedBox(height: 1.5),
+                      Text(
+                        deal.offerSubtitle,
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.montserrat(
+                          fontSize: 8.0, // Requested size
+                          fontWeight: FontWeight.w500, // Medium
+                          color: const Color(0xFF656565),
+                          height: 1.1,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // 5. CLAIM BUTTON (Exactly at Y=168)
+              Positioned(
+                top: 178.0,
+                left: 15,
+                right: 15,
+                height: 26.0,
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => DealDetailScreen(deal: deal),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: deal.isClaimable
+                          ? AppColors.primaryGreen
+                          : const Color(0xFFBDBDBD),
+                      borderRadius: BorderRadius.circular(7.38),
+                    ),
+                    child: Align(
+                      alignment: const Alignment(0, -0.15),
+                      child: Text(
+                        deal.isClaimable ? "Claim" : "Unlock",
+                        style: GoogleFonts.poppins(
+                          fontSize: 10.0,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -376,136 +385,165 @@ class _DealsScreenState extends State<DealsScreen> {
     );
   }
 
-  Widget _buildBigTicketCard(DealModel deal) {
-    const double cardHeight = 180.0;
-    const double cutoutY = cardHeight / 2; // Dead center for the big card
+  // --- BIG CARD IMPLEMENTATION (MATCHING 218H) ---
+  Widget _buildBigDealCard(DealModel deal) {
+    const double cardHeight = 218.0;
+    const double cornerRadius = 11.44;
+    const double absoluteCutoutY = cardHeight / 2; // Dead center
 
     return CustomPaint(
-      painter: TicketShadowPainter(
-        clipper: TicketClipper(cutoutPosition: cutoutY),
-      ),
+      painter: TicketOuterShadowPainter(cornerRadius: cornerRadius),
       child: ClipPath(
-        clipper: TicketClipper(cutoutPosition: cutoutY),
+        clipper: TicketShapeClipper(
+          cornerRadius: cornerRadius,
+          cutoutRadius: 8.0,
+          absoluteCutoutY: absoluteCutoutY,
+        ),
         child: Container(
           width: double.infinity,
           height: cardHeight,
-          color: Colors.white,
+          color: const Color(0xFFFFFFFF),
           child: Stack(
             children: [
               Row(
                 children: [
-                  // 1. Left Product Image
-                  Container(
-                    width: 140,
-                    height: double.infinity,
-                    padding: const EdgeInsets.all(8),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Container(
-                        color: const Color(0xFFF5F5F5), // Fallback background
+                  // Left-Side Visual Block
+                  Expanded(
+                    child: Container(
+                      height: double.infinity,
+                      padding: const EdgeInsets.all(15),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(14.0),
                         child: Image.asset(
                           deal.productImage,
                           fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) =>
-                              const Icon(Icons.image, color: Colors.grey),
+                          errorBuilder: (c, e, s) =>
+                              const Icon(Icons.broken_image, size: 32),
                         ),
                       ),
                     ),
                   ),
 
-                  // 2. Right Content Area
+                  // Right-Side Copy Block
                   Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          // Brand Logo
-                          SizedBox(
-                            height: 20,
-                            child: Image.asset(
-                              deal.brandLogo,
-                              fit: BoxFit.contain,
-                              errorBuilder: (context, error, stackTrace) =>
-                                  Text(
-                                    "LOGO",
-                                    style: GoogleFonts.montserrat(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal:
+                                10.0, // Reduced padding to increase width
+                            vertical: 16.0, // Strict top and bottom boundaries
+                          ),
+                          child: FittedBox(
+                            fit: BoxFit
+                                .scaleDown, // ZERO pixel errors on any screen size
+                            child: SizedBox(
+                              width:
+                                  constraints.maxWidth -
+                                  20, // Uses exact remaining width
+                              height:
+                                  cardHeight -
+                                  32, // Uses exact remaining height
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment
+                                    .spaceBetween, // Mathematically equal gaps
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  // 1. LOGO
+                                  SizedBox(
+                                    height: 20,
+                                    child: Image.asset(
+                                      deal.brandLogo,
+                                      fit: BoxFit.contain,
+                                      errorBuilder: (c, e, s) =>
+                                          const SizedBox(),
                                     ),
                                   ),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
 
-                          // Offer Details
-                          Text(
-                            deal.offerTitle,
-                            textAlign: TextAlign.center,
-                            style: GoogleFonts.montserrat(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.colblack,
-                            ),
-                          ),
-                          Text(
-                            deal.offerSubtitle,
-                            textAlign: TextAlign.center,
-                            style: GoogleFonts.montserrat(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.white500,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
+                                  // 2. TITLE
+                                  Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        deal.offerTitle,
+                                        textAlign: TextAlign.center,
+                                        style: GoogleFonts.montserrat(
+                                          fontSize: 10.84,
+                                          fontWeight: FontWeight.w600,
+                                          color: AppColors.colblack,
+                                          height: 1.1,
+                                        ),
+                                        maxLines: 1,
+                                      ),
+                                      Text(
+                                        deal.offerSubtitle,
+                                        textAlign: TextAlign.center,
+                                        style: GoogleFonts.montserrat(
+                                          fontSize: 9.03,
+                                          fontWeight: FontWeight.w500,
+                                          color: const Color(0xFF656565),
+                                          height: 1.1, // Tight line height
+                                        ),
+                                        maxLines: 2,
+                                      ),
+                                    ],
+                                  ),
 
-                          // Description text
-                          Text(
-                            deal.description ?? "",
-                            textAlign: TextAlign.center,
-                            style: GoogleFonts.montserrat(
-                              fontSize: 8,
-                              fontWeight: FontWeight.w400,
-                              color: AppColors.white500,
-                            ),
-                            maxLines: 3,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const Spacer(),
+                                  // 4. DESCRIPTION
+                                  SizedBox(
+                                    width: 125, // Increased width slightly
+                                    child: Text(
+                                      deal.description ?? "",
+                                      textAlign: TextAlign.center,
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 5.85,
+                                        height: 1.3,
+                                        fontWeight: FontWeight.w400,
+                                        color: const Color(0xFF656565),
+                                      ),
+                                      maxLines: 4,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
 
-                          // Button
-                          Container(
-                            width: 100,
-                            height: 28,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFBDBDBD),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Center(
-                              child: Text(
-                                "Unlock",
-                                style: GoogleFonts.montserrat(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white,
-                                ),
+                                  // 5. BUTTON
+                                  Container(
+                                    width: 125, // Increased width slightly
+                                    height: 26.0,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFBDBDBD),
+                                      borderRadius: BorderRadius.circular(7.38),
+                                    ),
+                                    child: Align(
+                                      alignment: const Alignment(0, -0.15),
+                                      child: Text(
+                                        "Unlock",
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 10.0,
+                                          fontWeight: FontWeight.w500,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
-                        ],
-                      ),
+                        );
+                      },
                     ),
                   ),
                 ],
               ),
 
-              // Custom Vertical Dotted Line
+              // Non-bleeding Midline Vertical Divider
               Positioned(
-                top: 10,
-                bottom: 10,
-                left: 140, // Positioned exactly at the boundary of the image
+                top: 12,
+                bottom: 12,
+                left: (MediaQuery.of(context).size.width - 48) / 2,
                 child: CustomPaint(
-                  painter: DottedLinePainter(isVertical: true),
+                  painter: SharedDottedLinePainter(isVertical: true),
                   size: const Size(1, double.infinity),
                 ),
               ),
@@ -571,140 +609,135 @@ class _DealsScreenState extends State<DealsScreen> {
   }
 }
 
-// ==========================================
-// CORE TICKET CLIPPER & PAINTER SYSTEM
-// ==========================================
+// --- MATHEMATICAL PATH CLIPPERS AND SHADOW PAINTERS ---
 
-/// Carves out the geometric "Ticket" shape with mathematically perfect semi-circles.
-class TicketClipper extends CustomClipper<Path> {
+class TicketShapeClipper extends CustomClipper<Path> {
   final double cornerRadius;
   final double cutoutRadius;
-  final double
-  cutoutPosition; // The precise Y-axis position for the center of the cutouts
+  final double absoluteCutoutY; // Now uses explicit pixels, NOT percentage!
 
-  TicketClipper({
-    this.cornerRadius = 14.0,
-    this.cutoutRadius = 8.0,
-    required this.cutoutPosition,
+  TicketShapeClipper({
+    required this.cornerRadius,
+    required this.cutoutRadius,
+    required this.absoluteCutoutY,
   });
 
   @override
   Path getClip(Size size) {
     final path = Path();
 
-    // Top Left Corner
+    // Ignore dynamic size.height for the cutouts - lock it exactly to our variable
+    final double midY = absoluteCutoutY;
+
     path.moveTo(0, cornerRadius);
     path.arcToPoint(
       Offset(cornerRadius, 0),
       radius: Radius.circular(cornerRadius),
     );
-
-    // Top Right Corner
     path.lineTo(size.width - cornerRadius, 0);
     path.arcToPoint(
       Offset(size.width, cornerRadius),
       radius: Radius.circular(cornerRadius),
     );
 
-    // Right Edge -> Down to Cutout
-    path.lineTo(size.width, cutoutPosition - cutoutRadius);
-
-    // Right Cutout (Inward curve)
+    // Right Edge Cutout
+    path.lineTo(size.width, midY - cutoutRadius);
     path.arcToPoint(
-      Offset(size.width, cutoutPosition + cutoutRadius),
+      Offset(size.width, midY + cutoutRadius),
       radius: Radius.circular(cutoutRadius),
       clockwise: false,
     );
 
-    // Right Edge -> Down to Bottom Corner
     path.lineTo(size.width, size.height - cornerRadius);
     path.arcToPoint(
       Offset(size.width - cornerRadius, size.height),
       radius: Radius.circular(cornerRadius),
     );
-
-    // Bottom Left Corner
     path.lineTo(cornerRadius, size.height);
     path.arcToPoint(
       Offset(0, size.height - cornerRadius),
       radius: Radius.circular(cornerRadius),
     );
 
-    // Left Edge -> Up to Cutout
-    path.lineTo(0, cutoutPosition + cutoutRadius);
-
-    // Left Cutout (Inward curve)
+    // Left Edge Cutout
+    path.lineTo(0, midY + cutoutRadius);
     path.arcToPoint(
-      Offset(0, cutoutPosition - cutoutRadius),
+      Offset(0, midY - cutoutRadius),
       radius: Radius.circular(cutoutRadius),
       clockwise: false,
     );
 
-    // Left Edge -> Up to Top
     path.lineTo(0, cornerRadius);
-
     path.close();
     return path;
   }
 
   @override
-  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
+  bool shouldReclip(CustomClipper<Path> oldClipper) => true;
 }
 
-/// Casts a beautiful drop shadow explicitly matching the shape generated by the TicketClipper.
-class TicketShadowPainter extends CustomPainter {
-  final CustomClipper<Path> clipper;
+class TicketOuterShadowPainter extends CustomPainter {
+  final double cornerRadius;
 
-  TicketShadowPainter({required this.clipper});
+  TicketOuterShadowPainter({required this.cornerRadius});
 
   @override
   void paint(Canvas canvas, Size size) {
-    var path = clipper.getClip(size);
-    // Draw the shadow exactly along the carved ticket path
-    canvas.drawShadow(path, Colors.black.withOpacity(0.08), 8.0, true);
+    final shadowPaint = Paint()
+      ..color = const Color(0xFF000000)
+          .withOpacity(0.08) // 8% Black
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5.5);
+
+    final rectPath = Path()
+      ..addRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromLTWH(0, 0, size.width, size.height),
+          Radius.circular(cornerRadius),
+        ),
+      );
+
+    canvas.save();
+    canvas.translate(0, 3);
+    canvas.drawPath(rectPath, shadowPaint);
+    canvas.restore();
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-/// Draws the minimal dashed divider lines matching the Figma file
-class DottedLinePainter extends CustomPainter {
-  final Color color;
+class SharedDottedLinePainter extends CustomPainter {
   final bool isVertical;
 
-  DottedLinePainter({
-    this.color = const Color(0xFFD4D4D4),
-    this.isVertical = false,
-  });
+  SharedDottedLinePainter({required this.isVertical});
 
   @override
   void paint(Canvas canvas, Size size) {
-    var paint = Paint()
-      ..color = color
-      ..strokeWidth = 1
+    final paint = Paint()
+      ..color = const Color(0xFF858585)
+      ..strokeWidth = 0.48
       ..style = PaintingStyle.stroke;
 
-    var max = isVertical ? size.height : size.width;
-    var dashWidth = 4.0;
-    var dashSpace = 4.0;
-    double currentPos = 0;
+    final maxDimension = isVertical ? size.height : size.width;
+    const double dashWidth = 3.0;
+    const double dashSpace = 3.0;
+    double currentPosition = 0;
 
-    while (currentPos < max) {
+    while (currentPosition < maxDimension) {
       if (isVertical) {
         canvas.drawLine(
-          Offset(0, currentPos),
-          Offset(0, currentPos + dashWidth),
+          Offset(0, currentPosition),
+          Offset(0, currentPosition + dashWidth),
           paint,
         );
       } else {
         canvas.drawLine(
-          Offset(currentPos, 0),
-          Offset(currentPos + dashWidth, 0),
+          Offset(currentPosition, 0),
+          Offset(currentPosition + dashWidth, 0),
           paint,
         );
       }
-      currentPos += dashWidth + dashSpace;
+      currentPosition += dashWidth + dashSpace;
     }
   }
 
@@ -712,5 +745,351 @@ class DottedLinePainter extends CustomPainter {
   bool shouldRepaint(CustomPainter oldDelegate) => false;
 }
 
+class DealDetailScreen extends StatelessWidget {
+  final DealModel deal; // Pass the selected deal here
 
-well there are few changes needed 
+  const DealDetailScreen({super.key, required this.deal});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor:
+          AppColors.bgWhite, // Using your existing background color
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // --- HEADER ---
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Great",
+                    style: GoogleFonts.montserrat(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.colblack,
+                    ),
+                  ),
+                  Text(
+                    "Deals",
+                    style: GoogleFonts.montserrat(
+                      fontSize: 36,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.colblack,
+                      height: 1.0,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // --- EXPANDED CARD ---
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: _buildExpandedCard(context),
+            ),
+            const SizedBox(height: 32),
+
+            // --- REDEEM INSTRUCTIONS & T&C ---
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32.0),
+              child: _buildDetailsSection(),
+            ),
+            const SizedBox(height: 50),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // --- MATHEMATICALLY LOCKED EXPANDED CARD (Height: 570px) ---
+  Widget _buildExpandedCard(BuildContext context) {
+    const double cardHeight = 570.0;
+    const double cornerRadius = 16.0;
+
+    // --- ABSOLUTE PIXEL MATH ---
+    // Image: 220
+    // Gap 1: 24
+    // Logo: 28
+    // Gap 2: 24
+    // Divider Y = 220 + 24 + 28 + 24 = 296.0
+
+    const double dividerY = 296.0;
+
+    return CustomPaint(
+      painter: TicketOuterShadowPainter(cornerRadius: cornerRadius),
+      child: ClipPath(
+        clipper: TicketShapeClipper(
+          cornerRadius: cornerRadius,
+          cutoutRadius: 10.0, // Slightly larger cutout for big card
+          absoluteCutoutY: dividerY, // mathematically locks semicircle center
+        ),
+        child: Container(
+          width: double.infinity,
+          height: cardHeight,
+          color: const Color(0xFFFFFFFF),
+          child: Stack(
+            children: [
+              // 1. PRODUCT IMAGE (Exact 220px)
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                height: 220.0,
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(cornerRadius),
+                    topRight: Radius.circular(cornerRadius),
+                  ),
+                  child: Image.asset(
+                    deal.productImage,
+                    fit: BoxFit.cover,
+                    errorBuilder: (c, e, s) =>
+                        Container(color: Colors.grey.shade200),
+                  ),
+                ),
+              ),
+
+              // 2. BRAND LOGO (Exactly at Y = 244)
+              Positioned(
+                top: 244.0,
+                left: 0,
+                right: 0,
+                height: 28.0,
+                child: Center(
+                  child: Image.asset(
+                    deal.brandLogo,
+                    height: 28.0,
+                    fit: BoxFit.contain,
+                    errorBuilder: (c, e, s) => const SizedBox(),
+                  ),
+                ),
+              ),
+
+              // 3. DOTTED DIVIDER (Exactly at Y = 296)
+              Positioned(
+                top: dividerY - (0.48 / 2),
+                left: 16,
+                right: 16,
+                child: CustomPaint(
+                  painter: SharedDottedLinePainter(isVertical: false),
+                  size: const Size(double.infinity, 1),
+                ),
+              ),
+
+              // 4. TITLE & SUBTITLE
+              Positioned(
+                top: 320.0, // Divider(296) + Gap(24)
+                left: 16,
+                right: 16,
+                child: Column(
+                  children: [
+                    Text(
+                      deal.offerTitle,
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.montserrat(
+                        fontSize: 18.0,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.colblack,
+                        height: 1.1,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      deal.offerSubtitle,
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.montserrat(
+                        fontSize: 13.0,
+                        fontWeight: FontWeight.w500,
+                        color: const Color(0xFF656565),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // 5. GRAY CLAIM BOX (Exactly at Y = 386)
+              Positioned(
+                top: 386.0,
+                left: 20,
+                right: 20,
+                height:
+                    110.0, // 16(pad) + 18(text) + 16(gap) + 54(btn) + 16(pad)
+                child: Container(
+                  padding: const EdgeInsets.all(16.0),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF2F2F2), // Light gray background
+                    borderRadius: BorderRadius.circular(16.0),
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "Special Code :",
+                            style: GoogleFonts.poppins(
+                              fontSize: 12.0,
+                              fontWeight: FontWeight.w500,
+                              color: const Color(0xFF656565),
+                            ),
+                          ),
+                          Text(
+                            "***************",
+                            style: GoogleFonts.poppins(
+                              fontSize: 12.0,
+                              fontWeight: FontWeight.w500,
+                              color: const Color(0xFF656565),
+                              letterSpacing: 1.5, // Spacing for asterisk look
+                            ),
+                          ),
+                        ],
+                      ),
+                      const Spacer(),
+                      // Large Claim Button
+                      Container(
+                        width: double.infinity,
+                        height: 50.0,
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryGreen,
+                          borderRadius: BorderRadius.circular(12.0),
+                        ),
+                        child: Center(
+                          child: Text(
+                            "Claim",
+                            style: GoogleFonts.poppins(
+                              fontSize: 16.0,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // 6. EXPIRY TEXT (Exactly at bottom gap)
+              Positioned(
+                bottom: 24.0,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: Text(
+                    "Expires on 00 March 2026",
+                    style: GoogleFonts.poppins(
+                      fontSize: 11.0,
+                      fontWeight: FontWeight.w400,
+                      color: const Color(0xFF858585),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // --- DETAILS & LIST SECTION ---
+  Widget _buildDetailsSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          "How to redeem",
+          style: GoogleFonts.poppins(
+            fontSize: 14.0,
+            fontWeight: FontWeight.w600,
+            color: const Color(0xFF656565),
+          ),
+        ),
+        const SizedBox(height: 12),
+        _buildBulletPoint(
+          "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna",
+        ),
+        const SizedBox(height: 12),
+        _buildBulletPoint(
+          "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna",
+        ),
+        const SizedBox(height: 12),
+        _buildBulletPoint(
+          "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna",
+        ),
+
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: 24.0),
+          child: Divider(color: Color(0xFFE0E0E0), thickness: 1),
+        ),
+
+        Text(
+          "Terms and Conditions",
+          style: GoogleFonts.poppins(
+            fontSize: 14.0,
+            fontWeight: FontWeight.w600,
+            color: const Color(0xFF656565),
+          ),
+        ),
+        const SizedBox(height: 12),
+        _buildBulletPoint(
+          "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna",
+        ),
+        const SizedBox(height: 12),
+        _buildBulletPoint(
+          "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna",
+        ),
+        const SizedBox(height: 12),
+        _buildBulletPoint(
+          "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna",
+        ),
+      ],
+    );
+  }
+
+  // --- REUSABLE BULLET POINT COMPONENT ---
+  Widget _buildBulletPoint(String text) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 6.0, right: 8.0),
+          child: Container(
+            width: 4,
+            height: 4,
+            decoration: const BoxDecoration(
+              color: Color(0xFF858585),
+              shape: BoxShape.circle,
+            ),
+          ),
+        ),
+        Expanded(
+          child: Text(
+            text,
+            style: GoogleFonts.poppins(
+              fontSize: 11.5,
+              fontWeight: FontWeight.w400,
+              color: const Color(0xFF858585),
+              height: 1.5,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+

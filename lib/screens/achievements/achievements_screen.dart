@@ -532,7 +532,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
             ),
             // SvgPicture handles the vector assets
             child: Center(
-              child: Image.asset(data['image'], width: 42, height: 4),
+              child: Image.asset(data['image'], width: 42, height: 42),
             ),
           ),
           const SizedBox(width: 16),

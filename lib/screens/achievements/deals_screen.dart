@@ -1,8 +1,12 @@
 import 'dart:ui';
+import 'package:flutter/gestures.dart'; // Added for clickable T&C links
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:spentree/core/app_style.dart';
+import 'package:spentree/screens/profile/privacy_screen.dart';
+import 'package:spentree/screens/profile/terms_screen.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 // --- DATA MODEL FOR DYNAMIC RENDERING & STATE ---
 class DealModel {
@@ -15,7 +19,7 @@ class DealModel {
   final String? description;
   final bool isBlurred;
   final bool isLockedWithSeeds;
-  bool isCopied; // Mutable state
+  bool isCopied;
 
   DealModel({
     required this.id,
@@ -38,7 +42,7 @@ class DealsScreen extends StatefulWidget {
   State<DealsScreen> createState() => _DealsScreenState();
 }
 
-class _DealsScreenState extends State<DealsScreen> {
+class _DealsScreenState extends State<DealsScreen> with TickerProviderStateMixin {
   // --- MOCK DATA SETS ---
 
   late List<DealModel> _crowdFavourites = [
@@ -135,7 +139,6 @@ class _DealsScreenState extends State<DealsScreen> {
       offerTitle: 'Special Deal',
       offerSubtitle: 'Mystery box',
       isClaimable: false,
-      isBlurred: true,
     ),
     DealModel(
       id: 'md_6',
@@ -144,7 +147,6 @@ class _DealsScreenState extends State<DealsScreen> {
       offerTitle: 'Special Deal',
       offerSubtitle: 'Mystery box',
       isClaimable: false,
-      isBlurred: true,
     ),
     DealModel(
       id: 'md_7',
@@ -153,7 +155,6 @@ class _DealsScreenState extends State<DealsScreen> {
       offerTitle: 'Special Deal',
       offerSubtitle: 'Mystery box',
       isClaimable: false,
-      isBlurred: true,
     ),
   ];
 
@@ -168,10 +169,12 @@ class _DealsScreenState extends State<DealsScreen> {
     isClaimable: false,
   );
 
+  bool _isBottomSheetOpen = false;
+  late AnimationController _bottomSheetController;
+
   void _handleDealCopied(DealModel copiedDeal) {
     setState(() {
       copiedDeal.isCopied = true;
-
       int index = _crowdFavourites.indexWhere((d) => d.id == copiedDeal.id);
       if (index != -1) {
         _crowdFavourites.removeAt(index);
@@ -209,6 +212,432 @@ class _DealsScreenState extends State<DealsScreen> {
         },
       ),
     );
+  }
+
+  // --- MEMBERSHIP BOTTOM SHEET ---
+  void _showMembershipBottomSheet() {
+    if (_isBottomSheetOpen) return;
+    _isBottomSheetOpen = true;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        // Local state for the selectable plans inside the bottom sheet
+        int selectedPlanIndex = 0; // 0 for Annual, 1 for Monthly
+
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setSheetState) {
+            return Container(
+              height: MediaQuery.of(context).size.height * 0.75,
+              decoration: BoxDecoration(
+                color: AppColors.colwhite,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 10,
+                    spreadRadius: 2,
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  const SizedBox(height: 12),
+                  // Drag Handle
+                  Container(
+                    width: 50,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Scrollable Inner Content
+                  Expanded(
+                    child: SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          // Header
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: const BoxDecoration(
+                                  color: AppColors.primaryGreen,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.star,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Text(
+                                "Spentree Pro",
+                                style: GoogleFonts.poppins(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w500, // Medium
+                                  color: AppColors.colblack,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            "Unlock smarter insights and grow your\nmoney with clarity.",
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.poppins(
+                              fontSize: 12, // Reduced size
+                              fontWeight: FontWeight.w400, // Regular
+                              color: const Color(0xFF808080), // Specific grey
+                              height: 1.5,
+                            ),
+                          ),
+                          const SizedBox(height: 32),
+
+                          // Table Header
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  "Feature",
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.colblack,
+                                  ),
+                                ),
+                              ), // SemiBold 14
+                              SizedBox(
+                                width: 60,
+                                child: Center(
+                                  child: Text(
+                                    "Basic",
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.colblack,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              SizedBox(
+                                width: 50,
+                                child: Center(
+                                  child: Text(
+                                    "Pro",
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.colblack,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+
+                          // Reduced gap and exact divider spec
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 8.0),
+                            child: Divider(
+                              color: Color(0xFF808080),
+                              thickness: 0.5,
+                            ),
+                          ),
+
+                          // Features Map
+                          ...[
+                            "Unlimited expense history",
+                            "Advanced analytics",
+                            "Forest health insights",
+                            "Time-based pattern",
+                            "Behavioural insights",
+                            "Member only deals",
+                          ].map(
+                            (feature) => Padding(
+                              padding: const EdgeInsets.only(
+                                bottom: 15.0,
+                              ), // Reduced gap between context elements
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      feature,
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 14,
+                                        color: const Color(0xFF4F4F4F),
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ), // Medium 12, 4f4f4f
+                                  ),
+                                  SizedBox(
+                                    width: 60,
+                                    child: Center(
+                                      child: Icon(
+                                        Icons.close,
+                                        color: const Color(0xFF717171),
+                                        size: 20,
+                                      ),
+                                    ), // 717171 Cross
+                                  ),
+                                  const SizedBox(
+                                    width: 50,
+                                    child: Center(
+                                      child: Icon(
+                                        Icons.check,
+                                        color: AppColors.primaryGreen,
+                                        size: 20,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Annual Plan Card (Selectable)
+                          GestureDetector(
+                            onTap: () {
+                              setSheetState(() => selectedPlanIndex = 0);
+                            },
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 16,
+                                horizontal: 20,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.navbar,
+                                border: Border.all(
+                                  color: selectedPlanIndex == 0
+                                      ? AppColors.primaryGreen
+                                      : const Color(0xFFD7D8D6),
+                                  width: selectedPlanIndex == 0 ? 1.5 : 1.0,
+                                ),
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: selectedPlanIndex == 0
+                                    ? [
+                                        BoxShadow(
+                                          color: AppColors.primaryGreen
+                                              .withOpacity(0.15),
+                                          blurRadius: 10,
+                                          offset: const Offset(0, 4),
+                                        ),
+                                      ]
+                                    : [],
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "Annual Plan",
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      color: selectedPlanIndex == 0
+                                          ? AppColors.primaryGreen
+                                          : const Color(0xFFBABABA),
+                                    ),
+                                  ), // SemiBold 16
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    "30 days free - Then ₹1499/Year",
+                                    style: GoogleFonts.inter(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w400,
+                                      color: selectedPlanIndex == 0
+                                          ? AppColors.primaryGreen.withOpacity(
+                                              0.8,
+                                            )
+                                          : const Color(0xFF808080),
+                                    ),
+                                  ), // Inter Regular 12
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(
+                            height: 10,
+                          ), // Decreased gap between buttons
+                          // Monthly Plan Card (Selectable)
+                          GestureDetector(
+                            onTap: () {
+                              setSheetState(() => selectedPlanIndex = 1);
+                            },
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 16,
+                                horizontal: 20,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                border: Border.all(
+                                  color: selectedPlanIndex == 1
+                                      ? AppColors.primaryGreen
+                                      : const Color(0xFFD7D8D6),
+                                  width: selectedPlanIndex == 1 ? 1.5 : 1.0,
+                                ),
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: selectedPlanIndex == 1
+                                    ? [
+                                        BoxShadow(
+                                          color: AppColors.primaryGreen
+                                              .withOpacity(0.15),
+                                          blurRadius: 10,
+                                          offset: const Offset(0, 4),
+                                        ),
+                                      ]
+                                    : [],
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "Monthly Plan",
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      color: selectedPlanIndex == 1
+                                          ? AppColors.primaryGreen
+                                          : const Color(0xFFBABABA),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    "7 days free - Then ₹199/Month",
+                                    style: GoogleFonts.inter(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w400,
+                                      color: selectedPlanIndex == 1
+                                          ? AppColors.primaryGreen.withOpacity(
+                                              0.8,
+                                            )
+                                          : const Color(0xFF808080),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+
+                          // Green CTA Button
+                          GestureDetector(
+                            onTap: () {
+                              // Handle subscription action here
+                              debugPrint(
+                                "Started Trial for Plan: $selectedPlanIndex",
+                              );
+                              Navigator.pop(
+                                context,
+                              ); // Optional: close sheet on start
+                            },
+                            child: Container(
+                              height: 54,
+                              width: double.infinity,
+                              decoration: BoxDecoration(
+                                color: AppColors.primaryGreen,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  "Start 30 days free trial",
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+
+                          // Clickable T&C Footer
+                          // Clickable T&C Footer
+                          RichText(
+                            textAlign: TextAlign.center,
+                            text: TextSpan(
+                              style: GoogleFonts.poppins(
+                                fontSize: 10,
+                                color: Colors.grey.shade500,
+                                height: 1.5,
+                              ),
+                              children: [
+                                const TextSpan(
+                                  text:
+                                      "By placing this order, you agree to the ",
+                                ),
+                                TextSpan(
+                                  text: "Terms of Service",
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  recognizer: TapGestureRecognizer()
+                                    ..onTap = () {
+                                      // Open Terms Screen
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              const TermsScreen(),
+                                        ),
+                                      );
+                                    },
+                                ),
+                                const TextSpan(text: " and "),
+                                TextSpan(
+                                  text: "Privacy\nPolicy",
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  recognizer: TapGestureRecognizer()
+                                    ..onTap = () {
+                                      // Open Privacy Screen
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              const PrivacyScreen(),
+                                        ),
+                                      );
+                                    },
+                                ),
+                                const TextSpan(
+                                  text:
+                                      ". Subscription automatically renews unless auto-renew is turned\noff at least 24-hours before the end of the current period.",
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 32),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    ).then((_) {
+      _isBottomSheetOpen = false;
+    });
   }
 
   @override
@@ -271,23 +700,32 @@ class _DealsScreenState extends State<DealsScreen> {
             const SizedBox(height: 14),
             SizedBox(
               height: 228,
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                scrollDirection: Axis.horizontal,
-                physics: const BouncingScrollPhysics(),
-                itemCount: _memberDrops.length,
-                itemBuilder: (context, index) {
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 15.0, bottom: 8.0),
-                    child: _buildSmallDealCard(_memberDrops[index]),
-                  );
+              child: NotificationListener<ScrollUpdateNotification>(
+                onNotification: (notification) {
+                  if (notification.metrics.pixels >
+                      notification.metrics.maxScrollExtent + 40) {
+                    _showMembershipBottomSheet();
+                  }
+                  return false;
                 },
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  itemCount: _memberDrops.length,
+                  itemBuilder: (context, index) {
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 15.0, bottom: 8.0),
+                      child: _buildSmallDealCard(_memberDrops[index]),
+                    );
+                  },
+                ),
               ),
             ),
-            const SizedBox(height: 45),
+            const SizedBox(height: 43),
 
             _buildSectionHeader("Deal of the day", showStar: true),
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24.0),
               child: _buildBigDealCard(_dealOfTheDay),
@@ -345,10 +783,10 @@ class _DealsScreenState extends State<DealsScreen> {
     Color buttonColor;
     if (deal.isCopied) {
       buttonText = "Copied";
-      buttonColor = AppColors.primaryGreen;
+      buttonColor = const Color(0xFFFFCC00);
     } else if (deal.isLockedWithSeeds) {
-      buttonText = "3 more seeds";
-      buttonColor = const Color(0xFFBDBDBD);
+      buttonText = "Claim";
+      buttonColor = AppColors.primaryGreen;
     } else if (deal.isClaimable) {
       buttonText = "Claim";
       buttonColor = AppColors.primaryGreen;
@@ -435,7 +873,13 @@ class _DealsScreenState extends State<DealsScreen> {
                 ),
               ),
               GestureDetector(
-                onTap: () => _openDealExpanded(context, deal),
+                onTap: () {
+                  if (buttonText == "Unlock") {
+                    _showMembershipBottomSheet();
+                  } else if (buttonText == "Claim" || buttonText == "Copied") {
+                    _openDealExpanded(context, deal);
+                  }
+                },
                 child: Container(
                   margin: const EdgeInsets.symmetric(horizontal: 15.0),
                   height: 26.0,
@@ -451,7 +895,7 @@ class _DealsScreenState extends State<DealsScreen> {
                       style: GoogleFonts.poppins(
                         fontSize: 10.0,
                         fontWeight: FontWeight.w500,
-                        color: Colors.white,
+                        color: AppColors.colwhite,
                       ),
                     ),
                   ),
@@ -463,10 +907,46 @@ class _DealsScreenState extends State<DealsScreen> {
       ],
     );
 
-    if (deal.isBlurred) {
-      innerContent = ImageFiltered(
-        imageFilter: ImageFilter.blur(sigmaX: 3.5, sigmaY: 3.5),
-        child: innerContent,
+    if (deal.isBlurred || deal.isLockedWithSeeds) {
+      innerContent = ClipRect( 
+        child: Stack(
+          children: [
+            ImageFiltered(
+              imageFilter: ImageFilter.blur(sigmaX: 10.4, sigmaY: 10.4), 
+              child: innerContent,
+            ),
+            Container(
+              color: AppColors.bgWhite.withOpacity(0.4), 
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (deal.isLockedWithSeeds) {
+      innerContent = Stack(
+        children: [
+          innerContent, // The blurred card
+          Align(
+            alignment: Alignment.center,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(PhosphorIcons.lock(), color: AppColors.unlockst, size: 28),
+                const SizedBox(height: 4),
+                Text(
+                  "Unlocks at\nLevel 9",
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.poppins(
+                    fontSize: 10.0,
+                    fontWeight: FontWeight.w500, // Medium
+                    color: AppColors.unlockst, 
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       );
     }
 
@@ -485,7 +965,7 @@ class _DealsScreenState extends State<DealsScreen> {
             child: Container(
               width: cardWidth,
               height: cardHeight,
-              color: const Color(0xFFFFFFFF),
+              color: AppColors.navbar,
               child: innerContent,
             ),
           ),
@@ -574,7 +1054,7 @@ class _DealsScreenState extends State<DealsScreen> {
                                   deal.description ?? "",
                                   textAlign: TextAlign.center,
                                   style: GoogleFonts.poppins(
-                                    fontSize: 5.85,
+                                    fontSize: 8,
                                     height: 1.3,
                                     fontWeight: FontWeight.w400,
                                     color: const Color(0xFF656565),
@@ -585,7 +1065,13 @@ class _DealsScreenState extends State<DealsScreen> {
                               ),
                             ),
                             GestureDetector(
-                              onTap: () => _openDealExpanded(context, deal),
+                              onTap: () {
+                                if (!deal.isClaimable) {
+                                  _showMembershipBottomSheet();
+                                } else {
+                                  _openDealExpanded(context, deal);
+                                }
+                              },
                               child: Container(
                                 width: 145,
                                 height: 26.0,
@@ -600,7 +1086,7 @@ class _DealsScreenState extends State<DealsScreen> {
                                     style: GoogleFonts.poppins(
                                       fontSize: 10.0,
                                       fontWeight: FontWeight.w500,
-                                      color: Colors.white,
+                                      color: AppColors.colwhite,
                                     ),
                                   ),
                                 ),
@@ -633,7 +1119,7 @@ class _DealsScreenState extends State<DealsScreen> {
 
     if (deal.isBlurred) {
       innerContent = ImageFiltered(
-        imageFilter: ImageFilter.blur(sigmaX: 3.5, sigmaY: 3.5),
+        imageFilter: ImageFilter.blur(sigmaX: 10.5, sigmaY: 10.5),
         child: innerContent,
       );
     }
@@ -653,7 +1139,7 @@ class _DealsScreenState extends State<DealsScreen> {
             child: Container(
               width: MediaQuery.of(context).size.width - 48,
               height: cardHeight,
-              color: const Color(0xFFFFFFFF),
+              color: AppColors.navbar,
               child: innerContent,
             ),
           ),
@@ -788,13 +1274,11 @@ class _ExpandedDealOverlayState extends State<ExpandedDealOverlay> {
                     ),
                   ),
                   const SizedBox(height: 30),
-
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24.0),
                     child: _buildExpandedCard(context),
                   ),
                   const SizedBox(height: 32),
-
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 32.0),
                     child: _buildDetailsSection(),
@@ -829,10 +1313,9 @@ class _ExpandedDealOverlayState extends State<ExpandedDealOverlay> {
             child: Container(
               width: MediaQuery.of(context).size.width - 48,
               height: cardHeight,
-              color: const Color(0xFFFFFFFF),
+              color: AppColors.navbar,
               child: Stack(
                 children: [
-                  // 1. PRODUCT IMAGE
                   Positioned(
                     top: 0,
                     left: 0,
@@ -851,8 +1334,6 @@ class _ExpandedDealOverlayState extends State<ExpandedDealOverlay> {
                       ),
                     ),
                   ),
-
-                  // 2. BRAND LOGO
                   Positioned(
                     top: 190.0,
                     left: 0,
@@ -867,8 +1348,6 @@ class _ExpandedDealOverlayState extends State<ExpandedDealOverlay> {
                       ),
                     ),
                   ),
-
-                  // 3. DOTTED DIVIDER
                   Positioned(
                     top: dividerY - (1.09 / 2),
                     left: 20,
@@ -881,10 +1360,6 @@ class _ExpandedDealOverlayState extends State<ExpandedDealOverlay> {
                       size: const Size(double.infinity, 1),
                     ),
                   ),
-
-                  // 4. MATHEMATICALLY EQUAL BOTTOM LAYOUT (ANIMATION SAFE)
-                  // SingleChildScrollView prevents RenderFlex errors during the flight
-                  // It acts as a safe clipping boundary as the card expands.
                   Positioned(
                     top: dividerY,
                     bottom: 0,
@@ -893,11 +1368,10 @@ class _ExpandedDealOverlayState extends State<ExpandedDealOverlay> {
                     child: SingleChildScrollView(
                       physics: const NeverScrollableScrollPhysics(),
                       child: SizedBox(
-                        height: cardHeight - dividerY, // Exactly 280.0
+                        height: cardHeight - dividerY,
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
-                            // TEXT BLOCK
                             Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
@@ -926,8 +1400,6 @@ class _ExpandedDealOverlayState extends State<ExpandedDealOverlay> {
                                 ),
                               ],
                             ),
-
-                            // GREY CODE BOX
                             Container(
                               width: double.infinity,
                               height: 110.0,
@@ -982,7 +1454,6 @@ class _ExpandedDealOverlayState extends State<ExpandedDealOverlay> {
                                     ],
                                   ),
                                   const SizedBox(height: 15),
-
                                   GestureDetector(
                                     onTap: () {
                                       if (!isCodeCopied) {
@@ -991,9 +1462,7 @@ class _ExpandedDealOverlayState extends State<ExpandedDealOverlay> {
                                             text: "PUMA10OFF",
                                           ),
                                         );
-                                        setState(() {
-                                          isCodeCopied = true;
-                                        });
+                                        setState(() => isCodeCopied = true);
                                         widget.onCopied();
                                       }
                                     },
@@ -1023,8 +1492,6 @@ class _ExpandedDealOverlayState extends State<ExpandedDealOverlay> {
                                 ],
                               ),
                             ),
-
-                            // EXPIRE TEXT
                             Text(
                               "Expires on 00 March 2026",
                               style: GoogleFonts.montserrat(
@@ -1071,12 +1538,10 @@ class _ExpandedDealOverlayState extends State<ExpandedDealOverlay> {
         _buildBulletPoint(
           "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna",
         ),
-
         const Padding(
           padding: EdgeInsets.symmetric(vertical: 26.0),
           child: Divider(color: Color(0xFFE0E0E0), thickness: 1),
         ),
-
         Text(
           "Terms and Conditions",
           style: GoogleFonts.poppins(

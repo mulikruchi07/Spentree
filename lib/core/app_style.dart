@@ -69,6 +69,8 @@ class AppColors {
       isDarkMode ? const Color(0xFF666666) : const Color(0xFFD7D8D6);
   static Color get datenum =>
       isDarkMode ? const Color(0xFF999999) : const Color(0xFF797979);
+  static Color get unlockst =>
+      isDarkMode ? const Color(0xFFC0C0C0) : const Color(0xFFFFFFFF);
 }
 
 // --- 4. DYNAMIC TEXT STYLES ---

@@ -71,6 +71,8 @@ class AppColors {
       isDarkMode ? const Color(0xFF999999) : const Color(0xFF797979);
   static Color get unlockst =>
       isDarkMode ? const Color(0xFFC0C0C0) : const Color(0xFFFFFFFF);
+      static Color get redirctcircle =>
+      isDarkMode ? const Color(0xFF2D2D2D) : const Color(0xFFD9D9D9);
 }
 
 // --- 4. DYNAMIC TEXT STYLES ---

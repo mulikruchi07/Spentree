@@ -131,56 +131,331 @@
 //     );
 //   }
 // }
+//testing
+// import 'package:flutter/material.dart';
+// import 'package:spentree/screens/dashboard/dashboard_screen.dart';
+// import 'package:spentree/screens/main_wrapper.dart';
+// import 'screens/subscription/payment_successful_screen.dart';
+// import 'core/app_style.dart';
+// import 'screens/forest/spentwrap_intro_screen.dart';
+// import 'core/transaction_service.dart';
+// import 'screens/achievements/deals_screen.dart';
 
+// void main() async {
+//   WidgetsFlutterBinding.ensureInitialized();
+
+//   // Start fetching SMS in the background immediately
+//   await TransactionService().initService();
+//   runApp(const MyApp(startScreen: SizedBox()));
+// }
+
+// class MyApp extends StatelessWidget {
+//   const MyApp({super.key, required SizedBox startScreen});
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return ValueListenableBuilder<ThemeMode>(
+//       valueListenable: themeNotifier,
+//       builder: (context, currentMode, child) {
+//         return MaterialApp(
+//           debugShowCheckedModeBanner: false,
+//           title: 'SpenTree',
+//           themeMode: currentMode,
+
+//           theme: ThemeData(
+//             colorScheme: ColorScheme.fromSeed(
+//               seedColor: AppColors.primaryGreen,
+//               brightness: Brightness.light,
+//             ),
+//             useMaterial3: true,
+//             scaffoldBackgroundColor: AppColors.bgWhite,
+//           ),
+
+//           darkTheme: ThemeData(
+//             colorScheme: ColorScheme.fromSeed(
+//               seedColor: AppColors.primaryGreen,
+//               brightness: Brightness.dark,
+//             ),
+//             useMaterial3: true,
+//             scaffoldBackgroundColor: AppColors.bgWhite,
+//           ),
+
+//           home: const MainWrapper(initialIndex: 0),
+//           // home: const DealsScreen(),
+//           // home: const PaymentSuccessfulScreen(),
+//         );
+//       },
+//     );
+//   }
+// }
+
+//widget 1 todays_tree_card
+// import 'package:flutter/material.dart';
+// import 'widgets/todays_tree_card.dart';
+// void main() {
+//   runApp(const MyApp());
+// }
+// class MyApp extends StatelessWidget {
+//   const MyApp({super.key});
+//   @override
+//   Widget build(BuildContext context) {
+//     return MaterialApp(
+//       home: Scaffold(
+//         body: Center(
+//           child: TodaysTreeCard(
+//             todayExpense: 1000,
+//             dailyLimit: 5000,
+//             onGoToDashboard: () {},
+//           ),
+//         ),
+//       ),
+//     );
+//   }
+// }
+
+//widget 2 mini_tree_card
+// import 'package:flutter/material.dart';
+// import 'widgets/mini_tree_card.dart'; // Adjust path if needed
+// void main() {
+//   runApp(const MyApp());
+// }
+// class MyApp extends StatelessWidget {
+//   const MyApp({super.key});
+//   @override
+//   Widget build(BuildContext context) {
+//     return MaterialApp(
+//       debugShowCheckedModeBanner: false,
+//       home: Scaffold(
+//         backgroundColor: const Color(0xFFF5F5F5),
+//         body: Center(
+//           child: SizedBox(
+//             width: 168,
+//             child: MiniTreeCard(
+//               todayExpense: 4000.0,
+//               dailyLimit: 5000,
+//             ),
+//           ),
+//         ),
+//       ),
+//     );
+//   }
+// }
+
+//wdiget 3 add_expense_card
+// import 'package:flutter/material.dart';
+// import 'widgets/add_expense_card.dart';
+
+// void main() {
+//   runApp(const MyApp());
+// }
+
+// class MyApp extends StatelessWidget {
+//   const MyApp({super.key});
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return MaterialApp(
+//       debugShowCheckedModeBanner: false,
+//       home: Scaffold(
+//         backgroundColor: Colors.white,
+//         body: Center(
+//           child: SizedBox(
+//             width: 168,
+//             child: AddExpenseCard(
+//               onTap: () {
+//                 debugPrint('Card tapped');
+//               },
+//             ),
+//           ),
+//         ),
+//       ),
+//     );
+//   }
+// }
+
+//widget 4 todays_expenses_card.dart
+// import 'package:flutter/material.dart';
+// import 'package:phosphor_flutter/phosphor_flutter.dart';
+
+// import 'widgets/todays_expenses_card.dart';
+// import 'core/transaction_service.dart';
+
+// void main() {
+//   runApp(const MyApp());
+// }
+
+// class MyApp extends StatelessWidget {
+//   const MyApp({super.key});
+
+//   @override
+//   Widget build(BuildContext context) {
+//     final transactions = [
+//       Transaction(
+//         id: '1',
+//         title: 'Swiggy',
+//         category: 'Food & Beverages',
+//         amount: 450,
+//         date: DateTime.now(),
+//         time: const TimeOfDay(hour: 12, minute: 30),
+//         icon: PhosphorIcons.bowlSteam(),
+//         isManual: false,
+//       ),
+//       Transaction(
+//         id: '2',
+//         title: 'Uber',
+//         category: 'Transport',
+//         amount: 220,
+//         date: DateTime.now(),
+//         time: const TimeOfDay(hour: 14, minute: 15),
+//         icon: PhosphorIcons.car(),
+//         isManual: true,
+//       ),
+//       Transaction(
+//         id: '3',
+//         title: 'Amazon',
+//         category: 'Shopping',
+//         amount: 1299,
+//         date: DateTime.now(),
+//         time: const TimeOfDay(hour: 16, minute: 45),
+//         icon: PhosphorIcons.tShirt(),
+//         isManual: false,
+//       ),
+//       Transaction(
+//         id: '4',
+//         title: 'Jio Recharge',
+//         category: 'Bills & Subscriptions',
+//         amount: 299,
+//         date: DateTime.now(),
+//         time: const TimeOfDay(hour: 18, minute: 20),
+//         icon: PhosphorIcons.simCard(),
+//         isManual: false,
+//       ),
+//     ];
+
+//     return MaterialApp(
+//       debugShowCheckedModeBanner: false,
+//       home: Scaffold(
+//         backgroundColor: const Color(0xFFF5F5F5),
+//         body: SafeArea(
+//           child: Padding(
+//             padding: const EdgeInsets.all(0),
+//             child: TodaysExpensesCard(
+//               transactions: transactions, //const[], //nullstate
+//               onGoToAnalytics: () {
+//                 debugPrint('Analytics tapped');
+//               },
+//               onSwapTap: () {
+//                 debugPrint('Swap tapped');
+//               },
+//             ),
+//           ),
+//         ),
+//       ),
+//     );
+//   }
+// }
+
+// widget 5 greeting_summary_card.dart
+// import 'package:flutter/material.dart';
+// import 'widgets/greeting_summary_card.dart';
+// void main() {
+//   runApp(const MyApp());
+// }
+// class MyApp extends StatelessWidget {
+//   const MyApp({super.key});
+//   @override
+//   Widget build(BuildContext context) {
+//     return MaterialApp(
+//       debugShowCheckedModeBanner: false,
+//       home: Scaffold(
+//         backgroundColor: const Color(0xFFF5F5F5),
+//         body: SafeArea(
+//           child: Padding(
+//             padding: const EdgeInsets.all(0),
+//             child: GreetingSummaryCard(
+//               userName: 'Ruchi',
+//               todayExpense: 1050.0,
+//               dailyLimit: 5000,
+//               onArrowTap: () {
+//                 debugPrint('Arrow tapped');
+//               },
+//             ),
+//           ),
+//         ),
+//       ),
+//     );
+//   }
+// }
+
+// widget 6 dynamic_calendar_card.dart
+// import 'package:flutter/material.dart';
+// import 'widgets/dynamic_calendar_card.dart';
+// import 'widgets/todays_expenses_card.dart';
+// import 'core/transaction_service.dart';
+// void main() {
+//   runApp(const MyApp());
+// }
+// class MyApp extends StatelessWidget {
+//   const MyApp({super.key});
+//   @override
+//   Widget build(BuildContext context) {
+//     return const MaterialApp(
+//       debugShowCheckedModeBanner: false,
+//       home: WidgetTestScreen(),
+//     );
+//   }
+// }
+// class WidgetTestScreen extends StatefulWidget {
+//   const WidgetTestScreen({super.key});
+//   @override
+//   State<WidgetTestScreen> createState() => _WidgetTestScreenState();
+// }
+// class _WidgetTestScreenState extends State<WidgetTestScreen> {
+//   bool showCalendar = true;
+//   @override
+//   Widget build(BuildContext context) {
+//     return Scaffold(
+//       backgroundColor: const Color(0xFFF5F5F5),
+//       body: SafeArea(
+//         child: Padding(
+//           padding: const EdgeInsets.all(0),
+//           child: showCalendar
+//               ? DynamicCalendarCard(
+//                   dailyLimit: 5000,
+//                   onSwapTap: () {
+//                     setState(() {
+//                       showCalendar = false;
+//                     });
+//                   },
+//                 )
+//               : TodaysExpensesCard(
+//                   transactions: const [],
+//                   onGoToAnalytics: () {},
+//                   onSwapTap: () {
+//                     setState(() {
+//                       showCalendar = true;
+//                     });
+//                   },
+//                 ),
+//         ),
+//       ),
+//     );
+//   }
+// }
+
+//swap toggel
 import 'package:flutter/material.dart';
-import 'package:spentree/screens/dashboard/dashboard_screen.dart';
-import 'package:spentree/screens/main_wrapper.dart';
-import 'core/app_style.dart';
-import 'screens/forest/spentwrap_intro_screen.dart';
-import 'core/transaction_service.dart';
-
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-
-  // Start fetching SMS in the background immediately
-  await TransactionService().initService();
-  runApp(const MyApp(startScreen: SizedBox()));
+import 'screens/widget_test_screen.dart';
+void main() {
+  runApp(const MyApp());
 }
-
 class MyApp extends StatelessWidget {
-  const MyApp({super.key, required SizedBox startScreen});
-
+  const MyApp({super.key});
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<ThemeMode>(
-      valueListenable: themeNotifier,
-      builder: (context, currentMode, child) {
-        return MaterialApp(
-          debugShowCheckedModeBanner: false,
-          title: 'SpenTree',
-          themeMode: currentMode,
-
-          theme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: AppColors.primaryGreen,
-              brightness: Brightness.light,
-            ),
-            useMaterial3: true,
-            scaffoldBackgroundColor: AppColors.bgWhite,
-          ),
-
-          darkTheme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: AppColors.primaryGreen,
-              brightness: Brightness.dark,
-            ),
-            useMaterial3: true,
-            scaffoldBackgroundColor: AppColors.bgWhite,
-          ),
-
-          home: const MainWrapper(initialIndex: 3),
-        );
-      },
+    return const MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: WidgetTestScreen(),
     );
   }
 }

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import '../core/app_style.dart'; // Make sure this path is correct
 
 class GreetingSummaryCard extends StatelessWidget {
@@ -23,8 +23,13 @@ class GreetingSummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // --- MATH & LOGIC FOR BADGE ---
-    final double pendingLimit = (dailyLimit - todayExpense).clamp(0.0, dailyLimit.toDouble());
-    final double percentage = dailyLimit > 0 ? (pendingLimit / dailyLimit).clamp(0.0, 1.0) : 0.0;
+    final double pendingLimit = (dailyLimit - todayExpense).clamp(
+      0.0,
+      dailyLimit.toDouble(),
+    );
+    final double percentage = dailyLimit > 0
+        ? (pendingLimit / dailyLimit).clamp(0.0, 1.0)
+        : 0.0;
 
     String badgeText;
     Color statusColor;
@@ -74,7 +79,9 @@ class GreetingSummaryCard extends StatelessWidget {
                 width: 75,
                 height: 75,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF4F4F4), // Clean light gray instead of yellow
+                  color: const Color(
+                    0xFFF4F4F4,
+                  ), // Clean light gray instead of yellow
                   shape: BoxShape.circle,
                   image: profileImageUrl != null && profileImageUrl!.isNotEmpty
                       ? DecorationImage(
@@ -135,7 +142,7 @@ class GreetingSummaryCard extends StatelessWidget {
                     ),
                   ),
                   child: Icon(
-                    PhosphorIcons.arrowUpRight(PhosphorIconsStyle.regular),
+                    PhosphorIcons.arrowUpRight,
                     color: AppColors.divider,
                     size: 42,
                   ),
@@ -150,71 +157,80 @@ class GreetingSummaryCard extends StatelessWidget {
           // ==========================================
           Padding(
             // Adjust this 'horizontal' value to increase or decrease the left/right gap!
-            padding: const EdgeInsets.symmetric(horizontal: 12.0), 
+            padding: const EdgeInsets.symmetric(horizontal: 12.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 RichText(
-            text: TextSpan(
-              children: [
-                TextSpan(
-                  text: "Today's Expense  •  ",
-                  style: GoogleFonts.montserrat(
-                    fontSize: 12.03,
-                    fontWeight: FontWeight.w500, // Medium
-                    color: const Color(0xFF636363), // Exact color requested
-                  ),
-                ),
-                TextSpan(
-                  text: formattedDate,
-                  style: GoogleFonts.montserrat(
-                    fontSize: 12.03,
-                    fontWeight: FontWeight.w500, // Medium
-                    color: const Color(0xFF636363),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 4),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // Amount Text (Size 40, Bold)
-              Text(
-                "Rs. ${NumberFormat('#,##0').format(todayExpense)}",
-                style: GoogleFonts.montserrat(
-                  fontSize: 40,
-                  fontWeight: FontWeight.w700, // Bold
-                  color: AppColors.colblack,
-                  letterSpacing: -1,
-                ),
-              ),
-              
-              // Dynamic Status Badge (Text Size 12, Medium)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                decoration: BoxDecoration(
-                  color: statusColor,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      badgeIcon,
-                      color: badgeText == "Warning" ? Colors.black : Colors.white,
-                      size: 14,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      badgeText,
-                      style: GoogleFonts.montserrat(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500, // Medium
-                        color: badgeText == "Warning" ? Colors.black : Colors.white,
+                  text: TextSpan(
+                    children: [
+                      TextSpan(
+                        text: "Today's Expense  •  ",
+                        style: GoogleFonts.montserrat(
+                          fontSize: 12.03,
+                          fontWeight: FontWeight.w500, // Medium
+                          color: const Color(
+                            0xFF636363,
+                          ), // Exact color requested
+                        ),
                       ),
+                      TextSpan(
+                        text: formattedDate,
+                        style: GoogleFonts.montserrat(
+                          fontSize: 12.03,
+                          fontWeight: FontWeight.w500, // Medium
+                          color: const Color(0xFF636363),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // Amount Text (Size 40, Bold)
+                    Text(
+                      "Rs. ${NumberFormat('#,##0').format(todayExpense)}",
+                      style: GoogleFonts.montserrat(
+                        fontSize: 40,
+                        fontWeight: FontWeight.w700, // Bold
+                        color: AppColors.colblack,
+                        letterSpacing: -1,
+                      ),
+                    ),
+
+                    // Dynamic Status Badge (Text Size 12, Medium)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: statusColor,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            badgeIcon,
+                            color: badgeText == "Warning"
+                                ? Colors.black
+                                : Colors.white,
+                            size: 14,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            badgeText,
+                            style: GoogleFonts.montserrat(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500, // Medium
+                              color: badgeText == "Warning"
+                                  ? Colors.black
+                                  : Colors.white,
+                            ),
                           ),
                         ],
                       ),

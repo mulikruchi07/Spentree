@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import '../core/app_style.dart'; // Directly pulling from your style file
 
 class TodaysTreeCard extends StatelessWidget {
@@ -76,23 +76,21 @@ class TodaysTreeCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               GestureDetector(
-  onTap: onSwapTap,
-  child: Container(
-    width: 42,
-    height: 32,
-    decoration: BoxDecoration(
-      color: AppColors.inputFill,
-      shape: BoxShape.circle,
-    ),
-    child: Icon(
-      PhosphorIcons.arrowsLeftRight(
-        PhosphorIconsStyle.bold,
-      ),
-      size: 16,
-      color: AppColors.colblack,
-    ),
-  ),
-),
+                onTap: onSwapTap,
+                child: Container(
+                  width: 42,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: AppColors.inputFill,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    PhosphorIcons.arrowsLeftRight,
+                    size: 16,
+                    color: AppColors.colblack,
+                  ),
+                ),
+              ),
               Text(
                 "Today's Tree",
                 style: GoogleFonts.poppins(

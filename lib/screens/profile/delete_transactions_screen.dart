@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -25,43 +25,43 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
 
   final List<Map<String, dynamic>> _transactions = [
     {
-      "icon": PhosphorIcons.bowlSteam(),
+      "icon": PhosphorIcons.bowlSteam,
       "title": "Reciever",
       "amount": "100",
       "time": "11:00 AM",
     },
     {
-      "icon": PhosphorIcons.tShirt(),
+      "icon": PhosphorIcons.tShirt,
       "title": "Reciever",
       "amount": "100",
       "time": "11:00 AM",
     },
     {
-      "icon": PhosphorIcons.gasCan(),
+      "icon": PhosphorIcons.gasCan,
       "title": "Reciever",
       "amount": "100",
       "time": "11:00 AM",
     },
     {
-      "icon": PhosphorIcons.simCard(),
+      "icon": PhosphorIcons.simCard,
       "title": "Reciever",
       "amount": "100",
       "time": "11:00 AM",
     },
     {
-      "icon": PhosphorIcons.user(),
+      "icon": PhosphorIcons.user,
       "title": "Reciever",
       "amount": "100",
       "time": "11:00 AM",
     },
     {
-      "icon": PhosphorIcons.currencyInr(),
+      "icon": PhosphorIcons.currencyInr,
       "title": "Reciever",
       "amount": "100",
       "time": "11:00 AM",
     },
     {
-      "icon": PhosphorIcons.simCard(),
+      "icon": PhosphorIcons.simCard,
       "title": "Reciever",
       "amount": "100",
       "time": "11:00 AM",

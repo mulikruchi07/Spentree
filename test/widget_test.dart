@@ -6,7 +6,7 @@
 // tree, read text, and verify that the values of widget properties are correct.
 
 import 'package:flutter/material.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:spentree/main.dart';
@@ -28,4 +28,3 @@ void main() {
     expect(find.text('1'), findsOneWidget);
   });
 }
-

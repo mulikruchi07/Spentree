@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'dart:math' as math;
 
 class Transaction {
@@ -160,17 +160,17 @@ class TransactionService extends ChangeNotifier {
   IconData _getIconForCategory(String cat) {
     switch (cat) {
       case "Food & Beverages":
-        return PhosphorIcons.bowlSteam();
+        return PhosphorIcons.bowlSteam;
       case "Shopping":
-        return PhosphorIcons.tShirt();
+        return PhosphorIcons.tShirt;
       case "Fuel":
-        return PhosphorIcons.gasCan();
+        return PhosphorIcons.gasCan;
       case "Bills & Subscriptions":
-        return PhosphorIcons.simCard();
+        return PhosphorIcons.simCard;
       case "To People":
-        return PhosphorIcons.user();
+        return PhosphorIcons.user;
       default:
-        return PhosphorIcons.currencyInr();
+        return PhosphorIcons.currencyInr;
     }
   }
 

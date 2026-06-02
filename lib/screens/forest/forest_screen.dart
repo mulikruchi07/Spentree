@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -85,8 +85,9 @@ class _ForestScreenState extends State<ForestScreen> {
   Future<void> _playForestSound() async {
     // CHECK PREFERENCE FIRST
     final prefs = await SharedPreferences.getInstance();
-    final bool isSoundEnabled = prefs.getBool('sound_effects') ?? true; // Defaults to true
-    
+    final bool isSoundEnabled =
+        prefs.getBool('sound_effects') ?? true; // Defaults to true
+
     // If user turned it off, do not play!
     if (!isSoundEnabled) return;
 
@@ -273,7 +274,7 @@ class _ForestScreenState extends State<ForestScreen> {
             ),
           ],
         ),
-        Icon(PhosphorIcons.trophy(), size: 32, color: AppColors.colblack),
+        Icon(PhosphorIcons.trophy, size: 32, color: AppColors.colblack),
       ],
     );
   }
@@ -644,17 +645,17 @@ class _ForestScreenState extends State<ForestScreen> {
       {
         "name": "Shell Petroleum",
         "amount": "- Rs. 1500",
-        "icon": PhosphorIcons.gasCan(),
+        "icon": PhosphorIcons.gasCan,
       },
       {
         "name": "D-Mart",
         "amount": "- Rs. 2000",
-        "icon": PhosphorIcons.tShirt(),
+        "icon": PhosphorIcons.tShirt,
       },
       {
         "name": "Unknown Source",
         "amount": "+ Rs. 2000",
-        "icon": PhosphorIcons.currencyInr(),
+        "icon": PhosphorIcons.currencyInr,
       },
     ];
     return Column(

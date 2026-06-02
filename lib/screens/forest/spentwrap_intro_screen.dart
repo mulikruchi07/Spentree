@@ -2,7 +2,7 @@ import 'dart:ui';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:intl/intl.dart';
 import '../../core/app_style.dart';
 import 'package:spentree/screens/main_wrapper.dart';
@@ -582,9 +582,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                                       screenWidth * 0.035,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: Colors.black.withOpacity(
-                                        0.40,
-                                      ),
+                                      color: Colors.black.withOpacity(0.40),
                                       borderRadius: BorderRadius.circular(24),
                                     ),
                                     child: Column(
@@ -599,7 +597,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                                             shape: BoxShape.circle,
                                           ),
                                           child: Icon(
-                                            PhosphorIcons.presentationChart(),
+                                            PhosphorIcons.presentationChart,
                                             color: AppColors.colwhite,
                                             size: screenWidth * 0.1,
                                           ),
@@ -996,7 +994,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                                           linearVal,
                                         )!,
                                         child: _buildGreenIconBox(
-                                          PhosphorIcons.bowlSteam(),
+                                          PhosphorIcons.bowlSteam,
                                           screenWidth,
                                         ),
                                       ),
@@ -1240,7 +1238,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                                         "Bank account",
                                         "- Rs. 1500",
                                         "Fri, 11 April 2025",
-                                        PhosphorIcons.gasPump(),
+                                        PhosphorIcons.gasPump,
                                         screenWidth,
                                         screenHeight,
                                       ),
@@ -1249,7 +1247,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                                         "Bank account",
                                         "- Rs. 2000",
                                         "Fri, 11 April 2025",
-                                        PhosphorIcons.shoppingCart(),
+                                        PhosphorIcons.shoppingCart,
                                         screenWidth,
                                         screenHeight,
                                       ),
@@ -1258,7 +1256,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                                         "Bank account",
                                         "- Rs. 2000",
                                         "Fri, 11 April 2025",
-                                        PhosphorIcons.currencyInr(),
+                                        PhosphorIcons.currencyInr,
                                         screenWidth,
                                         screenHeight,
                                         isIncome: true,

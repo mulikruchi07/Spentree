@@ -6,7 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:spentree/core/app_style.dart';
 import 'package:spentree/screens/profile/privacy_screen.dart';
 import 'package:spentree/screens/profile/terms_screen.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 // --- DATA MODEL FOR DYNAMIC RENDERING & STATE ---
 class DealModel {
@@ -42,7 +42,8 @@ class DealsScreen extends StatefulWidget {
   State<DealsScreen> createState() => _DealsScreenState();
 }
 
-class _DealsScreenState extends State<DealsScreen> with TickerProviderStateMixin {
+class _DealsScreenState extends State<DealsScreen>
+    with TickerProviderStateMixin {
   // --- MOCK DATA SETS ---
 
   late List<DealModel> _crowdFavourites = [
@@ -233,7 +234,9 @@ class _DealsScreenState extends State<DealsScreen> with TickerProviderStateMixin
               height: MediaQuery.of(context).size.height * 0.75,
               decoration: BoxDecoration(
                 color: AppColors.colwhite,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(30),
+                ),
                 boxShadow: const [
                   BoxShadow(
                     color: Colors.black12,
@@ -908,16 +911,14 @@ class _DealsScreenState extends State<DealsScreen> with TickerProviderStateMixin
     );
 
     if (deal.isBlurred || deal.isLockedWithSeeds) {
-      innerContent = ClipRect( 
+      innerContent = ClipRect(
         child: Stack(
           children: [
             ImageFiltered(
-              imageFilter: ImageFilter.blur(sigmaX: 10.4, sigmaY: 10.4), 
+              imageFilter: ImageFilter.blur(sigmaX: 10.4, sigmaY: 10.4),
               child: innerContent,
             ),
-            Container(
-              color: AppColors.bgWhite.withOpacity(0.4), 
-            ),
+            Container(color: AppColors.bgWhite.withOpacity(0.4)),
           ],
         ),
       );
@@ -932,7 +933,7 @@ class _DealsScreenState extends State<DealsScreen> with TickerProviderStateMixin
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(PhosphorIcons.lock(), color: AppColors.unlockst, size: 28),
+                Icon(PhosphorIcons.lock, color: AppColors.unlockst, size: 28),
                 const SizedBox(height: 4),
                 Text(
                   "Unlocks at\nLevel 9",
@@ -940,7 +941,7 @@ class _DealsScreenState extends State<DealsScreen> with TickerProviderStateMixin
                   style: GoogleFonts.poppins(
                     fontSize: 10.0,
                     fontWeight: FontWeight.w500, // Medium
-                    color: AppColors.unlockst, 
+                    color: AppColors.unlockst,
                   ),
                 ),
               ],

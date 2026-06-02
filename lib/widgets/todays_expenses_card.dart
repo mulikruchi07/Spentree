@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import '../core/app_style.dart'; // Make sure this path is correct
 import '../core/transaction_service.dart'; // Required for the Transaction model
 
@@ -21,17 +21,17 @@ class TodaysExpensesCard extends StatelessWidget {
   Widget build(BuildContext context) {
     // Automatically take only the 4 most recent transactions
     final recentTx = transactions.take(4).toList();
-    
+
     // Calculate how many empty slots we need to fill to maintain fixed height
     final int emptySlots = 4 - recentTx.length;
 
     // Build the list of widgets (Transactions + Dynamic Empty State)
     List<Widget> listContent = [];
-    
+
     // 1. Add actual transactions
     for (int i = 0; i < recentTx.length; i++) {
       listContent.add(_buildTransactionRow(context, recentTx[i]));
-      
+
       // Add a gap after each transaction, as long as it's not the absolute last element in the whole card
       if (i < recentTx.length - 1 || emptySlots > 0) {
         listContent.add(const SizedBox(height: 8));
@@ -43,14 +43,16 @@ class TodaysExpensesCard extends StatelessWidget {
       // Calculate exact pixel height to perfectly fill the missing slots + gaps
       // 72.57 is the exact height of one transaction row. 8.0 is the gap between them.
       double emptyHeight = (72.57 * emptySlots) + (8.0 * (emptySlots - 1));
-      
+
       listContent.add(
         Container(
           height: emptyHeight,
           width: double.infinity,
           decoration: BoxDecoration(
             color: AppColors.inputFill,
-            borderRadius: BorderRadius.circular(50.39), // Pill shaped empty state
+            borderRadius: BorderRadius.circular(
+              50.39,
+            ), // Pill shaped empty state
           ),
           child: emptySlots == 1
               // If only 1 slot is empty, use HORIZONTAL layout
@@ -58,7 +60,7 @@ class TodaysExpensesCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
-                      PhosphorIcons.leaf(PhosphorIconsStyle.fill),
+                      PhosphorIcons.leaf,
                       color: AppColors.white500,
                       size: 28,
                     ),
@@ -78,13 +80,15 @@ class TodaysExpensesCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
-                      PhosphorIcons.leaf(PhosphorIconsStyle.fill),
+                      PhosphorIcons.leaf,
                       color: AppColors.white500,
                       size: 40,
                     ),
                     const SizedBox(height: 10),
                     Text(
-                      recentTx.isEmpty ? "No expenses found." : "No more expenses.",
+                      recentTx.isEmpty
+                          ? "No expenses found."
+                          : "No more expenses.",
                       style: GoogleFonts.montserrat(
                         color: AppColors.white600,
                         fontWeight: FontWeight.w500,
@@ -114,7 +118,7 @@ class TodaysExpensesCard extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           // ==========================================
-          // TOP HEADER 
+          // TOP HEADER
           // ==========================================
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -129,7 +133,7 @@ class TodaysExpensesCard extends StatelessWidget {
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
-                    PhosphorIcons.arrowsLeftRight(PhosphorIconsStyle.bold),
+                    PhosphorIcons.arrowsLeftRight,
                     size: 16,
                     color: AppColors.colblack,
                   ),
@@ -166,9 +170,7 @@ class TodaysExpensesCard extends StatelessWidget {
           // ==========================================
           // LIST + EMPTY STATE (Always fixed height!)
           // ==========================================
-          Column(
-            children: listContent,
-          ),
+          Column(children: listContent),
         ],
       ),
     );
@@ -198,8 +200,8 @@ class TodaysExpensesCard extends StatelessWidget {
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.08), // Very soft black
-                  blurRadius: 7, 
-                  offset: const Offset(0, 3), 
+                  blurRadius: 7,
+                  offset: const Offset(0, 3),
                 ),
               ],
             ),

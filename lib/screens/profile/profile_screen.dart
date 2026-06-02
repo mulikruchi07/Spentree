@@ -1,6 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:spentree/core/app_style.dart';
@@ -195,7 +195,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   Padding(
                     padding: const EdgeInsets.only(bottom: 8.0),
                     child: Icon(
-                      PhosphorIcons.trophy(),
+                      PhosphorIcons.trophy,
                       size: 32,
                       color: AppColors.colblack,
                     ),
@@ -255,7 +255,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
               // Settings List
               _buildSettingsItem(
-                PhosphorIcons.user(),
+                PhosphorIcons.user,
                 "My Account",
                 "Make changes to your account",
                 () {
@@ -269,7 +269,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
 
               _buildSettingsItem(
-                PhosphorIcons.shieldCheck(),
+                PhosphorIcons.shieldCheck,
                 "Data & Privacy",
                 "Manage your data & privacy",
                 () {
@@ -283,7 +283,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               // Logout Item
               _buildSettingsItem(
-                PhosphorIcons.signOut(),
+                PhosphorIcons.signOut,
                 "Log out",
                 "Further secure your account for safety",
                 () {
@@ -292,7 +292,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     title: "Logout",
                     message: "Are you sure you want to logout?",
                     confirmText: "Yes, Logout",
-                    icon: PhosphorIcons.signOut(),
+                    icon: PhosphorIcons.signOut,
 
                     onConfirm: () async {
                       final prefs = await SharedPreferences.getInstance();
@@ -311,7 +311,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 },
               ),
               _buildSettingsItem(
-                PhosphorIcons.question(),
+                PhosphorIcons.question,
                 "Helpdesk & FAQ",
                 "Further secure your account for safety",
                 () {
@@ -324,7 +324,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 },
               ),
               _buildSettingsItem(
-                PhosphorIcons.info(),
+                PhosphorIcons.info,
                 "About Us",
                 "Further secure your account for safety",
                 () {
@@ -337,7 +337,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 },
               ),
               _buildSettingsItem(
-                PhosphorIcons.envelopeSimple(),
+                PhosphorIcons.envelopeSimple,
                 "Contact Us",
                 "Further secure your account for safety",
                 () {

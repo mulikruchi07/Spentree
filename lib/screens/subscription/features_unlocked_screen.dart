@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:spentree/core/app_style.dart';
 import '../dashboard/dashboard_screen.dart';
 
@@ -161,32 +161,32 @@ class FeaturesUnlockedScreen extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           _buildFeatureCard(
-                            PhosphorIcons.clockCounterClockwise(),
+                            PhosphorIcons.clockCounterClockwise,
                             "Unlimited expense history",
                             "Access complete spending archive.",
                           ),
                           _buildFeatureCard(
-                            PhosphorIcons.chartBar(),
+                            PhosphorIcons.chartBar,
                             "Advanced analytics",
                             "Track deeper spending trends.",
                           ),
                           _buildFeatureCard(
-                            PhosphorIcons.tree(),
+                            PhosphorIcons.tree,
                             "Forest health insights",
                             "Understand your financial growth.",
                           ),
                           _buildFeatureCard(
-                            PhosphorIcons.hourglass(),
+                            PhosphorIcons.hourglass,
                             "Time-based pattern",
                             "Spot daily and monthly habits.",
                           ),
                           _buildFeatureCard(
-                            PhosphorIcons.brain(),
+                            PhosphorIcons.brain,
                             "Behavioural insights",
                             "See where money leaks.",
                           ),
                           _buildFeatureCard(
-                            PhosphorIcons.tag(),
+                            PhosphorIcons.tag,
                             "Member only deals",
                             "Unlock exclusive partner rewards.",
                           ),

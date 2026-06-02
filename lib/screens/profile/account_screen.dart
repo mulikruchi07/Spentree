@@ -3,7 +3,7 @@
 // import 'dart:typed_data';
 // import 'package:flutter/material.dart';
 // import 'package:flutter/services.dart'; // Needed for input formatters
-// import 'package:phosphor_flutter/phosphor_flutter.dart';
+// import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 // import 'package:google_fonts/google_fonts.dart';
 // import 'package:shared_preferences/shared_preferences.dart';
 // import 'package:url_launcher/url_launcher.dart';
@@ -1247,7 +1247,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -1429,7 +1429,7 @@ class _AccountScreenState extends State<AccountScreen> {
           children: [
             ListTile(
               leading: PhosphorIcon(
-                PhosphorIcons.image(),
+                PhosphorIcons.image,
                 color: AppColors.colblack,
               ),
               title: Text(
@@ -1444,7 +1444,7 @@ class _AccountScreenState extends State<AccountScreen> {
             if (_originalImagePath != null)
               ListTile(
                 leading: PhosphorIcon(
-                  PhosphorIcons.crop(),
+                  PhosphorIcons.crop,
                   color: AppColors.colblack,
                 ),
                 title: Text(
@@ -1458,7 +1458,7 @@ class _AccountScreenState extends State<AccountScreen> {
               ),
             ListTile(
               leading: PhosphorIcon(
-                PhosphorIcons.trash(),
+                PhosphorIcons.trash,
                 color: AppColors.destructiveRed,
               ),
               title: Text(
@@ -1494,7 +1494,7 @@ class _AccountScreenState extends State<AccountScreen> {
           children: [
             ListTile(
               leading: PhosphorIcon(
-                PhosphorIcons.camera(),
+                PhosphorIcons.camera,
                 color: AppColors.colblack,
               ),
               title: Text(
@@ -1508,7 +1508,7 @@ class _AccountScreenState extends State<AccountScreen> {
             ),
             ListTile(
               leading: PhosphorIcon(
-                PhosphorIcons.image(),
+                PhosphorIcons.image,
                 color: AppColors.colblack,
               ),
               title: Text(
@@ -1755,7 +1755,7 @@ class _AccountScreenState extends State<AccountScreen> {
                 const SizedBox(height: 32),
                 _buildSectionHeader("Login & Security"),
                 _buildActionTile(
-                  PhosphorIcons.password(),
+                  PhosphorIcons.password,
                   "Change Password",
                   "Change your current password",
                   onTap: () {
@@ -1768,7 +1768,7 @@ class _AccountScreenState extends State<AccountScreen> {
                   },
                 ),
                 _buildToggleTile(
-                  PhosphorIcons.fingerprintSimple(),
+                  PhosphorIcons.fingerprintSimple,
                   "Face ID / Touch ID",
                   "Manage your device security",
                   _isFaceIdEnabled,
@@ -1782,28 +1782,28 @@ class _AccountScreenState extends State<AccountScreen> {
                 const SizedBox(height: 32),
                 _buildSectionHeader("Communication Preferences"),
                 _buildToggleTile(
-                  PhosphorIcons.warning(),
+                  PhosphorIcons.warning,
                   "Spending Alerts",
                   "Get alerts when you overspend",
                   _spendingAlerts,
                   (v) => setState(() => _spendingAlerts = v),
                 ),
                 _buildToggleTile(
-                  PhosphorIcons.lightbulb(),
+                  PhosphorIcons.lightbulb,
                   "Spending Tips",
                   "Get tips for daily expenses",
                   _spendingTips,
                   (v) => setState(() => _spendingTips = v),
                 ),
                 _buildToggleTile(
-                  PhosphorIcons.bellSimpleRinging(),
+                  PhosphorIcons.bellSimpleRinging,
                   "Notifications",
                   "Streak & Milestone Notifications",
                   _notifications,
                   (v) => setState(() => _notifications = v),
                 ),
                 _buildToggleTile(
-                  PhosphorIcons.speakerHigh(),
+                  PhosphorIcons.speakerHigh,
                   "Sound Effects",
                   "Control Sound effects & Music",
                   _soundEffects,
@@ -1829,26 +1829,26 @@ class _AccountScreenState extends State<AccountScreen> {
                 const SizedBox(height: 32),
                 _buildSectionHeader("Account Control"),
                 _buildActionTile(
-                  PhosphorIcons.lockKey(),
+                  PhosphorIcons.lockKey,
                   "Deactivate Account",
                   "Temporarily disable account",
                   onPop: () => _showConfirmationDialog(
                     title: "Deactivate Account",
                     message: "You can come back anytime by logging in again.",
                     confirmText: "Yes, Deactivate",
-                    icon: PhosphorIcons.lockKey(),
+                    icon: PhosphorIcons.lockKey,
                     onConfirm: () {},
                   ),
                 ),
                 _buildActionTile(
-                  PhosphorIcons.trash(),
+                  PhosphorIcons.trash,
                   "Delete My Account",
                   "Delete your account permanently",
                   onPop: () => _showConfirmationDialog(
                     title: "Delete Account",
                     message: "All your data will be removed permanently.",
                     confirmText: "Yes, Delete",
-                    icon: PhosphorIcons.trash(),
+                    icon: PhosphorIcons.trash,
                     onConfirm: () {},
                   ),
                 ),
@@ -1986,7 +1986,7 @@ class _AccountScreenState extends State<AccountScreen> {
                       ],
                     ),
                     child: PhosphorIcon(
-                      PhosphorIcons.pencilSimple(),
+                      PhosphorIcons.pencilSimple,
                       size: 20,
                       color: AppColors.colblack,
                     ),

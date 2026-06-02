@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import '../core/app_style.dart'; // Make sure this path is correct
 import '../core/transaction_service.dart'; // Connects to your actual transactions
 
@@ -116,7 +116,7 @@ class _DynamicCalendarCardState extends State<DynamicCalendarCard> {
                 shape: BoxShape.circle,
               ),
               child: Icon(
-                PhosphorIcons.arrowsLeftRight(PhosphorIconsStyle.bold),
+                PhosphorIcons.arrowsLeftRight,
                 size: 16,
                 color: AppColors.colblack,
               ),

@@ -1,7 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -186,7 +186,7 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           _buildIconCircle(
-            PhosphorIcons.calendarBlank(),
+            PhosphorIcons.calendarBlank,
             AppColors.primaryGreen,
           ),
           const SizedBox(height: 20),
@@ -268,7 +268,7 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _buildIconCircle(PhosphorIcons.export(), AppColors.primaryGreen),
+          _buildIconCircle(PhosphorIcons.export, AppColors.primaryGreen),
           const SizedBox(height: 20),
           Text(
             "Export Data",
@@ -351,13 +351,13 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
               ),
               const SizedBox(height: 32),
               _buildTile(
-                PhosphorIcons.export(),
+                PhosphorIcons.export,
                 "Export Data",
                 "Export your account data",
                 _handleExportFlow,
               ),
               _buildTile(
-                PhosphorIcons.arrowClockwise(),
+                PhosphorIcons.arrowClockwise,
                 "Reset App Data",
                 "Reset your account data",
                 () {
@@ -372,7 +372,7 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
                 },
               ),
               _buildTile(
-                PhosphorIcons.trash(),
+                PhosphorIcons.trash,
                 "Delete Transactions",
                 "Manage your transactions",
                 () {
@@ -382,7 +382,7 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
                     message:
                         "Are you sure you want to delete all transactions?",
                     confirmText: "Yes, Delete",
-                    icon: PhosphorIcons.trash(),
+                    icon: PhosphorIcons.trash,
                     onConfirm: () {
                       Navigator.push(
                         context,
@@ -396,13 +396,13 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
                 },
               ),
               _buildTile(
-                PhosphorIcons.speedometer(),
+                PhosphorIcons.speedometer,
                 "Change Limit",
                 "Manage your transactions",
                 _handleChangeLimit,
               ),
               _buildTile(
-                PhosphorIcons.shieldCheck(),
+                PhosphorIcons.shieldCheck,
                 "Privacy Policy",
                 "Further secure your account for safety",
                 () {

@@ -1,7 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 // import 'package:flutter_svg/flutter_svg.dart'; // Required for SVG rendering
 import '../../core/app_style.dart';
 import '../../core/user_data.dart'; // Assumes you have this for UserData.userName / UserData.profileImageUrl
@@ -196,7 +196,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
             clipBehavior: Clip
                 .none, // Allows the dot to sit slightly outside the icon bounds
             children: [
-              Icon(PhosphorIcons.gift(), size: 36, color: AppColors.colblack),
+              Icon(PhosphorIcons.gift, size: 36, color: AppColors.colblack),
               Positioned(
                 top: 0,
                 right: 0,
@@ -280,9 +280,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                               ),
                               child: !hasProfilePic
                                   ? Icon(
-                                      PhosphorIcons.user(
-                                        PhosphorIconsStyle.fill,
-                                      ),
+                                      PhosphorIcons.user,
                                       size: 40,
                                       color: AppColors.grey600,
                                     )
@@ -343,7 +341,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                   Row(
                     children: [
                       Icon(
-                        PhosphorIcons.plant(),
+                        PhosphorIcons.plant,
                         size: 16,
                         color: AppColors.primaryGreen,
                       ),
@@ -454,7 +452,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                 ),
                 // Lock Icon on top
                 Icon(
-                  PhosphorIcons.lockKey(),
+                  PhosphorIcons.lockKey,
                   size: 30,
                   color: AppColors.colblack,
                 ),

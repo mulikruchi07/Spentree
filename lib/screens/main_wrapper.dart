@@ -1,6 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:spentree/screens/forest/forest_screen.dart';
@@ -227,11 +227,11 @@ class _MainWrapperState extends State<MainWrapper> with WidgetsBindingObserver {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  _buildNavItem(0, PhosphorIcons.house),
-                  _buildNavItem(1, PhosphorIcons.chartPieSlice),
-                  _buildNavItem(2, PhosphorIcons.treeEvergreen),
-                  _buildNavItem(3, PhosphorIcons.trophy),
-                  _buildNavItem(4, PhosphorIcons.user),
+                  _buildNavItem(0, PhosphorIcons.house as PhosphorIconData Function([PhosphorIconsStyle])),
+                  _buildNavItem(1, PhosphorIcons.chartPieSlice as PhosphorIconData Function([PhosphorIconsStyle])),
+                  _buildNavItem(2, PhosphorIcons.treeEvergreen as PhosphorIconData Function([PhosphorIconsStyle])),
+                  _buildNavItem(3, PhosphorIcons.trophy as PhosphorIconData Function([PhosphorIconsStyle])),
+                  _buildNavItem(4, PhosphorIcons.user as PhosphorIconData Function([PhosphorIconsStyle])),
                 ],
               ),
             ],

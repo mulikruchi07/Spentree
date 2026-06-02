@@ -1,6 +1,6 @@
 // import 'dart:ui';
 // import 'package:flutter/material.dart';
-// import 'package:phosphor_flutter/phosphor_flutter.dart';
+// import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 // import 'package:flutter/cupertino.dart';
 // import 'package:flutter/services.dart';
 // import 'package:google_fonts/google_fonts.dart';
@@ -1581,7 +1581,7 @@
 
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -2118,7 +2118,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
             ),
           ],
         ),
-        Icon(PhosphorIcons.trophy(), size: 32, color: AppColors.colblack),
+        Icon(PhosphorIcons.trophy, size: 32, color: AppColors.colblack),
       ],
     );
   }
@@ -2615,14 +2615,14 @@ class _ExpenseFormState extends State<ExpenseForm> {
     if (!widget.isEditing &&
         _titleCtrl.text.isEmpty &&
         _amountCtrl.text.isEmpty) {
-      if (_titleCtrl.text.isEmpty) return PhosphorIcons.question();
+      if (_titleCtrl.text.isEmpty) return PhosphorIcons.question;
     }
-    if (cat == "Food & Beverages") return PhosphorIcons.bowlSteam();
-    if (cat == "Shopping") return PhosphorIcons.tShirt();
-    if (cat == "Fuel") return PhosphorIcons.gasCan();
-    if (cat == "Bills & Subscriptions") return PhosphorIcons.simCard();
-    if (cat == "To People") return PhosphorIcons.user();
-    return PhosphorIcons.currencyInr();
+    if (cat == "Food & Beverages") return PhosphorIcons.bowlSteam;
+    if (cat == "Shopping") return PhosphorIcons.tShirt;
+    if (cat == "Fuel") return PhosphorIcons.gasCan;
+    if (cat == "Bills & Subscriptions") return PhosphorIcons.simCard;
+    if (cat == "To People") return PhosphorIcons.user;
+    return PhosphorIcons.currencyInr;
   }
 
   void _trySave() {

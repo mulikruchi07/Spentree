@@ -1,5 +1,5 @@
 // import 'package:flutter/material.dart';
-// import 'package:phosphor_flutter/phosphor_flutter.dart';
+// import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 // import 'package:flutter/cupertino.dart';
 // import 'package:google_fonts/google_fonts.dart';
 // import 'package:intl/intl.dart';
@@ -743,7 +743,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -1040,7 +1040,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             child: Column(
                               children: [
                                 Icon(
-                                  PhosphorIcons.leaf(PhosphorIconsStyle.fill),
+                                  PhosphorIcons.leaf,
                                   color: AppColors.white500,
                                   size: 40,
                                 ),
@@ -1143,7 +1143,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           ],
         ),
-        Icon(PhosphorIcons.trophy(), size: 32, color: AppColors.colblack),
+        Icon(PhosphorIcons.trophy, size: 32, color: AppColors.colblack),
       ],
     );
   }

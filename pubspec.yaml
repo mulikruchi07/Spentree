@@ -20,12 +20,13 @@ dependencies:
   cupertino_icons: ^1.0.8
   intl: ^0.20.2
   url_launcher: ^6.3.2
-  phosphor_flutter: ^2.1.0
+  # phosphor_flutter: ^2.1.0
   image_picker: ^1.2.1
   image_cropper: ^11.0.0
   path_provider: ^2.1.5
   audioplayers: ^6.5.1
   glassmorphism: ^3.0.0
+  phosphoricons_flutter: ^1.0.0
 
 dev_dependencies:
   flutter_test:
@@ -58,6 +59,8 @@ flutter:
     - assets/audio/
     - assets/images/forest/spentwrap/
     - assets/images/achievements/
+    - assets/images/deals/
+    - assets/images/subs/
   
   fonts:
     - family: CalcioDemo

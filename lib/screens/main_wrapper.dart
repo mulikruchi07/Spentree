@@ -12,9 +12,8 @@ import '../../core/app_style.dart';
 import 'achievements/achievements_screen.dart';
 
 class MainWrapper extends StatefulWidget {
-  final int initialIndex; // Add this variable
+  final int initialIndex;
 
-  // Add it to the constructor with a default value of 0 (Dashboard)
   const MainWrapper({super.key, this.initialIndex = 0});
 
   @override
@@ -27,7 +26,6 @@ class _MainWrapperState extends State<MainWrapper> with WidgetsBindingObserver {
   bool _showPrivacyBlur = false;
   bool _lockCache = false;
 
-  // --- NEW: PageController for swipe navigation ---
   late PageController _pageController;
 
   @override
@@ -106,8 +104,6 @@ class _MainWrapperState extends State<MainWrapper> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    // --- FIX: Wrapping the entire wrapper in the theme listener ensures
-    // ---      that cached pages update instantly when the theme changes!
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: themeNotifier,
       builder: (context, currentMode, child) {
@@ -185,7 +181,7 @@ class _MainWrapperState extends State<MainWrapper> with WidgetsBindingObserver {
 
   Widget _buildFloatingNavbar() {
     final media = MediaQuery.of(context);
-    final bottomInset = MediaQuery.of(context).padding.bottom;
+    final bottomInset = media.padding.bottom;
     final width = media.size.width;
     final horizontalPadding = width * 0.06;
 
@@ -223,15 +219,15 @@ class _MainWrapperState extends State<MainWrapper> with WidgetsBindingObserver {
                 ),
               ),
 
-              // NAV ITEMS
+              // NAV ITEMS (UPDATED WITH EXPLICIT ICON DATA)
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  _buildNavItem(0, PhosphorIcons.house as PhosphorIconData Function([PhosphorIconsStyle])),
-                  _buildNavItem(1, PhosphorIcons.chartPieSlice as PhosphorIconData Function([PhosphorIconsStyle])),
-                  _buildNavItem(2, PhosphorIcons.treeEvergreen as PhosphorIconData Function([PhosphorIconsStyle])),
-                  _buildNavItem(3, PhosphorIcons.trophy as PhosphorIconData Function([PhosphorIconsStyle])),
-                  _buildNavItem(4, PhosphorIcons.user as PhosphorIconData Function([PhosphorIconsStyle])),
+                  _buildNavItem(0, PhosphorIcons.house, PhosphorIcons.houseFill),
+                  _buildNavItem(1, PhosphorIcons.chartPieSlice, PhosphorIcons.chartPieSliceFill),
+                  _buildNavItem(2, PhosphorIcons.treeEvergreen, PhosphorIcons.treeEvergreenFill),
+                  _buildNavItem(3, PhosphorIcons.trophy, PhosphorIcons.trophyFill),
+                  _buildNavItem(4, PhosphorIcons.user, PhosphorIcons.userFill),
                 ],
               ),
             ],
@@ -241,9 +237,11 @@ class _MainWrapperState extends State<MainWrapper> with WidgetsBindingObserver {
     );
   }
 
+  // UPDATED BUILDER SIGNATURE: TAKES TWO ICON DATA PARAMS
   Widget _buildNavItem(
     int index,
-    PhosphorIconData Function([PhosphorIconsStyle]) iconBuilder,
+    IconData inactiveIcon,
+    IconData activeIcon,
   ) {
     bool isSelected = _selectedIndex == index;
 
@@ -262,15 +260,11 @@ class _MainWrapperState extends State<MainWrapper> with WidgetsBindingObserver {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              iconBuilder(
-                isSelected
-                    ? PhosphorIconsStyle.fill
-                    : PhosphorIconsStyle.regular,
-              ),
+              // SIMPLY SWAP BETWEEN ACTIVE AND INACTIVE ICONS
+              isSelected ? activeIcon : inactiveIcon,
               size: 28,
               color: isSelected
                   ? AppColors.primaryGreen
-                  // : AppColors.colblack.withOpacity(0.2),
                   : const Color(0xFF666666),
             ),
           ],

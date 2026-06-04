@@ -1,4 +1,4 @@
-package com.example.spentree // Change to your actual package name!
+package com.example.spentree 
 
 import android.appwidget.AppWidgetManager
 import android.content.Context

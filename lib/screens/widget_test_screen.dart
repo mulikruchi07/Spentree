@@ -1,5 +1,7 @@
+import 'dart:typed_data'; // ADDED for Uint8List
+import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
-import 'package:spentree/widgets/dynamic_calendar_card.dart';
+import 'package:spentree/widgets/calendar_card.dart';
 import 'package:spentree/widgets/todays_expenses_card.dart';
 import 'package:spentree/widgets/todays_tree_card.dart';
 
@@ -12,6 +14,25 @@ class WidgetTestScreen extends StatefulWidget {
 
 class _WidgetTestScreenState extends State<WidgetTestScreen> {
   int currentCard = 0;
+  Uint8List? _treeBytes;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTreeBytes();
+  }
+
+  // ADDED: Loads a sample tree image into memory for the UI test
+  Future<void> _loadTreeBytes() async {
+    try {
+      final ByteData data = await rootBundle.load('assets/images/dashboard/tree_1.png');
+      setState(() {
+        _treeBytes = data.buffer.asUint8List();
+      });
+    } catch (e) {
+      debugPrint("Failed to load test tree image: $e");
+    }
+  }
 
   void nextCard() {
     setState(() {
@@ -21,6 +42,12 @@ class _WidgetTestScreenState extends State<WidgetTestScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_treeBytes == null) {
+      return const Scaffold(
+        backgroundColor: Color(0xFFF5F5F5),
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
     Widget card;
 
     switch (currentCard) {
@@ -28,6 +55,7 @@ class _WidgetTestScreenState extends State<WidgetTestScreen> {
         card = TodaysTreeCard(
           todayExpense: 2000,
           dailyLimit: 5000,
+          treeBytes: _treeBytes!, // Pass the loaded tree image bytes
           onGoToDashboard: () {},
           onSwapTap: nextCard,
         );
@@ -42,7 +70,7 @@ class _WidgetTestScreenState extends State<WidgetTestScreen> {
         break;
 
       default:
-        card = DynamicCalendarCard(dailyLimit: 5000, onSwapTap: nextCard);
+        card = DynamicCalendarCard(dailyLimit: 5000, treeBytes: _treeBytes!, onSwapTap: nextCard);
     }
 
     return Scaffold(

@@ -1590,8 +1590,12 @@ import '../../core/app_style.dart';
 import '../../core/transaction_service.dart'; // Make sure this path points to your new service
 
 class AnalyticsScreen extends StatefulWidget {
-  const AnalyticsScreen({super.key});
-
+  static final ValueNotifier<bool> triggerOpenForm = ValueNotifier(false);
+  final bool startWithAddExpense;
+  const AnalyticsScreen({
+    super.key, 
+    this.startWithAddExpense = false,
+  });
   @override
   State<AnalyticsScreen> createState() => _AnalyticsScreenState();
 }
@@ -1612,6 +1616,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
   bool _isEditMode = false;
   bool _isAddingExpense = false;
   String? _editingTransactionId;
+  bool _hasAutoOpenedForm = false;
 
   final double cardRadius = 15.0;
   final double boxHeight = 76.0;
@@ -1639,13 +1644,31 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
       parent: _chartAnimController,
       curve: Curves.easeOutCubic,
     );
-
+    AnalyticsScreen.triggerOpenForm.addListener(_onGlobalTrigger);
+    
+    if (AnalyticsScreen.triggerOpenForm.value) {
+      _onGlobalTrigger();
+    }
     TransactionService().addListener(_onDataChanged);
     _chartAnimController.forward();
   }
 
+  void _onGlobalTrigger() async {
+    if (AnalyticsScreen.triggerOpenForm.value) {
+      while (TransactionService().isLoading) {
+        await Future.delayed(const Duration(milliseconds: 100));
+        if (!mounted) return;
+      }
+      if (mounted && !_isAddingExpense) {
+        _toggleAddExpense();
+        AnalyticsScreen.triggerOpenForm.value = false; // Reset the trigger
+      }
+    }
+  }
+
   @override
   void dispose() {
+    AnalyticsScreen.triggerOpenForm.removeListener(_onGlobalTrigger);
     TransactionService().removeListener(_onDataChanged);
     _chartAnimController.dispose();
     _scrollController.dispose();
@@ -1784,6 +1807,18 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
     double totalCalc = dailyTx.fold(0, (sum, item) => sum + item.amount);
     bool isEmpty = dailyTx.isEmpty;
     var chartData = _calculateChartData(dailyTx);
+
+    if (widget.startWithAddExpense && !_hasAutoOpenedForm && !TransactionService().isLoading) {
+      // We wrap this in a post-frame callback so it doesn't interrupt the current drawing phase
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && !_isAddingExpense) {
+          setState(() {
+            _hasAutoOpenedForm = true; // Lock it so it only happens once
+          });
+          _toggleAddExpense(); 
+        }
+      });
+    }
 
     return Scaffold(
       backgroundColor: AppColors.bgWhite,

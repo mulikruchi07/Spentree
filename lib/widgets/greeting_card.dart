@@ -1,17 +1,19 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import '../core/app_style.dart'; // Make sure this path is correct
 
-class GreetingSummaryCard extends StatelessWidget {
+class GreetingCard extends StatelessWidget {
   final String userName;
   final double todayExpense;
   final int dailyLimit;
   final String? profileImageUrl;
   final VoidCallback onArrowTap;
 
-  const GreetingSummaryCard({
+  const GreetingCard({
     super.key,
     required this.userName,
     required this.todayExpense,
@@ -85,7 +87,7 @@ class GreetingSummaryCard extends StatelessWidget {
                   shape: BoxShape.circle,
                   image: profileImageUrl != null && profileImageUrl!.isNotEmpty
                       ? DecorationImage(
-                          image: NetworkImage(profileImageUrl!),
+                          image: FileImage(File(profileImageUrl!)),
                           fit: BoxFit.cover,
                         )
                       : null,

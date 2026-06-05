@@ -16,7 +16,6 @@ class AuthOverlayCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      // Generous vertical padding to give it that tall, spacious look
       padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 24),
       decoration: BoxDecoration(
         color: AppColors.bgWhite,
@@ -35,16 +34,11 @@ class AuthOverlayCard extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // ==========================================
-          // BRAND LOGO
-          // ==========================================
-          // Replace the asset path below with your actual exported 'S' logo image!
           Image.asset(
-            'assets/images/spentree_logo.png', // Make sure to add your logo to your assets folder
+            'assets/images/spentree_logo.png', 
             width: 72,
             height: 72,
             fit: BoxFit.contain,
-            // Fallback icon just in case the image isn't loaded yet
             errorBuilder: (context, error, stackTrace) => const Icon(
               Icons.hexagon_outlined,
               size: 72,
@@ -54,13 +48,10 @@ class AuthOverlayCard extends StatelessWidget {
 
           const SizedBox(height: 28),
 
-          // ==========================================
-          // DYNAMIC TEXT
-          // ==========================================
           Text(
             isSignUpMode
                 ? "Create Your Account To Access\nThis Feature"
-                : "Log In To Your Account To Access\nThis Feature", // Slightly adjusted for Log In grammar
+                : "Log In To Your Account To Access\nThis Feature", 
             textAlign: TextAlign.center,
             style: GoogleFonts.montserrat(
               fontSize: 16,
@@ -72,9 +63,6 @@ class AuthOverlayCard extends StatelessWidget {
 
           const SizedBox(height: 32),
 
-          // ==========================================
-          // PILL BUTTON
-          // ==========================================
           SizedBox(
             height: 46, // Height of the pill
             width:

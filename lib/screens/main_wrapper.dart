@@ -14,7 +14,13 @@ import 'achievements/achievements_screen.dart';
 class MainWrapper extends StatefulWidget {
   final int initialIndex;
 
-  const MainWrapper({super.key, this.initialIndex = 0});
+  final bool openAddExpenseForm; 
+
+  const MainWrapper({
+    super.key,
+    this.initialIndex = 0,
+    this.openAddExpenseForm = false, // Defaults to false
+  });
 
   @override
   State<MainWrapper> createState() => _MainWrapperState();
@@ -59,9 +65,8 @@ class _MainWrapperState extends State<MainWrapper> with WidgetsBindingObserver {
   }
 
   @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.inactive ||
-        state == AppLifecycleState.paused) {
+  void didChangeAppLifecycleState(AppLifecycleState state) async {
+    if (state == AppLifecycleState.inactive || state == AppLifecycleState.paused) {
       if (_lockCache) {
         setState(() => _showPrivacyBlur = true);
       }
@@ -72,8 +77,27 @@ class _MainWrapperState extends State<MainWrapper> with WidgetsBindingObserver {
       if (!_isAuthenticating && _lockCache) {
         _enforceLockOnResume();
       }
+      const platform = MethodChannel('spentree_widget_channel');
+      try {
+        final action = await platform.invokeMethod('getWidgetAction');
+        if (action == "OPEN_ADD_EXPENSE") {
+          setState(() {
+            _selectedIndex = 1; // Jump to Analytics Tab
+            _pageController.jumpToPage(1);
+          });
+          AnalyticsScreen.triggerOpenForm.value = true; // Fire the global form trigger!
+        } else if (action == "OPEN_DASHBOARD") {
+          setState(() {
+            _selectedIndex = 0; // Jump to Dashboard Tab
+            _pageController.jumpToPage(0);
+          });
+        }
+      } catch (e) {
+        debugPrint("Widget intent fetch failed: $e");
+      }
     }
   }
+  
 
   Future<void> _enforceLockOnResume() async {
     setState(() {
@@ -94,9 +118,9 @@ class _MainWrapperState extends State<MainWrapper> with WidgetsBindingObserver {
     }
   }
 
-  final List<Widget> _pages = [
+  List<Widget> get _pages => [
     const DashboardScreen(),
-    const AnalyticsScreen(),
+    AnalyticsScreen(startWithAddExpense: widget.openAddExpenseForm),
     const ForestScreen(),
     const AchievementsScreen(),
     const ProfileScreen(),

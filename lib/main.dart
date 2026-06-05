@@ -387,9 +387,9 @@
 //   }
 // }
 
-// widget 6 dynamic_calendar_card.dart
+// widget 6 calendar_card.dart
 // import 'package:flutter/material.dart';
-// import 'widgets/dynamic_calendar_card.dart';
+// import 'widgets/calendar_card.dart';
 // import 'widgets/todays_expenses_card.dart';
 // import 'core/transaction_service.dart';
 // void main() {
@@ -444,20 +444,111 @@
 // }
 
 //swap toggel
-import 'package:flutter/material.dart';
-import 'screens/widget_test_screen.dart';
+// import 'package:flutter/material.dart';
+// import 'screens/widget_test_screen.dart';
 
-void main() {
-  runApp(const MyApp());
+// void main() {
+//   runApp(const MyApp());
+// }
+
+// class MyApp extends StatelessWidget {
+//   const MyApp({super.key});
+//   @override
+//   Widget build(BuildContext context) {
+//     return const MaterialApp(
+//       debugShowCheckedModeBanner: false,
+//       home: WidgetTestScreen(),
+//     );
+//   }
+// }
+
+// android home screen widgets rendering test
+import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:spentree/screens/analytics/analytics_screen.dart';
+import 'package:spentree/screens/dashboard/dashboard_screen.dart';
+import 'package:spentree/screens/main_wrapper.dart';
+import 'core/app_style.dart';
+import 'core/transaction_service.dart';
+import 'core/widget_updater.dart';
+import 'package:flutter/services.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await TransactionService().initService();
+
+  const platform = MethodChannel('spentree_widget_channel');
+  platform.setMethodCallHandler((call) async {
+    if (call.method == "themeChanged") {
+      // Re-run the syncAllWidgets function here!
+      final today = DateTime.now();
+      final dailyTx = TransactionService().getTransactionsForDay(today);
+      double todayTotal = dailyTx.fold(0, (sum, item) => sum + item.amount);
+      final prefs = await SharedPreferences.getInstance();
+      int limit = prefs.getInt('daily_expense_limit') ?? 5000;
+      String? profileImage = prefs.getString('profile_image');
+
+      await WidgetUpdater.syncAllWidgets(
+        todayExpense: todayTotal,
+        dailyLimit: limit,
+        todayTransactions: dailyTx,
+        profileImagePath: profileImage,
+      );
+    }
+  });
+  String? action;
+  try {
+    action = await platform.invokeMethod('getWidgetAction');
+  } catch (e) {
+    debugPrint("Failed to get widget action: $e");
+  }
+
+  // If action is OPEN_ADD_EXPENSE, jump to Tab 1 (Analytics). Otherwise, Tab 0 (Dashboard)
+  int startTab = 0;
+  if (action == "OPEN_ADD_EXPENSE") {
+    startTab = 1; // Tab 1
+    AnalyticsScreen.triggerOpenForm.value = true; // Tell form to open!
+  } else if (action == "OPEN_DASHBOARD") {
+    startTab = 0; // Tab 0
+  }
+
+  // Pass the startTab to MainWrapper
+  runApp(MyApp(startScreen: MainWrapper(initialIndex: startTab)));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final Widget startScreen; // Updated to accept the dynamic start screen
+  const MyApp({super.key, required this.startScreen});
+
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: WidgetTestScreen(),
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: themeNotifier,
+      builder: (context, currentMode, child) {
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          title: 'SpenTree',
+          themeMode: currentMode,
+          theme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: AppColors.primaryGreen,
+              brightness: Brightness.light,
+            ),
+            useMaterial3: true,
+            scaffoldBackgroundColor: AppColors.bgWhite,
+          ),
+          darkTheme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: AppColors.primaryGreen,
+              brightness: Brightness.dark,
+            ),
+            useMaterial3: true,
+            scaffoldBackgroundColor: AppColors.bgWhite,
+          ),
+          home: startScreen, // Uses the dynamic start screen!
+        );
+      },
     );
   }
 }

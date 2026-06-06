@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="primaryGreen">#34C759</color>
+    <color name="bgWhite">#161616</color>
+    <color name="colblack">#FFFFFF</color>
+    <color name="white500">#999999</color>
+    <color name="white600">#AEAEAE</color>
+    <color name="inputFill">#343434</color>
+    <color name="grey800">#D0D1D0</color>
+</resources>

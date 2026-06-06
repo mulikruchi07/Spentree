@@ -15,6 +15,7 @@ dependencies:
   permission_handler: ^12.0.1
   local_auth: ^2.3.0
   shared_preferences: ^2.3.5
+  home_widget: ^0.9.2
   # flutter_svg: ^2.3.0
 
   cupertino_icons: ^1.0.8
@@ -66,3 +67,21 @@ flutter:
     - family: CalcioDemo
       fonts:
         - asset: assets/fonts/CalcioDemo.ttf
+    - family: Montserrat
+      fonts:
+        - asset: assets/fonts/Montserrat-Regular.ttf
+        - asset: assets/fonts/Montserrat-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Montserrat-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Montserrat-Bold.ttf
+          weight: 700
+    - family: Poppins
+      fonts:
+        - asset: assets/fonts/Poppins-Regular.ttf
+        - asset: assets/fonts/Poppins-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Poppins-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Poppins-Bold.ttf
+          weight: 700

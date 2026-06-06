@@ -1,11 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_background"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="0dp">
+    android:background="#34C759">
+
     <ImageView
-        android:id="@+id/widget_image_mini_tree" 
+        android:id="@+id/tree_image"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:scaleType="fitCenter" />
+        android:layout_alignParentBottom="true"
+        android:scaleType="fitEnd" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="16dp"
+        android:background="@drawable/badge_bg"
+        android:paddingHorizontal="10dp"
+        android:paddingVertical="4dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/badge_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Great"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:textColor="#34C759" />
+    </LinearLayout>
 </RelativeLayout>

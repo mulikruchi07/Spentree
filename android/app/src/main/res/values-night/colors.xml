@@ -1,10 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="primaryGreen">#34C759</color>
-    <color name="bgWhite">#161616</color>
-    <color name="colblack">#FFFFFF</color>
-    <color name="white500">#999999</color>
+    <color name="textGrey">#8E8E93</color>
+    <color name="grey700">#61677D</color>
+    <color name="grey600">#7C8BA0</color>
     <color name="white600">#AEAEAE</color>
-    <color name="inputFill">#343434</color>
+    <color name="subtext">#9B9B9B</color>
+    <color name="desctext">#ABABAB</color>
+    <color name="inactiveGrey">#E0E5EC</color>
+    <color name="borderGrey">#E5E5EA</color>
+    <color name="divider">#808080</color>
+    <color name="errorRed">#FF3B30</color>
+    <color name="destructiveRed">#FF383C</color>
+
+    <color name="textMain">#FFFFFF</color>
+    <color name="colwhite">#000000</color>
+    <color name="colblack">#FFFFFF</color>
+    <color name="navbar">#343434</color>
+    <color name="bgWhite">#161616</color>
     <color name="grey800">#D0D1D0</color>
+    <color name="white500">#999999</color>
+    <color name="inputFill">#343434</color>
+    <color name="colIconBg">#161616</color>
+    <color name="iconbox">#555555</color>
+    <color name="datebox">#666666</color>
+    <color name="datenum">#999999</color>
+    <color name="unlockst">#C0C0C0</color>
+    <color name="redirctcircle">#2D2D2D</color>
 </resources>

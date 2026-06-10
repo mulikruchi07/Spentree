@@ -13,90 +13,97 @@ class ContactScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-      canPop: true,
-      child: Scaffold(
-        backgroundColor: AppColors.bgWhite,
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
-          child: Column(
-            // Add this Column
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 70),
-              Text(
-                "Contact",
-                style: GoogleFonts.montserrat(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.colblack,
-                ),
-              ),
-              Text(
-                "SpenTree",
-                style: GoogleFonts.montserrat(
-                  fontSize: 36,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.colblack,
-                  height: 1.1,
-                ),
-              ),
+    MediaQuery.platformBrightnessOf(context);
 
-              const SizedBox(height: 16),
-              _buildPoppinsText(
-                "We’d love to hear from you. Whether you have feedback, questions, or just an idea to make Spentree better — we’re listening.",
-              ),
-              const SizedBox(height: 16),
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: themeNotifier,
+      builder: (context, currentTheme, child) {
+        return PopScope(
+          canPop: true,
+          child: Scaffold(
+            backgroundColor: AppColors.bgWhite,
+            body: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: Column(
+                // Add this Column
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 70),
+                  Text(
+                    "Contact",
+                    style: GoogleFonts.montserrat(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.colblack,
+                    ),
+                  ),
+                  Text(
+                    "SpenTree",
+                    style: GoogleFonts.montserrat(
+                      fontSize: 36,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.colblack,
+                      height: 1.1,
+                    ),
+                  ),
 
-              _buildSectionHeading("Need Help?"),
-              _buildPoppinsText(
-                "Having trouble with the app? Not sure how something works?\nReach out and we’ll do our best to help you quickly.",
-              ),
-              Text(
-                "Email: support@spentree.app",
-                style: GoogleFonts.poppins(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.colblack,
-                ),
-              ),
-              const SizedBox(height: 16),
+                  const SizedBox(height: 16),
+                  _buildPoppinsText(
+                    "We’d love to hear from you. Whether you have feedback, questions, or just an idea to make Spentree better — we’re listening.",
+                  ),
+                  const SizedBox(height: 16),
 
-              _buildSectionHeading("Share Feedback"),
-              _buildPoppinsText(
-                "Have a feature idea? Found something we can improve?\nSpentree grows with your input.",
-              ),
-              Text(
-                "Feedback: feedback@spentree.app",
-                style: GoogleFonts.poppins(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.colblack,
-                ),
-              ),
+                  _buildSectionHeading("Need Help?"),
+                  _buildPoppinsText(
+                    "Having trouble with the app? Not sure how something works?\nReach out and we’ll do our best to help you quickly.",
+                  ),
+                  Text(
+                    "Email: support@spentree.app",
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.colblack,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
 
-              const SizedBox(height: 16),
-              _buildSectionHeading("Report a Bug"),
-              _buildPoppinsText(
-                "If something isn’t working right, let us know with details like:\n• What happened\n• What you expected\n• Your device model (if possible)",
-              ),
-              _buildPoppinsText("This helps us fix things faster."),
+                  _buildSectionHeading("Share Feedback"),
+                  _buildPoppinsText(
+                    "Have a feature idea? Found something we can improve?\nSpentree grows with your input.",
+                  ),
+                  Text(
+                    "Feedback: feedback@spentree.app",
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.colblack,
+                    ),
+                  ),
 
-              const SizedBox(height: 16),
-              _buildSectionHeading("Stay Kind, Stay Growing"),
-              _buildPoppinsText(
-                "We’re building Spentree to be a calm and helpful space for better money habits. Your thoughts help us make it even better.",
-              ),
-              const SizedBox(height: 12),
-              _buildPoppinsText("Thanks for being part of the journey."),
+                  const SizedBox(height: 16),
+                  _buildSectionHeading("Report a Bug"),
+                  _buildPoppinsText(
+                    "If something isn’t working right, let us know with details like:\n• What happened\n• What you expected\n• Your device model (if possible)",
+                  ),
+                  _buildPoppinsText("This helps us fix things faster."),
 
-              const SizedBox(height: 12),
-              _buildFooter(context),
-              const SizedBox(height: 50),
-            ],
+                  const SizedBox(height: 16),
+                  _buildSectionHeading("Stay Kind, Stay Growing"),
+                  _buildPoppinsText(
+                    "We’re building Spentree to be a calm and helpful space for better money habits. Your thoughts help us make it even better.",
+                  ),
+                  const SizedBox(height: 12),
+                  _buildPoppinsText("Thanks for being part of the journey."),
+
+                  const SizedBox(height: 12),
+                  _buildFooter(context),
+                  const SizedBox(height: 50),
+                ],
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 

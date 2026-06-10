@@ -40,147 +40,159 @@ class _VerifyNumberScreenState extends State<VerifyNumberScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.bgWhite,
-      resizeToAvoidBottomInset: true,
-      body: SafeArea(
-        child: CustomScrollView(
-          slivers: [
-            SliverFillRemaining(
-              hasScrollBody: false,
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-                child: Column(
-                  children: [
-                    // --- UNIFORM HEADER HEIGHT ---
-                    const SizedBox(height: 110),
+    MediaQuery.platformBrightnessOf(context);
 
-                    Text(
-                      "Enter OTP",
-                      style: GoogleFonts.poppins(
-                        fontSize: 34,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.primaryGreen,
-                      ),
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: themeNotifier,
+      builder: (context, currentTheme, child) {
+        return Scaffold(
+          backgroundColor: AppColors.bgWhite,
+          resizeToAvoidBottomInset: true,
+          body: SafeArea(
+            child: CustomScrollView(
+              slivers: [
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: horizontalPadding,
                     ),
+                    child: Column(
+                      children: [
+                        // --- UNIFORM HEADER HEIGHT ---
+                        const SizedBox(height: 110),
 
-                    const SizedBox(height: 16),
-
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                      child: Text(
-                        "Enter the OTP code we just sent you on your registered Phone number",
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w400,
-                          color: AppColors.grey700,
-                          height: 1.5,
+                        Text(
+                          "Enter OTP",
+                          style: GoogleFonts.poppins(
+                            fontSize: 34,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.primaryGreen,
+                          ),
                         ),
-                      ),
-                    ),
 
-                    const SizedBox(height: 32),
+                        const SizedBox(height: 16),
 
-                    // --- OTP INPUTS ---
-                    // FIX: Wrapped in FittedBox to scale down on slim phones instead of overflow
-                    FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: List.generate(
-                          otpLength,
-                          (index) => Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 4.0,
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                          child: Text(
+                            "Enter the OTP code we just sent you on your registered Phone number",
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.poppins(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w400,
+                              color: AppColors.grey700,
+                              height: 1.5,
                             ),
-                            child: _buildOtpDigitBox(index),
                           ),
                         ),
-                      ),
-                    ),
 
-                    if (_hasError)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 16.0),
-                        child: Text(
-                          "Invalid OTP. Please try again.",
-                          style: GoogleFonts.poppins(
-                            color: AppColors.errorRed,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ),
+                        const SizedBox(height: 32),
 
-                    const SizedBox(height: 40),
-
-                    SizedBox(
-                      width: double.infinity,
-                      height: componentHeight,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          // Navigate to Dashboard
-                          Navigator.pushAndRemoveUntil(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const MainWrapper(),
-                            ),
-                            (route) => false,
-                          );
-                          setState(() => _hasError = true);
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primaryGreen,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(cornerRadius),
-                          ),
-                          elevation: 0,
-                        ),
-                        child: Text(
-                          "Verify OTP",
-                          style: GoogleFonts.poppins(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                            color: AppColors.colwhite,
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: RichText(
-                        text: TextSpan(
-                          style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w400,
-                            color: AppColors.grey800,
-                          ),
-                          children: [
-                            TextSpan(text: "Didn’t get OTP? "),
-                            TextSpan(
-                              text: "Resend OTP",
-                              style: const TextStyle(
-                                color: AppColors.primaryGreen,
-                                fontWeight: FontWeight.w400,
+                        // --- OTP INPUTS ---
+                        // FIX: Wrapped in FittedBox to scale down on slim phones instead of overflow
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: List.generate(
+                              otpLength,
+                              (index) => Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 4.0,
+                                ),
+                                child: _buildOtpDigitBox(index),
                               ),
-                              recognizer: TapGestureRecognizer()..onTap = () {},
                             ),
-                          ],
+                          ),
                         ),
-                      ),
+
+                        if (_hasError)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 16.0),
+                            child: Text(
+                              "Invalid OTP. Please try again.",
+                              style: GoogleFonts.poppins(
+                                color: AppColors.errorRed,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+
+                        const SizedBox(height: 40),
+
+                        SizedBox(
+                          width: double.infinity,
+                          height: componentHeight,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              // Navigate to Dashboard
+                              Navigator.pushAndRemoveUntil(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const MainWrapper(),
+                                ),
+                                (route) => false,
+                              );
+                              setState(() => _hasError = true);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primaryGreen,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
+                                  cornerRadius,
+                                ),
+                              ),
+                              elevation: 0,
+                            ),
+                            child: Text(
+                              "Verify OTP",
+                              style: GoogleFonts.poppins(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                                color: AppColors.colwhite,
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: RichText(
+                            text: TextSpan(
+                              style: GoogleFonts.poppins(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w400,
+                                color: AppColors.grey800,
+                              ),
+                              children: [
+                                TextSpan(text: "Didn’t get OTP? "),
+                                TextSpan(
+                                  text: "Resend OTP",
+                                  style: const TextStyle(
+                                    color: AppColors.primaryGreen,
+                                    fontWeight: FontWeight.w400,
+                                  ),
+                                  recognizer: TapGestureRecognizer()
+                                    ..onTap = () {},
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const Spacer(flex: 3),
+                        const SizedBox(height: 20),
+                      ],
                     ),
-                    const Spacer(flex: 3),
-                    const SizedBox(height: 20),
-                  ],
+                  ),
                 ),
-              ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 

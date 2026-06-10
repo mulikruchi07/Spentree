@@ -56,163 +56,175 @@ class _SignInScreenState extends State<SignInScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.bgWhite,
-      resizeToAvoidBottomInset: true,
-      body: SafeArea(
-        child: CustomScrollView(
-          slivers: [
-            SliverFillRemaining(
-              hasScrollBody: false,
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-                child: Column(
-                  children: [
-                    const SizedBox(height: 110),
+    MediaQuery.platformBrightnessOf(context);
 
-                    Text(
-                      "Sign In",
-                      style: GoogleFonts.poppins(
-                        fontSize: 34,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.primaryGreen,
-                      ),
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: themeNotifier,
+      builder: (context, currentTheme, child) {
+        return Scaffold(
+          backgroundColor: AppColors.bgWhite,
+          resizeToAvoidBottomInset: true,
+          body: SafeArea(
+            child: CustomScrollView(
+              slivers: [
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: horizontalPadding,
                     ),
-                    const SizedBox(height: 16),
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 110),
 
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                      child: Text(
-                        "Bounce back to your old forest and start planting again.",
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w400,
-                          color: AppColors.grey700,
-                          height: 1.5,
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 32),
-
-                    // --- INPUTS ---
-                    _buildTextField(
-                      _phoneController,
-                      "Phone Number",
-                      isPhone: true,
-                      errorText: _phoneError,
-                    ),
-                    SizedBox(height: inputGap),
-
-                    _buildTextField(
-                      _passwordController,
-                      "Password",
-                      isPassword: true,
-                      isVisible: _isPasswordVisible,
-                      onVisibilityChanged: () => setState(
-                        () => _isPasswordVisible = !_isPasswordVisible,
-                      ),
-                      errorText: _passwordError,
-                    ),
-
-                    // --- Forgot Password ---
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const ForgotPasswordScreen(),
+                        Text(
+                          "Sign In",
+                          style: GoogleFonts.poppins(
+                            fontSize: 34,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.primaryGreen,
                           ),
-                        );
-                      },
-                      child: Align(
-                        alignment: Alignment.centerRight,
-                        child: Padding(
-                          padding: const EdgeInsets.only(top: 12.0),
+                        ),
+                        const SizedBox(height: 16),
+
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
                           child: Text(
-                            "Forgot Password?",
+                            "Bounce back to your old forest and start planting again.",
+                            textAlign: TextAlign.center,
                             style: GoogleFonts.poppins(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.primaryGreen,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w400,
+                              color: AppColors.grey700,
+                              height: 1.5,
                             ),
                           ),
                         ),
-                      ),
-                    ),
 
-                    const SizedBox(height: 24),
+                        const SizedBox(height: 32),
 
-                    // --- Log In Button ---
-                    SizedBox(
-                      width: double.infinity,
-                      height: componentHeight,
-                      child: ElevatedButton(
-                        onPressed: _validateAndSubmit,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primaryGreen,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(cornerRadius),
-                          ),
-                          elevation: 0,
+                        // --- INPUTS ---
+                        _buildTextField(
+                          _phoneController,
+                          "Phone Number",
+                          isPhone: true,
+                          errorText: _phoneError,
                         ),
-                        child: Text(
-                          "Log In",
-                          style: GoogleFonts.poppins(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                            color: AppColors.colwhite,
+                        SizedBox(height: inputGap),
+
+                        _buildTextField(
+                          _passwordController,
+                          "Password",
+                          isPassword: true,
+                          isVisible: _isPasswordVisible,
+                          onVisibilityChanged: () => setState(
+                            () => _isPasswordVisible = !_isPasswordVisible,
                           ),
+                          errorText: _passwordError,
                         ),
-                      ),
-                    ),
 
-                    const SizedBox(height: 20),
-
-                    // --- Sign Up Link ---
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: RichText(
-                        text: TextSpan(
-                          style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w400,
-                            color: AppColors.grey800,
-                          ),
-                          children: [
-                            TextSpan(text: "Don't have an account? "),
-                            TextSpan(
-                              text: "Sign Up",
-                              style: const TextStyle(
-                                color: AppColors.primaryGreen,
-                                fontWeight: FontWeight.w400,
+                        // --- Forgot Password ---
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const ForgotPasswordScreen(),
                               ),
-                              recognizer: TapGestureRecognizer()
-                                ..onTap = () {
-                                  Navigator.pushReplacement(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          const SignUpScreen(),
-                                    ),
-                                  );
-                                },
+                            );
+                          },
+                          child: Align(
+                            alignment: Alignment.centerRight,
+                            child: Padding(
+                              padding: const EdgeInsets.only(top: 12.0),
+                              child: Text(
+                                "Forgot Password?",
+                                style: GoogleFonts.poppins(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppColors.primaryGreen,
+                                ),
+                              ),
                             ),
-                          ],
+                          ),
                         ),
-                      ),
-                    ),
 
-                    const Spacer(flex: 3),
-                    const SizedBox(height: 20),
-                  ],
+                        const SizedBox(height: 24),
+
+                        // --- Log In Button ---
+                        SizedBox(
+                          width: double.infinity,
+                          height: componentHeight,
+                          child: ElevatedButton(
+                            onPressed: _validateAndSubmit,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primaryGreen,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
+                                  cornerRadius,
+                                ),
+                              ),
+                              elevation: 0,
+                            ),
+                            child: Text(
+                              "Log In",
+                              style: GoogleFonts.poppins(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                                color: AppColors.colwhite,
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        // --- Sign Up Link ---
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: RichText(
+                            text: TextSpan(
+                              style: GoogleFonts.poppins(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w400,
+                                color: AppColors.grey800,
+                              ),
+                              children: [
+                                TextSpan(text: "Don't have an account? "),
+                                TextSpan(
+                                  text: "Sign Up",
+                                  style: const TextStyle(
+                                    color: AppColors.primaryGreen,
+                                    fontWeight: FontWeight.w400,
+                                  ),
+                                  recognizer: TapGestureRecognizer()
+                                    ..onTap = () {
+                                      Navigator.pushReplacement(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              const SignUpScreen(),
+                                        ),
+                                      );
+                                    },
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+
+                        const Spacer(flex: 3),
+                        const SizedBox(height: 20),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 

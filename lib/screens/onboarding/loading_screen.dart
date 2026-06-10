@@ -75,54 +75,65 @@ class _LoadingScreenState extends State<LoadingScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.bgWhite,
-      body: SafeArea(
-        child: SizedBox(
-          width: double.infinity,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // --- CUSTOM ROTATING WHEEL ---
-              RotationTransition(
-                turns: _rotationController,
-                child: SizedBox(
-                  width: 60,
-                  height: 60,
-                  child: CircularProgressIndicator(
-                    value: 0.25, // Static 75% Arc (Creates the "C" shape)
-                    strokeWidth: 8, // Thicker stroke
-                    strokeCap: StrokeCap.round, // Curved edges
-                    color: AppColors.primaryGreen,
-                    backgroundColor:
-                        AppColors.inputFill, // Light grey track behind
-                  ),
-                ),
-              ),
+    MediaQuery.platformBrightnessOf(context);
 
-              const SizedBox(height: 32),
-
-              // --- ANIMATED TEXT ---
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 500),
-                transitionBuilder: (Widget child, Animation<double> animation) {
-                  return FadeTransition(opacity: animation, child: child);
-                },
-                child: Text(
-                  _loadingTexts[_textIndex],
-                  key: ValueKey<String>(_loadingTexts[_textIndex]),
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.montserrat(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.grey700,
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: themeNotifier,
+      builder: (context, currentTheme, child) {
+        return Scaffold(
+          backgroundColor: AppColors.bgWhite,
+          body: SafeArea(
+            child: SizedBox(
+              width: double.infinity,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // --- CUSTOM ROTATING WHEEL ---
+                  RotationTransition(
+                    turns: _rotationController,
+                    child: SizedBox(
+                      width: 60,
+                      height: 60,
+                      child: CircularProgressIndicator(
+                        value: 0.25, // Static 75% Arc (Creates the "C" shape)
+                        strokeWidth: 8, // Thicker stroke
+                        strokeCap: StrokeCap.round, // Curved edges
+                        color: AppColors.primaryGreen,
+                        backgroundColor:
+                            AppColors.inputFill, // Light grey track behind
+                      ),
+                    ),
                   ),
-                ),
+
+                  const SizedBox(height: 32),
+
+                  // --- ANIMATED TEXT ---
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 500),
+                    transitionBuilder:
+                        (Widget child, Animation<double> animation) {
+                          return FadeTransition(
+                            opacity: animation,
+                            child: child,
+                          );
+                        },
+                    child: Text(
+                      _loadingTexts[_textIndex],
+                      key: ValueKey<String>(_loadingTexts[_textIndex]),
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.montserrat(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.grey700,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      }
     );
   }
 }

@@ -128,6 +128,7 @@ class _MainWrapperState extends State<MainWrapper> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
+    MediaQuery.platformBrightnessOf(context);
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: themeNotifier,
       builder: (context, currentMode, child) {

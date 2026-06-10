@@ -161,6 +161,11 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    MediaQuery.platformBrightnessOf(context);
+
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: themeNotifier,
+      builder: (context, currentTheme, child) {
     return Scaffold(
       backgroundColor: AppColors.bgWhite,
       body: Stack(
@@ -283,8 +288,10 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
               right: 24,
               child: _buildDeleteButton(),
             ),
-        ],
-      ),
+            ],
+          ),
+        );
+      }
     );
   }
 

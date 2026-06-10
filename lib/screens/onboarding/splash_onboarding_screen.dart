@@ -92,132 +92,139 @@ class _SplashOnboardingScreenState extends State<SplashOnboardingScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.bgWhite,
-      body: Stack(
-        children: [
-          // LAYER 1: CONTENT
-          SafeArea(
-            child: SizedBox(
-              width: double.infinity,
-              child: Column(
-                children: [
-                  const Spacer(flex: 4),
-                  Image.asset(
-                    "assets/logo.png",
-                    width: 140,
-                    fit: BoxFit.contain,
-                  ),
-                  const Spacer(flex: 3),
-                  Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // HERO: Flying Logo
-                      Hero(
-                        tag: 'logo-image',
-                        flightShuttleBuilder:
-                            (
-                              flightContext,
-                              animation,
-                              direction,
-                              fromContext,
-                              toContext,
-                            ) {
-                              return Material(
-                                color: Colors.transparent,
-                                child: Image.asset(
-                                  AppImages.logoName,
-                                  fit: BoxFit.contain,
-                                ),
-                              );
-                            },
-                        child: Image.asset(
-                          AppImages.appName,
-                          width: 220,
-                          fit: BoxFit.contain,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        "Grow trees, not expenses",
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.montserrat(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.colblack,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const Spacer(flex: 2),
-                ],
-              ),
-            ),
-          ),
+    MediaQuery.platformBrightnessOf(context);
 
-          // LAYER 2: EXPANDING GREEN DOT
-          SafeArea(
-            child: Column(
-              children: [
-                const Spacer(flex: 4),
-                SizedBox(
-                  height: 140,
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: themeNotifier,
+      builder: (context, currentTheme, child) {
+        return Scaffold(
+          backgroundColor: AppColors.bgWhite,
+          body: Stack(
+            children: [
+              // LAYER 1: CONTENT
+              SafeArea(
+                child: SizedBox(
                   width: double.infinity,
-                  child: Center(
-                    child: AnimatedBuilder(
-                      animation: _scaleAnimation,
-                      builder: (context, child) {
-                        if (_scaleAnimation.value == 0)
-                          return const SizedBox.shrink();
-                        return Transform.scale(
-                          scale: _scaleAnimation.value,
-                          child: Container(
-                            width: 50,
-                            height: 50,
-                            decoration: const BoxDecoration(
-                              color: AppColors.primaryGreen,
-                              shape: BoxShape.circle,
+                  child: Column(
+                    children: [
+                      const Spacer(flex: 4),
+                      Image.asset(
+                        "assets/logo.png",
+                        width: 140,
+                        fit: BoxFit.contain,
+                      ),
+                      const Spacer(flex: 3),
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // HERO: Flying Logo
+                          Hero(
+                            tag: 'logo-image',
+                            flightShuttleBuilder:
+                                (
+                                  flightContext,
+                                  animation,
+                                  direction,
+                                  fromContext,
+                                  toContext,
+                                ) {
+                                  return Material(
+                                    color: Colors.transparent,
+                                    child: Image.asset(
+                                      AppImages.logoName,
+                                      fit: BoxFit.contain,
+                                    ),
+                                  );
+                                },
+                            child: Image.asset(
+                              AppImages.appName,
+                              width: 220,
+                              fit: BoxFit.contain,
                             ),
                           ),
-                        );
-                      },
-                    ),
+                          const SizedBox(height: 4),
+                          Text(
+                            "Grow trees, not expenses",
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.montserrat(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.colblack,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const Spacer(flex: 2),
+                    ],
                   ),
                 ),
-                const Spacer(flex: 5),
-              ],
-            ),
-          ),
+              ),
 
-          // LAYER 3: WELCOME TEXT
-          AnimatedBuilder(
-            animation: _controller,
-            builder: (context, child) {
-              return Align(
-                alignment: _textAlignmentAnimation.value,
-                child: Opacity(
-                  opacity: _textFadeAnimation.value,
-                  child: Hero(
-                    tag: 'welcome-text',
-                    child: Material(
-                      type: MaterialType.transparency,
-                      child: Text(
-                        "Welcome to SpenTree",
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.montserrat(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.colwhite,
+              // LAYER 2: EXPANDING GREEN DOT
+              SafeArea(
+                child: Column(
+                  children: [
+                    const Spacer(flex: 4),
+                    SizedBox(
+                      height: 140,
+                      width: double.infinity,
+                      child: Center(
+                        child: AnimatedBuilder(
+                          animation: _scaleAnimation,
+                          builder: (context, child) {
+                            if (_scaleAnimation.value == 0)
+                              return const SizedBox.shrink();
+                            return Transform.scale(
+                              scale: _scaleAnimation.value,
+                              child: Container(
+                                width: 50,
+                                height: 50,
+                                decoration: const BoxDecoration(
+                                  color: AppColors.primaryGreen,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            );
+                          },
                         ),
                       ),
                     ),
-                  ),
+                    const Spacer(flex: 5),
+                  ],
                 ),
-              );
-            },
+              ),
+
+              // LAYER 3: WELCOME TEXT
+              AnimatedBuilder(
+                animation: _controller,
+                builder: (context, child) {
+                  return Align(
+                    alignment: _textAlignmentAnimation.value,
+                    child: Opacity(
+                      opacity: _textFadeAnimation.value,
+                      child: Hero(
+                        tag: 'welcome-text',
+                        child: Material(
+                          type: MaterialType.transparency,
+                          child: Text(
+                            "Welcome to SpenTree",
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.montserrat(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.colwhite,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

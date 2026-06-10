@@ -151,230 +151,237 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    String initial = UserData.userName.isNotEmpty
-        ? UserData.userName[0].toUpperCase()
-        : "?";
+    MediaQuery.platformBrightnessOf(context);
 
-    return Scaffold(
-      backgroundColor: AppColors.bgWhite,
-      body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 70),
-              // ... Header Code ...
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.end,
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: themeNotifier,
+      builder: (context, currentTheme, child) {
+        String initial = UserData.userName.isNotEmpty
+            ? UserData.userName[0].toUpperCase()
+            : "?";
+
+        return Scaffold(
+          backgroundColor: AppColors.bgWhite,
+          body: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  const SizedBox(height: 70),
+                  // ... Header Code ...
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Text(
-                        "My",
-                        style: GoogleFonts.montserrat(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.colblack,
-                        ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "My",
+                            style: GoogleFonts.montserrat(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.colblack,
+                            ),
+                          ),
+                          Text(
+                            "Profile",
+                            style: GoogleFonts.montserrat(
+                              fontSize: 36,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.colblack,
+                              height: 1.1,
+                            ),
+                          ),
+                        ],
                       ),
-                      Text(
-                        "Profile",
-                        style: GoogleFonts.montserrat(
-                          fontSize: 36,
-                          fontWeight: FontWeight.w600,
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8.0),
+                        child: Icon(
+                          PhosphorIcons.trophy,
+                          size: 32,
                           color: AppColors.colblack,
-                          height: 1.1,
                         ),
                       ),
                     ],
                   ),
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 8.0),
-                    child: Icon(
-                      PhosphorIcons.trophy,
-                      size: 32,
-                      color: AppColors.colblack,
+                  const SizedBox(height: 16),
+                  // ... User Card ...
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      color: AppColors.inputFill,
+                      borderRadius: BorderRadius.circular(15),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              // ... User Card ...
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(
-                  color: AppColors.inputFill,
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 35,
-                      backgroundColor: AppColors.primaryGreen,
-                      child: Text(
-                        initial,
-                        style: GoogleFonts.montserrat(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.colblack,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 20),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    child: Row(
                       children: [
-                        Text(
-                          UserData.userName,
-                          style: GoogleFonts.poppins(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.colblack,
+                        CircleAvatar(
+                          radius: 35,
+                          backgroundColor: AppColors.primaryGreen,
+                          child: Text(
+                            initial,
+                            style: GoogleFonts.montserrat(
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.colblack,
+                            ),
                           ),
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          "Planting since January 2025",
-                          style: GoogleFonts.montserrat(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.white500,
-                          ),
+                        const SizedBox(width: 20),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              UserData.userName,
+                              style: GoogleFonts.poppins(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.colblack,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              "Planting since January 2025",
+                              style: GoogleFonts.montserrat(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.white500,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 32),
-
-              // Settings List
-              _buildSettingsItem(
-                PhosphorIcons.user,
-                "My Account",
-                "Make changes to your account",
-                () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const AccountScreen(),
-                    ),
-                  );
-                },
-              ),
-
-              _buildSettingsItem(
-                PhosphorIcons.shieldCheck,
-                "Data & Privacy",
-                "Manage your data & privacy",
-                () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const DataPrivacyScreen(),
-                    ),
-                  );
-                },
-              ),
-              // Logout Item
-              _buildSettingsItem(
-                PhosphorIcons.signOut,
-                "Log out",
-                "Further secure your account for safety",
-                () {
-                  // SHOW CUSTOM LOGOUT DIALOG
-                  _showConfirmationDialog(
-                    title: "Logout",
-                    message: "Are you sure you want to logout?",
-                    confirmText: "Yes, Logout",
-                    icon: PhosphorIcons.signOut,
-
-                    onConfirm: () async {
-                      final prefs = await SharedPreferences.getInstance();
-                      await prefs.setBool('isLoggedIn', false);
-                      if (mounted) {
-                        Navigator.pushAndRemoveUntil(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const SignInScreen(),
-                          ),
-                          (route) => false,
-                        );
-                      }
-                    },
-                  );
-                },
-              ),
-              _buildSettingsItem(
-                PhosphorIcons.question,
-                "Helpdesk & FAQ",
-                "Further secure your account for safety",
-                () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const HelpdeskScreen(),
-                    ),
-                  );
-                },
-              ),
-              _buildSettingsItem(
-                PhosphorIcons.info,
-                "About Us",
-                "Further secure your account for safety",
-                () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const AboutScreen(),
-                    ),
-                  );
-                },
-              ),
-              _buildSettingsItem(
-                PhosphorIcons.envelopeSimple,
-                "Contact Us",
-                "Further secure your account for safety",
-                () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const ContactScreen(),
-                    ),
-                  );
-                },
-              ),
-
-              const SizedBox(
-                height: 20,
-              ), // "Reduce gap distance between tip and divide line"
-              Divider(color: AppColors.divider, thickness: 1),
-
-              const SizedBox(height: 20),
-
-              // --- 7. Footer ---
-              Center(
-                child: Text(
-                  "Planted with love in Mumbai, India",
-                  // Poppins, Medium 13
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.white500,
                   ),
-                ),
-              ),
+                  const SizedBox(height: 32),
 
-              const SizedBox(height: 120),
-            ],
+                  // Settings List
+                  _buildSettingsItem(
+                    PhosphorIcons.user,
+                    "My Account",
+                    "Make changes to your account",
+                    () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const AccountScreen(),
+                        ),
+                      );
+                    },
+                  ),
+
+                  _buildSettingsItem(
+                    PhosphorIcons.shieldCheck,
+                    "Data & Privacy",
+                    "Manage your data & privacy",
+                    () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const DataPrivacyScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  // Logout Item
+                  _buildSettingsItem(
+                    PhosphorIcons.signOut,
+                    "Log out",
+                    "Further secure your account for safety",
+                    () {
+                      // SHOW CUSTOM LOGOUT DIALOG
+                      _showConfirmationDialog(
+                        title: "Logout",
+                        message: "Are you sure you want to logout?",
+                        confirmText: "Yes, Logout",
+                        icon: PhosphorIcons.signOut,
+
+                        onConfirm: () async {
+                          final prefs = await SharedPreferences.getInstance();
+                          await prefs.setBool('isLoggedIn', false);
+                          if (mounted) {
+                            Navigator.pushAndRemoveUntil(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const SignInScreen(),
+                              ),
+                              (route) => false,
+                            );
+                          }
+                        },
+                      );
+                    },
+                  ),
+                  _buildSettingsItem(
+                    PhosphorIcons.question,
+                    "Helpdesk & FAQ",
+                    "Further secure your account for safety",
+                    () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const HelpdeskScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildSettingsItem(
+                    PhosphorIcons.info,
+                    "About Us",
+                    "Further secure your account for safety",
+                    () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const AboutScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildSettingsItem(
+                    PhosphorIcons.envelopeSimple,
+                    "Contact Us",
+                    "Further secure your account for safety",
+                    () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ContactScreen(),
+                        ),
+                      );
+                    },
+                  ),
+
+                  const SizedBox(
+                    height: 20,
+                  ), // "Reduce gap distance between tip and divide line"
+                  Divider(color: AppColors.divider, thickness: 1),
+
+                  const SizedBox(height: 20),
+
+                  // --- 7. Footer ---
+                  Center(
+                    child: Text(
+                      "Planted with love in Mumbai, India",
+                      // Poppins, Medium 13
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.white500,
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 120),
+                ],
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 

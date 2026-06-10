@@ -1686,184 +1686,190 @@ class _AccountScreenState extends State<AccountScreen> {
     if (_isLoading) {
       return Scaffold(backgroundColor: AppColors.bgWhite);
     }
+    MediaQuery.platformBrightnessOf(context);
 
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, result) {
-        if (didPop) return;
-        _handleBackNavigation();
-      },
-      child: Scaffold(
-        backgroundColor: AppColors.bgWhite,
-        body: SafeArea(
-          top: false,
-          child: SingleChildScrollView(
-            controller: _scrollController,
-            physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 24.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 70),
-                Text(
-                  "My",
-                  style: GoogleFonts.montserrat(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.colblack,
-                  ),
-                ),
-                Text(
-                  "Account",
-                  style: GoogleFonts.montserrat(
-                    fontSize: 36,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.colblack,
-                    height: 1.1,
-                  ),
-                ),
-
-                const SizedBox(height: 32),
-                _buildProfileHeader(),
-
-                const SizedBox(height: 32),
-
-                Container(
-                  key: _editSectionKey,
-                  child: Column(
-                    children: [
-                      _buildInlineEditableField(
-                        label: "Name",
-                        controller: _nameController,
-                        isEditing: _isEditingName,
-                        onToggle: _toggleNameEdit,
-                        errorMsg: _nameError,
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: themeNotifier,
+      builder: (context, currentTheme, child) {
+        return PopScope(
+          canPop: false,
+          onPopInvokedWithResult: (didPop, result) {
+            if (didPop) return;
+            _handleBackNavigation();
+          },
+          child: Scaffold(
+            backgroundColor: AppColors.bgWhite,
+            body: SafeArea(
+              top: false,
+              child: SingleChildScrollView(
+                controller: _scrollController,
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 70),
+                    Text(
+                      "My",
+                      style: GoogleFonts.montserrat(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.colblack,
                       ),
-                      const SizedBox(height: 16),
-                      _buildInlineEditableField(
-                        label: "Phone Number",
-                        controller: _phoneController,
-                        isEditing: _isEditingPhone,
-                        onToggle: _togglePhoneEdit,
-                        isPhone: true,
-                        errorMsg: _phoneError,
+                    ),
+                    Text(
+                      "Account",
+                      style: GoogleFonts.montserrat(
+                        fontSize: 36,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.colblack,
+                        height: 1.1,
                       ),
-                    ],
-                  ),
-                ),
+                    ),
 
-                const SizedBox(height: 32),
-                _buildSectionHeader("Login & Security"),
-                _buildActionTile(
-                  PhosphorIcons.password,
-                  "Change Password",
-                  "Change your current password",
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const ChangePasswordScreen(),
+                    const SizedBox(height: 32),
+                    _buildProfileHeader(),
+
+                    const SizedBox(height: 32),
+
+                    Container(
+                      key: _editSectionKey,
+                      child: Column(
+                        children: [
+                          _buildInlineEditableField(
+                            label: "Name",
+                            controller: _nameController,
+                            isEditing: _isEditingName,
+                            onToggle: _toggleNameEdit,
+                            errorMsg: _nameError,
+                          ),
+                          const SizedBox(height: 16),
+                          _buildInlineEditableField(
+                            label: "Phone Number",
+                            controller: _phoneController,
+                            isEditing: _isEditingPhone,
+                            onToggle: _togglePhoneEdit,
+                            isPhone: true,
+                            errorMsg: _phoneError,
+                          ),
+                        ],
                       ),
-                    );
-                  },
-                ),
-                _buildToggleTile(
-                  PhosphorIcons.fingerprintSimple,
-                  "Face ID / Touch ID",
-                  "Manage your device security",
-                  _isFaceIdEnabled,
-                  _handleFaceIdToggle,
-                ),
+                    ),
 
-                const SizedBox(height: 32),
-                _buildSectionHeader("Appearance"),
-                _buildAppearanceSection(),
+                    const SizedBox(height: 32),
+                    _buildSectionHeader("Login & Security"),
+                    _buildActionTile(
+                      PhosphorIcons.password,
+                      "Change Password",
+                      "Change your current password",
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ChangePasswordScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                    _buildToggleTile(
+                      PhosphorIcons.fingerprintSimple,
+                      "Face ID / Touch ID",
+                      "Manage your device security",
+                      _isFaceIdEnabled,
+                      _handleFaceIdToggle,
+                    ),
 
-                const SizedBox(height: 32),
-                _buildSectionHeader("Communication Preferences"),
-                _buildToggleTile(
-                  PhosphorIcons.warning,
-                  "Spending Alerts",
-                  "Get alerts when you overspend",
-                  _spendingAlerts,
-                  (v) => setState(() => _spendingAlerts = v),
-                ),
-                _buildToggleTile(
-                  PhosphorIcons.lightbulb,
-                  "Spending Tips",
-                  "Get tips for daily expenses",
-                  _spendingTips,
-                  (v) => setState(() => _spendingTips = v),
-                ),
-                _buildToggleTile(
-                  PhosphorIcons.bellSimpleRinging,
-                  "Notifications",
-                  "Streak & Milestone Notifications",
-                  _notifications,
-                  (v) => setState(() => _notifications = v),
-                ),
-                _buildToggleTile(
-                  PhosphorIcons.speakerHigh,
-                  "Sound Effects",
-                  "Control Sound effects & Music",
-                  _soundEffects,
-                  (v) async {
-                    // 1. Update the UI instantly
-                    setState(() => _soundEffects = v);
+                    const SizedBox(height: 32),
+                    _buildSectionHeader("Appearance"),
+                    _buildAppearanceSection(),
 
-                    // 2. Sync to the global cache (so ForestScreen can read it instantly)
-                    AccountScreen.cachedSoundEffects = v;
+                    const SizedBox(height: 32),
+                    _buildSectionHeader("Communication Preferences"),
+                    _buildToggleTile(
+                      PhosphorIcons.warning,
+                      "Spending Alerts",
+                      "Get alerts when you overspend",
+                      _spendingAlerts,
+                      (v) => setState(() => _spendingAlerts = v),
+                    ),
+                    _buildToggleTile(
+                      PhosphorIcons.lightbulb,
+                      "Spending Tips",
+                      "Get tips for daily expenses",
+                      _spendingTips,
+                      (v) => setState(() => _spendingTips = v),
+                    ),
+                    _buildToggleTile(
+                      PhosphorIcons.bellSimpleRinging,
+                      "Notifications",
+                      "Streak & Milestone Notifications",
+                      _notifications,
+                      (v) => setState(() => _notifications = v),
+                    ),
+                    _buildToggleTile(
+                      PhosphorIcons.speakerHigh,
+                      "Sound Effects",
+                      "Control Sound effects & Music",
+                      _soundEffects,
+                      (v) async {
+                        // 1. Update the UI instantly
+                        setState(() => _soundEffects = v);
 
-                    // 3. Save to device storage for the next time the app opens
-                    final prefs = await SharedPreferences.getInstance();
-                    await prefs.setBool('sound_effects', v);
-                  },
+                        // 2. Sync to the global cache (so ForestScreen can read it instantly)
+                        AccountScreen.cachedSoundEffects = v;
+
+                        // 3. Save to device storage for the next time the app opens
+                        final prefs = await SharedPreferences.getInstance();
+                        await prefs.setBool('sound_effects', v);
+                      },
+                    ),
+
+                    const SizedBox(height: 32),
+                    _buildSectionHeader("Account Preferences"),
+                    _buildStaticField("Language", "English"),
+                    const SizedBox(height: 16),
+                    _buildStaticField("Currency", "INR"),
+
+                    const SizedBox(height: 32),
+                    _buildSectionHeader("Account Control"),
+                    _buildActionTile(
+                      PhosphorIcons.lockKey,
+                      "Deactivate Account",
+                      "Temporarily disable account",
+                      onPop: () => _showConfirmationDialog(
+                        title: "Deactivate Account",
+                        message:
+                            "You can come back anytime by logging in again.",
+                        confirmText: "Yes, Deactivate",
+                        icon: PhosphorIcons.lockKey,
+                        onConfirm: () {},
+                      ),
+                    ),
+                    _buildActionTile(
+                      PhosphorIcons.trash,
+                      "Delete My Account",
+                      "Delete your account permanently",
+                      onPop: () => _showConfirmationDialog(
+                        title: "Delete Account",
+                        message: "All your data will be removed permanently.",
+                        confirmText: "Yes, Delete",
+                        icon: PhosphorIcons.trash,
+                        onConfirm: () {},
+                      ),
+                    ),
+
+                    const SizedBox(height: 48),
+                    _buildFooter(context),
+                    const SizedBox(height: 40),
+                  ],
                 ),
-
-                const SizedBox(height: 32),
-                _buildSectionHeader("Account Preferences"),
-                _buildStaticField("Language", "English"),
-                const SizedBox(height: 16),
-                _buildStaticField("Currency", "INR"),
-
-                const SizedBox(height: 32),
-                _buildSectionHeader("Account Control"),
-                _buildActionTile(
-                  PhosphorIcons.lockKey,
-                  "Deactivate Account",
-                  "Temporarily disable account",
-                  onPop: () => _showConfirmationDialog(
-                    title: "Deactivate Account",
-                    message: "You can come back anytime by logging in again.",
-                    confirmText: "Yes, Deactivate",
-                    icon: PhosphorIcons.lockKey,
-                    onConfirm: () {},
-                  ),
-                ),
-                _buildActionTile(
-                  PhosphorIcons.trash,
-                  "Delete My Account",
-                  "Delete your account permanently",
-                  onPop: () => _showConfirmationDialog(
-                    title: "Delete Account",
-                    message: "All your data will be removed permanently.",
-                    confirmText: "Yes, Delete",
-                    icon: PhosphorIcons.trash,
-                    onConfirm: () {},
-                  ),
-                ),
-
-                const SizedBox(height: 48),
-                _buildFooter(context),
-                const SizedBox(height: 40),
-              ],
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
-
   // --- UI Reusable Components ---
 
   Widget _buildAppearanceSection() {

@@ -71,7 +71,10 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
 
-    return Scaffold(
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: themeNotifier,
+      builder: (context, currentTheme, child) {
+        return Scaffold(
       backgroundColor: AppColors.bgWhite,
       body: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
@@ -151,9 +154,11 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
               _buildFooter(context),
               const SizedBox(height: 120), // Bottom padding for navbar
             ],
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      }
     );
   }
 

@@ -13,122 +13,129 @@ class HelpdeskScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.bgWhite,
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 70),
+    MediaQuery.platformBrightnessOf(context);
 
-            // --- Header ---
-            Text(
-              "Helpdesk",
-              style: GoogleFonts.montserrat(
-                fontSize: 18,
-                fontWeight: FontWeight.w500,
-                color: AppColors.colblack,
-              ),
-            ),
-            Text(
-              "SpenTree",
-              style: GoogleFonts.montserrat(
-                fontSize: 36,
-                fontWeight: FontWeight.w600,
-                color: AppColors.colblack,
-                height: 1.1,
-              ),
-            ),
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: themeNotifier,
+      builder: (context, currentTheme, child) {
+        return Scaffold(
+          backgroundColor: AppColors.bgWhite,
+          body: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 70),
 
-            const SizedBox(height: 16),
-            _buildPoppinsText(
-              "Welcome to Spentree Help\nHere you’ll find answers to common questions about how the app works.",
-            ),
-
-            const SizedBox(height: 12),
-
-            // --- FAQ Expansion List ---
-            _buildExpansionRow(
-              "What is Spentree?",
-              "Spentree is a personal finance habit-building app that helps users track daily spending and build better money awareness through visual tools like trees and forests.",
-            ),
-
-            _buildExpansionRow(
-              "How does the daily limit work?",
-              "You set a daily spending limit in your profile. As you spend during the day, Spentree tracks how much of your limit you’ve used. Your tree changes based on how close you are to your limit. At midnight, your daily tree resets for a fresh start.",
-            ),
-
-            _buildExpansionRow(
-              "How do I grow my forest?",
-              "Every day you stay within your limit, a healthy tree is added to your permanent forest. Over time, your consistency builds a lush landscape representing your financial health.",
-            ),
-
-            _buildExpansionRow(
-              "Can I add expenses manually?",
-              "Yes. While Spentree can detect transaction SMS, you can always use the '+' button on the dashboard to log cash expenses or manual entries.",
-            ),
-
-            _buildExpansionRow(
-              "How do I split an expense with friends?",
-              "Tap on any transaction in your history and select the 'Split' option. You can enter the number of people to divide the cost and track your share accurately.",
-            ),
-
-            _buildExpansionRow(
-              "Can I edit or delete a transaction?",
-              "Absolutely. Swipe left on any transaction in your history to reveal the Edit and Delete options. This ensures your forest data remains accurate.",
-            ),
-
-            _buildExpansionRow(
-              "Why am I getting spending alerts?",
-              "Spending alerts are designed to keep you mindful. You will receive notifications as you approach 80% and 100% of your daily limit.",
-            ),
-
-            _buildExpansionRow(
-              "Is my data safe?",
-              "Your privacy is a priority. All transaction processing happens locally on your device, and we do not sell your personal financial data to third parties.",
-            ),
-
-            _buildExpansionRow(
-              "I overspent today. What happens?",
-              "If you exceed your limit, your tree for the day will appear withered in your history. However, every day is a fresh start to try again!",
-            ),
-
-            const SizedBox(height: 16),
-
-            // --- Contact Section ---
-            Text(
-              "Still need help?",
-              style: GoogleFonts.montserrat(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: AppColors.colblack,
-              ),
-            ),
-            const SizedBox(height: 8),
-            _buildPoppinsText("We’re here for you."),
-            RichText(
-              text: TextSpan(
-                style: GoogleFonts.poppins(
-                  fontSize: 13,
-                  color: AppColors.colblack,
-                ),
-                children: [
-                  TextSpan(text: "Contact us at: "),
-                  TextSpan(
-                    text: "support@spentree.app",
-                    style: TextStyle(fontWeight: FontWeight.w600),
+                // --- Header ---
+                Text(
+                  "Helpdesk",
+                  style: GoogleFonts.montserrat(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.colblack,
                   ),
-                ],
-              ),
-            ),
+                ),
+                Text(
+                  "SpenTree",
+                  style: GoogleFonts.montserrat(
+                    fontSize: 36,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.colblack,
+                    height: 1.1,
+                  ),
+                ),
 
-            const SizedBox(height: 16),
-            _buildFooter(context),
-            const SizedBox(height: 50),
-          ],
-        ),
-      ),
+                const SizedBox(height: 16),
+                _buildPoppinsText(
+                  "Welcome to Spentree Help\nHere you’ll find answers to common questions about how the app works.",
+                ),
+
+                const SizedBox(height: 12),
+
+                // --- FAQ Expansion List ---
+                _buildExpansionRow(
+                  "What is Spentree?",
+                  "Spentree is a personal finance habit-building app that helps users track daily spending and build better money awareness through visual tools like trees and forests.",
+                ),
+
+                _buildExpansionRow(
+                  "How does the daily limit work?",
+                  "You set a daily spending limit in your profile. As you spend during the day, Spentree tracks how much of your limit you’ve used. Your tree changes based on how close you are to your limit. At midnight, your daily tree resets for a fresh start.",
+                ),
+
+                _buildExpansionRow(
+                  "How do I grow my forest?",
+                  "Every day you stay within your limit, a healthy tree is added to your permanent forest. Over time, your consistency builds a lush landscape representing your financial health.",
+                ),
+
+                _buildExpansionRow(
+                  "Can I add expenses manually?",
+                  "Yes. While Spentree can detect transaction SMS, you can always use the '+' button on the dashboard to log cash expenses or manual entries.",
+                ),
+
+                _buildExpansionRow(
+                  "How do I split an expense with friends?",
+                  "Tap on any transaction in your history and select the 'Split' option. You can enter the number of people to divide the cost and track your share accurately.",
+                ),
+
+                _buildExpansionRow(
+                  "Can I edit or delete a transaction?",
+                  "Absolutely. Swipe left on any transaction in your history to reveal the Edit and Delete options. This ensures your forest data remains accurate.",
+                ),
+
+                _buildExpansionRow(
+                  "Why am I getting spending alerts?",
+                  "Spending alerts are designed to keep you mindful. You will receive notifications as you approach 80% and 100% of your daily limit.",
+                ),
+
+                _buildExpansionRow(
+                  "Is my data safe?",
+                  "Your privacy is a priority. All transaction processing happens locally on your device, and we do not sell your personal financial data to third parties.",
+                ),
+
+                _buildExpansionRow(
+                  "I overspent today. What happens?",
+                  "If you exceed your limit, your tree for the day will appear withered in your history. However, every day is a fresh start to try again!",
+                ),
+
+                const SizedBox(height: 16),
+
+                // --- Contact Section ---
+                Text(
+                  "Still need help?",
+                  style: GoogleFonts.montserrat(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.colblack,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                _buildPoppinsText("We’re here for you."),
+                RichText(
+                  text: TextSpan(
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      color: AppColors.colblack,
+                    ),
+                    children: [
+                      TextSpan(text: "Contact us at: "),
+                      TextSpan(
+                        text: "support@spentree.app",
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+                _buildFooter(context),
+                const SizedBox(height: 50),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 

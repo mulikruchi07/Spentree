@@ -873,59 +873,105 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    bool isViewingToday = DateUtils.isSameDay(_focusedDate, _today);
+    MediaQuery.platformBrightnessOf(context);
 
-    final dailyTx = TransactionService().getTransactionsForDay(_focusedDate);
-    double selectedDayExpense = dailyTx.fold(
-      0,
-      (sum, item) => sum + item.amount,
-    );
-    pendingLimit = (limit - selectedDayExpense).clamp(0.0, limit.toDouble());
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: themeNotifier,
+      builder: (context, currentTheme, child) {
+        bool isViewingToday = DateUtils.isSameDay(_focusedDate, _today);
 
-    return Scaffold(
-      backgroundColor: AppColors.bgWhite,
-      body: TransactionService().isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: AppColors.primaryGreen),
-            )
-          : SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              child: Column(
-                children: [
-                  const SizedBox(height: 70),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildHeader(),
-                        const SizedBox(height: 20),
-                        _buildCalendarBox(),
-                        const SizedBox(height: 20),
+        final dailyTx = TransactionService().getTransactionsForDay(
+          _focusedDate,
+        );
+        double selectedDayExpense = dailyTx.fold(
+          0,
+          (sum, item) => sum + item.amount,
+        );
+        pendingLimit = (limit - selectedDayExpense).clamp(
+          0.0,
+          limit.toDouble(),
+        );
 
-                        _buildTreeSection(),
+        return Scaffold(
+          backgroundColor: AppColors.bgWhite,
+          body: TransactionService().isLoading
+              ? const Center(
+                  child: CircularProgressIndicator(
+                    color: AppColors.primaryGreen,
+                  ),
+                )
+              : SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 70),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildHeader(),
+                            const SizedBox(height: 20),
+                            _buildCalendarBox(),
+                            const SizedBox(height: 20),
 
-                        const SizedBox(height: 28),
-                        // CONNECTED THE BUTTON HERE
-                        _buildSectionHeader(
-                          "Your Balance",
-                          "Change Limit",
-                          onTapAction: _handleChangeLimit,
-                        ),
-                        const SizedBox(height: 12),
+                            _buildTreeSection(),
 
-                        _buildGrayCard(
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Column(
+                            const SizedBox(height: 28),
+                            // CONNECTED THE BUTTON HERE
+                            _buildSectionHeader(
+                              "Your Balance",
+                              "Change Limit",
+                              onTapAction: _handleChangeLimit,
+                            ),
+                            const SizedBox(height: 12),
+
+                            _buildGrayCard(
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        isViewingToday
+                                            ? "Today's Expense"
+                                            : "Expense on ${DateFormat('d MMM').format(_focusedDate)}",
+                                        style: GoogleFonts.montserrat(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w500,
+                                          color: AppColors.white600,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        "Rs. ${NumberFormat('#,##0').format(selectedDayExpense)}",
+                                        style: GoogleFonts.montserrat(
+                                          fontSize: 22,
+                                          fontWeight: FontWeight.w700,
+                                          color: AppColors.colblack,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  selectedDayExpense <= limit
+                                      ? _buildGreenBadge("Great")
+                                      : _buildRedBadge("Over Limit"),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+
+                            _buildGrayCard(
+                              child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Text(
-                                    isViewingToday
-                                        ? "Today's Expense"
-                                        : "Expense on ${DateFormat('d MMM').format(_focusedDate)}",
+                                    "Pending Limit",
                                     style: GoogleFonts.montserrat(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w500,
@@ -933,186 +979,162 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     ),
                                   ),
                                   const SizedBox(height: 2),
-                                  Text(
-                                    "Rs. ${NumberFormat('#,##0').format(selectedDayExpense)}",
-                                    style: GoogleFonts.montserrat(
-                                      fontSize: 22,
-                                      fontWeight: FontWeight.w700,
-                                      color: AppColors.colblack,
+                                  RichText(
+                                    text: TextSpan(
+                                      children: [
+                                        TextSpan(
+                                          text:
+                                              "Rs. ${NumberFormat('#,##0').format(pendingLimit)} ",
+                                          style: GoogleFonts.montserrat(
+                                            fontSize: 22,
+                                            fontWeight: FontWeight.w700,
+                                            color: AppColors.colblack,
+                                          ),
+                                        ),
+                                        TextSpan(
+                                          text:
+                                              "/ ${NumberFormat('#,##0').format(limit)}",
+                                          style: GoogleFonts.montserrat(
+                                            fontSize: 22,
+                                            fontWeight: FontWeight.w700,
+                                            color: AppColors.colblack,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ],
                               ),
-                              selectedDayExpense <= limit
-                                  ? _buildGreenBadge("Great")
-                                  : _buildRedBadge("Over Limit"),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-
-                        _buildGrayCard(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                "Pending Limit",
-                                style: GoogleFonts.montserrat(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                  color: AppColors.white600,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              RichText(
-                                text: TextSpan(
-                                  children: [
-                                    TextSpan(
-                                      text:
-                                          "Rs. ${NumberFormat('#,##0').format(pendingLimit)} ",
-                                      style: GoogleFonts.montserrat(
-                                        fontSize: 22,
-                                        fontWeight: FontWeight.w700,
-                                        color: AppColors.colblack,
-                                      ),
-                                    ),
-                                    TextSpan(
-                                      text:
-                                          "/ ${NumberFormat('#,##0').format(limit)}",
-                                      style: GoogleFonts.montserrat(
-                                        fontSize: 22,
-                                        fontWeight: FontWeight.w700,
-                                        color: AppColors.colblack,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        const SizedBox(height: 24),
-
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              isViewingToday ? "Today's Expenses" : "Expenses",
-                              style: GoogleFonts.poppins(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.colblack,
-                              ),
                             ),
-                            GestureDetector(
-                              onTap: () {
-                                Navigator.pushReplacement(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        const MainWrapper(initialIndex: 1),
-                                  ),
-                                );
-                              },
-                              child: Text(
-                                "Add expense",
-                                style: GoogleFonts.poppins(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w500,
-                                  color: AppColors.white500,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
 
-                        if (dailyTx.isEmpty)
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.symmetric(vertical: 30),
-                            decoration: BoxDecoration(
-                              color: AppColors.inputFill,
-                              borderRadius: BorderRadius.circular(cardRadius),
-                            ),
-                            child: Column(
+                            const SizedBox(height: 24),
+
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Icon(
-                                  PhosphorIcons.leaf,
-                                  color: AppColors.white500,
-                                  size: 40,
-                                ),
-                                const SizedBox(height: 10),
                                 Text(
-                                  "No expenses found for this day.",
-                                  style: GoogleFonts.montserrat(
-                                    color: AppColors.white600,
-                                    fontWeight: FontWeight.w500,
+                                  isViewingToday
+                                      ? "Today's Expenses"
+                                      : "Expenses",
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.colblack,
+                                  ),
+                                ),
+                                GestureDetector(
+                                  onTap: () {
+                                    Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            const MainWrapper(initialIndex: 1),
+                                      ),
+                                    );
+                                  },
+                                  child: Text(
+                                    "Add expense",
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w500,
+                                      color: AppColors.white500,
+                                    ),
                                   ),
                                 ),
                               ],
                             ),
-                          )
-                        else
-                          Column(
-                            children: dailyTx
-                                .map((tx) => _buildTransactionCard(tx))
-                                .toList(),
-                          ),
+                            const SizedBox(height: 16),
 
-                        const SizedBox(height: 12),
-                        Center(
-                          child: Text(
-                            "See all expenses",
-                            style: GoogleFonts.poppins(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.white500,
-                            ),
-                          ),
-                        ),
+                            if (dailyTx.isEmpty)
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 30,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.inputFill,
+                                  borderRadius: BorderRadius.circular(
+                                    cardRadius,
+                                  ),
+                                ),
+                                child: Column(
+                                  children: [
+                                    Icon(
+                                      PhosphorIcons.leaf,
+                                      color: AppColors.white500,
+                                      size: 40,
+                                    ),
+                                    const SizedBox(height: 10),
+                                    Text(
+                                      "No expenses found for this day.",
+                                      style: GoogleFonts.montserrat(
+                                        color: AppColors.white600,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              )
+                            else
+                              Column(
+                                children: dailyTx
+                                    .map((tx) => _buildTransactionCard(tx))
+                                    .toList(),
+                              ),
 
-                        const SizedBox(height: 32),
-                        Text(
-                          "Tip of the day",
-                          style: GoogleFonts.poppins(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                            color: AppColors.colblack,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          "Cooking one meal at home can save enough to grow 3 new leaves.",
-                          style: GoogleFonts.poppins(
-                            fontSize: 21,
-                            fontWeight: FontWeight.w500,
-                            color: AppColors.white500,
-                            height: 1.3,
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        Divider(color: AppColors.divider, thickness: 1),
-                        const SizedBox(height: 20),
-                        Center(
-                          child: Text(
-                            "Planted with love in Mumbai, India",
-                            style: GoogleFonts.poppins(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.white500,
+                            const SizedBox(height: 12),
+                            Center(
+                              child: Text(
+                                "See all expenses",
+                                style: GoogleFonts.poppins(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppColors.white500,
+                                ),
+                              ),
                             ),
-                          ),
+
+                            const SizedBox(height: 32),
+                            Text(
+                              "Tip of the day",
+                              style: GoogleFonts.poppins(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                                color: AppColors.colblack,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              "Cooking one meal at home can save enough to grow 3 new leaves.",
+                              style: GoogleFonts.poppins(
+                                fontSize: 21,
+                                fontWeight: FontWeight.w500,
+                                color: AppColors.white500,
+                                height: 1.3,
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            Divider(color: AppColors.divider, thickness: 1),
+                            const SizedBox(height: 20),
+                            Center(
+                              child: Text(
+                                "Planted with love in Mumbai, India",
+                                style: GoogleFonts.poppins(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppColors.white500,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 120),
+                          ],
                         ),
-                        const SizedBox(height: 120),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            ),
+                ),
+        );
+      },
     );
   }
 
@@ -1664,6 +1686,8 @@ class _ChangeLimitPopupState extends State<_ChangeLimitPopup>
       'last_limit_change',
       DateTime.now().toIso8601String(),
     );
+
+    await TransactionService().syncWidget();
 
     if (mounted) {
       Navigator.pop(context, val); // Return the new value to update the UI

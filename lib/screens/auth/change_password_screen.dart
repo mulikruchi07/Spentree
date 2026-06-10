@@ -77,6 +77,10 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    MediaQuery.platformBrightnessOf(context);
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: themeNotifier,
+      builder: (context, currentTheme, child) {
     return Scaffold(
       backgroundColor: AppColors.bgWhite,
       resizeToAvoidBottomInset: true,
@@ -193,12 +197,14 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                     const Spacer(flex: 3),
                     const SizedBox(height: 20),
                   ],
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      }
     );
   }
 

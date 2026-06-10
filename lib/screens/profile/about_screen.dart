@@ -14,112 +14,119 @@ class AboutScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-      canPop: true, // Allows hardware back button to return to Profile
-      child: Scaffold(
-        backgroundColor: AppColors.bgWhite,
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
-          child: Column(
-            // Add this Column
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 70),
-              Text(
-                "About",
-                style: GoogleFonts.montserrat(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.colblack,
-                ),
-              ),
-              Text(
-                "SpenTree",
-                style: GoogleFonts.montserrat(
-                  fontSize: 36,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.colblack,
-                  height: 1.1,
-                ),
-              ),
+    MediaQuery.platformBrightnessOf(context);
 
-              const SizedBox(height: 16),
-              _buildPoppinsText(
-                "Spentree was created with one simple idea:\nBuilding money habits should feel encouraging, not stressful.",
-              ),
-              _buildPoppinsText(
-                "Most finance apps focus on numbers, limits, and warnings.",
-              ),
-              const SizedBox(height: 12),
-              _buildPoppinsText(
-                "Spentree takes a different approach.\nWe turn your daily spending habits into something you can see grow.",
-              ),
-              const SizedBox(height: 12),
-              _buildPoppinsText(
-                "Every smart decision helps your tree stay healthy.\nEvery mindful day adds to your forest.",
-              ),
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: themeNotifier,
+      builder: (context, currentTheme, child) {
+        return PopScope(
+          canPop: true, // Allows hardware back button to return to Profile
+          child: Scaffold(
+            backgroundColor: AppColors.bgWhite,
+            body: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: Column(
+                // Add this Column
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 70),
+                  Text(
+                    "About",
+                    style: GoogleFonts.montserrat(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.colblack,
+                    ),
+                  ),
+                  Text(
+                    "SpenTree",
+                    style: GoogleFonts.montserrat(
+                      fontSize: 36,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.colblack,
+                      height: 1.1,
+                    ),
+                  ),
 
-              const SizedBox(height: 16),
-              _buildSectionHeading("Why We Built Spentree?"),
-              _buildPoppinsText(
-                "Managing money, especially when you're young, can feel overwhelming. Budgets feel strict. Tracking feels tiring. Guilt often replaces motivation.",
-              ),
-              const SizedBox(height: 12),
-              _buildPoppinsText("Spentree was designed to change that."),
-              const SizedBox(height: 12),
-              _buildPoppinsText(
-                "Instead of telling you what you did wrong, Spentree shows you how small improvements can grow into something bigger — just like a forest.",
-              ),
+                  const SizedBox(height: 16),
+                  _buildPoppinsText(
+                    "Spentree was created with one simple idea:\nBuilding money habits should feel encouraging, not stressful.",
+                  ),
+                  _buildPoppinsText(
+                    "Most finance apps focus on numbers, limits, and warnings.",
+                  ),
+                  const SizedBox(height: 12),
+                  _buildPoppinsText(
+                    "Spentree takes a different approach.\nWe turn your daily spending habits into something you can see grow.",
+                  ),
+                  const SizedBox(height: 12),
+                  _buildPoppinsText(
+                    "Every smart decision helps your tree stay healthy.\nEvery mindful day adds to your forest.",
+                  ),
 
-              const SizedBox(height: 12),
-              _buildPoppinsText("We believe habits grow best with:"),
-              _buildPoppinsText(
-                "• Gentle reminders, not pressure\n• Visual progress, not spreadsheets\n• Consistency, not perfection",
-              ),
+                  const SizedBox(height: 16),
+                  _buildSectionHeading("Why We Built Spentree?"),
+                  _buildPoppinsText(
+                    "Managing money, especially when you're young, can feel overwhelming. Budgets feel strict. Tracking feels tiring. Guilt often replaces motivation.",
+                  ),
+                  const SizedBox(height: 12),
+                  _buildPoppinsText("Spentree was designed to change that."),
+                  const SizedBox(height: 12),
+                  _buildPoppinsText(
+                    "Instead of telling you what you did wrong, Spentree shows you how small improvements can grow into something bigger — just like a forest.",
+                  ),
 
-              const SizedBox(height: 16),
-              _buildSectionHeading("Our Philosophy"),
-              _buildPoppinsText(
-                "Money habits are like plants.\nThey don’t grow overnight. They need regular care, patience, and small daily efforts.",
-              ),
-              _buildPoppinsText(
-                "Some days are dry. Some days it rains. But with time, a single plant becomes a forest.\nSpentree is here to help you see that journey.",
-              ),
+                  const SizedBox(height: 12),
+                  _buildPoppinsText("We believe habits grow best with:"),
+                  _buildPoppinsText(
+                    "• Gentle reminders, not pressure\n• Visual progress, not spreadsheets\n• Consistency, not perfection",
+                  ),
 
-              const SizedBox(height: 16),
-              _buildSectionHeading("Built for Everyday Life"),
-              _buildPoppinsText(
-                "Spentree is made for:\n• Students learning to manage expenses\n• Young professionals balancing spending and saving\n• Anyone who wants better control without feeling judged",
-              ),
-              _buildPoppinsText(
-                "We focus on awareness and balance — not restriction.",
-              ),
+                  const SizedBox(height: 16),
+                  _buildSectionHeading("Our Philosophy"),
+                  _buildPoppinsText(
+                    "Money habits are like plants.\nThey don’t grow overnight. They need regular care, patience, and small daily efforts.",
+                  ),
+                  _buildPoppinsText(
+                    "Some days are dry. Some days it rains. But with time, a single plant becomes a forest.\nSpentree is here to help you see that journey.",
+                  ),
 
-              const SizedBox(height: 16),
-              _buildSectionHeading("Our Promise"),
-              _buildPoppinsText(
-                "We aim to keep Spentree:\n• Simple\n• Positive\n• Private\n• Helpful",
-              ),
-              const SizedBox(height: 12),
-              _buildPoppinsText(
-                "Your data belongs to you.\nYour growth happens at your pace.",
-              ),
+                  const SizedBox(height: 16),
+                  _buildSectionHeading("Built for Everyday Life"),
+                  _buildPoppinsText(
+                    "Spentree is made for:\n• Students learning to manage expenses\n• Young professionals balancing spending and saving\n• Anyone who wants better control without feeling judged",
+                  ),
+                  _buildPoppinsText(
+                    "We focus on awareness and balance — not restriction.",
+                  ),
 
-              const SizedBox(height: 16),
-              _buildSectionHeading("Growing Together"),
-              _buildPoppinsText(
-                "Spentree is still growing, just like your forest. We’re always working to improve the experience and add features that help you build better money habits.",
-              ),
-              const SizedBox(height: 12),
-              _buildPoppinsText("Thank you for being part of the journey."),
+                  const SizedBox(height: 16),
+                  _buildSectionHeading("Our Promise"),
+                  _buildPoppinsText(
+                    "We aim to keep Spentree:\n• Simple\n• Positive\n• Private\n• Helpful",
+                  ),
+                  const SizedBox(height: 12),
+                  _buildPoppinsText(
+                    "Your data belongs to you.\nYour growth happens at your pace.",
+                  ),
 
-              const SizedBox(height: 12),
-              _buildFooter(context),
-              const SizedBox(height: 50),
-            ],
+                  const SizedBox(height: 16),
+                  _buildSectionHeading("Growing Together"),
+                  _buildPoppinsText(
+                    "Spentree is still growing, just like your forest. We’re always working to improve the experience and add features that help you build better money habits.",
+                  ),
+                  const SizedBox(height: 12),
+                  _buildPoppinsText("Thank you for being part of the journey."),
+
+                  const SizedBox(height: 12),
+                  _buildFooter(context),
+                  const SizedBox(height: 50),
+                ],
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 

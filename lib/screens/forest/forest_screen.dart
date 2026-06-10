@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:spentree/core/app_style.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'spentwrap_intro_screen.dart';
 
 class ForestScreen extends StatefulWidget {
   final bool isActive;
@@ -144,105 +145,112 @@ class _ForestScreenState extends State<ForestScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.bgWhite,
-      body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        child: Column(
-          children: [
-            const SizedBox(height: 70),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // 1. Header
-                  _buildHeader(),
-                  const SizedBox(height: 20),
+    MediaQuery.platformBrightnessOf(context);
 
-                  // 2. Monthly Calendar Box (Compact)
-                  _buildMonthlyCalendar(),
-                  const SizedBox(height: 24),
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: themeNotifier,
+      builder: (context, currentTheme, child) {
+        return Scaffold(
+          backgroundColor: AppColors.bgWhite,
+          body: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: Column(
+              children: [
+                const SizedBox(height: 70),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // 1. Header
+                      _buildHeader(),
+                      const SizedBox(height: 20),
 
-                  // 3. Forest Visualization & Tree List
-                  _buildForestSection(),
-                  const SizedBox(height: 32),
+                      // 2. Monthly Calendar Box (Compact)
+                      _buildMonthlyCalendar(),
+                      const SizedBox(height: 24),
 
-                  // 4. Monthly Summary
-                  Text(
-                    "April's Summary",
-                    style: GoogleFonts.poppins(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.colblack,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  _buildSummaryCard(
-                    "April's Expense",
-                    "Rs. 75,000",
-                    isExpense: true,
-                  ),
-                  const SizedBox(height: 12),
-                  _buildSummaryCard(
-                    "Average Daily Expense",
-                    "Rs. 3,500 / 5,000",
-                  ),
+                      // 3. Forest Visualization & Tree List
+                      _buildForestSection(),
+                      const SizedBox(height: 32),
 
-                  const SizedBox(height: 32),
-
-                  // 5. Category Spends
-                  Text(
-                    "Category Spends",
-                    style: GoogleFonts.poppins(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.colblack,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  _buildMultiSegmentProgressBar(),
-                  const SizedBox(height: 24),
-                  _buildCategoryList(),
-
-                  const SizedBox(height: 32),
-
-                  // 6. Top Expenses
-                  Text(
-                    "Top Expenses",
-                    style: GoogleFonts.poppins(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.colblack,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  _buildTopExpensesList(),
-
-                  const SizedBox(height: 48),
-
-                  // 7. Tip & Footer
-                  _buildTipSection(),
-                  const SizedBox(height: 20),
-                  Divider(color: AppColors.divider, thickness: 1),
-                  const SizedBox(height: 20),
-                  Center(
-                    child: Text(
-                      "Planted with love in Mumbai, India",
-                      style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.white500,
+                      // 4. Monthly Summary
+                      Text(
+                        "April's Summary",
+                        style: GoogleFonts.poppins(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.colblack,
+                        ),
                       ),
-                    ),
+                      const SizedBox(height: 12),
+                      _buildSummaryCard(
+                        "April's Expense",
+                        "Rs. 75,000",
+                        isExpense: true,
+                      ),
+                      const SizedBox(height: 12),
+                      _buildSummaryCard(
+                        "Average Daily Expense",
+                        "Rs. 3,500 / 5,000",
+                      ),
+
+                      const SizedBox(height: 32),
+
+                      // 5. Category Spends
+                      Text(
+                        "Category Spends",
+                        style: GoogleFonts.poppins(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.colblack,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      _buildMultiSegmentProgressBar(),
+                      const SizedBox(height: 24),
+                      _buildCategoryList(),
+
+                      const SizedBox(height: 32),
+
+                      // 6. Top Expenses
+                      Text(
+                        "Top Expenses",
+                        style: GoogleFonts.poppins(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.colblack,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      _buildTopExpensesList(),
+
+                      const SizedBox(height: 48),
+
+                      // 7. Tip & Footer
+                      _buildTipSection(),
+                      const SizedBox(height: 20),
+                      Divider(color: AppColors.divider, thickness: 1),
+                      const SizedBox(height: 20),
+                      Center(
+                        child: Text(
+                          "Planted with love in Mumbai, India",
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.white500,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 120),
+                    ],
                   ),
-                  const SizedBox(height: 120),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -274,7 +282,19 @@ class _ForestScreenState extends State<ForestScreen> {
             ),
           ],
         ),
-        Icon(PhosphorIcons.trophy, size: 32, color: AppColors.colblack),
+        GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const SpentWrapScreen()),
+            );
+          },
+          child: Icon(
+            PhosphorIcons.trophy,
+            size: 32,
+            color: AppColors.colblack,
+          ),
+        ),
       ],
     );
   }
@@ -647,11 +667,7 @@ class _ForestScreenState extends State<ForestScreen> {
         "amount": "- Rs. 1500",
         "icon": PhosphorIcons.gasCan,
       },
-      {
-        "name": "D-Mart",
-        "amount": "- Rs. 2000",
-        "icon": PhosphorIcons.tShirt,
-      },
+      {"name": "D-Mart", "amount": "- Rs. 2000", "icon": PhosphorIcons.tShirt},
       {
         "name": "Unknown Source",
         "amount": "+ Rs. 2000",

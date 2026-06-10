@@ -62,7 +62,7 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
                       color: AppColors.destructiveRed, // Design Red
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(icon, color: AppColors.colwhite, size: 32),
+                    child: Icon(icon, color: isDarkMode ? AppColors.colwhite : AppColors.colwhite, size: 32),
                   ),
                   const SizedBox(height: 20),
 
@@ -153,22 +153,29 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
   Future<void> _showSquarePopup({required Widget content}) async {
     return showDialog(
       context: context,
-      builder: (context) => BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Dialog(
-          backgroundColor: Colors.transparent,
-          insetPadding: const EdgeInsets.symmetric(horizontal: 40),
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: AppColors.bgWhite,
-              borderRadius: BorderRadius.circular(28),
-            ),
-            child: content,
-          ),
-        ),
-      ),
+      builder: (context) {
+        return ValueListenableBuilder<ThemeMode>(
+          valueListenable: themeNotifier,
+          builder: (context, mode, child) {
+            return BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: Dialog(
+                backgroundColor: Colors.transparent,
+                insetPadding: const EdgeInsets.symmetric(horizontal: 40),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: AppColors.bgWhite,
+                    borderRadius: BorderRadius.circular(28),
+                  ),
+                  child: content,
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -185,17 +192,14 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _buildIconCircle(
-            PhosphorIcons.calendarBlank,
-            AppColors.primaryGreen,
-          ),
+          _buildIconCircle(PhosphorIcons.calendarBlank, AppColors.primaryGreen),
           const SizedBox(height: 20),
           Text(
             "Select Dates",
             style: GoogleFonts.montserrat(
               fontSize: 20,
               fontWeight: FontWeight.w600,
-              color: AppColors.colblack,
+              color: AppColors.textMain,
             ),
           ),
           const SizedBox(height: 20),
@@ -296,7 +300,7 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
               style: GoogleFonts.montserrat(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: AppColors.white600,
+                color: AppColors.textMain,
               ),
             ),
           ),
@@ -321,106 +325,114 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.bgWhite,
-      body: SafeArea(
-        top: false,
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 70),
-              Text(
-                "Data &",
-                style: GoogleFonts.montserrat(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.colblack,
-                ),
-              ),
-              Text(
-                "Privacy",
-                style: GoogleFonts.montserrat(
-                  fontSize: 36,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.colblack,
-                  height: 1.1,
-                ),
-              ),
-              const SizedBox(height: 32),
-              _buildTile(
-                PhosphorIcons.export,
-                "Export Data",
-                "Export your account data",
-                _handleExportFlow,
-              ),
-              _buildTile(
-                PhosphorIcons.arrowClockwise,
-                "Reset App Data",
-                "Reset your account data",
-                () {
-                  // SHOW CUSTOM LOGOUT DIALOG
-                  _showConfirmationDialog(
-                    title: "Reset App Data",
-                    message: "Are you sure you want to reset your app data?",
-                    confirmText: "Yes, Reset",
-                    icon: Icons.refresh_rounded,
-                    onConfirm: () {},
-                  );
-                },
-              ),
-              _buildTile(
-                PhosphorIcons.trash,
-                "Delete Transactions",
-                "Manage your transactions",
-                () {
-                  // SHOW CUSTOM LOGOUT DIALOG
-                  _showConfirmationDialog(
-                    title: "Delete Transactions",
-                    message:
-                        "Are you sure you want to delete all transactions?",
-                    confirmText: "Yes, Delete",
-                    icon: PhosphorIcons.trash,
-                    onConfirm: () {
+    MediaQuery.platformBrightnessOf(context);
+
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: themeNotifier,
+      builder: (context, currentTheme, child) {
+        return Scaffold(
+          backgroundColor: AppColors.bgWhite,
+          body: SafeArea(
+            top: false,
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 70),
+                  Text(
+                    "Data &",
+                    style: GoogleFonts.montserrat(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.colblack,
+                    ),
+                  ),
+                  Text(
+                    "Privacy",
+                    style: GoogleFonts.montserrat(
+                      fontSize: 36,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.colblack,
+                      height: 1.1,
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  _buildTile(
+                    PhosphorIcons.export,
+                    "Export Data",
+                    "Export your account data",
+                    _handleExportFlow,
+                  ),
+                  _buildTile(
+                    PhosphorIcons.arrowClockwise,
+                    "Reset App Data",
+                    "Reset your account data",
+                    () {
+                      // SHOW CUSTOM LOGOUT DIALOG
+                      _showConfirmationDialog(
+                        title: "Reset App Data",
+                        message:
+                            "Are you sure you want to reset your app data?",
+                        confirmText: "Yes, Reset",
+                        icon: Icons.refresh_rounded,
+                        onConfirm: () {},
+                      );
+                    },
+                  ),
+                  _buildTile(
+                    PhosphorIcons.trash,
+                    "Delete Transactions",
+                    "Manage your transactions",
+                    () {
+                      // SHOW CUSTOM LOGOUT DIALOG
+                      _showConfirmationDialog(
+                        title: "Delete Transactions",
+                        message:
+                            "Are you sure you want to delete all transactions?",
+                        confirmText: "Yes, Delete",
+                        icon: PhosphorIcons.trash,
+                        onConfirm: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  const DeleteTransactionsScreen(),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                  _buildTile(
+                    PhosphorIcons.speedometer,
+                    "Change Limit",
+                    "Manage your transactions",
+                    _handleChangeLimit,
+                  ),
+                  _buildTile(
+                    PhosphorIcons.shieldCheck,
+                    "Privacy Policy",
+                    "Further secure your account for safety",
+                    () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) =>
-                              const DeleteTransactionsScreen(),
+                          builder: (context) => const PrivacyScreen(),
                         ),
                       );
                     },
-                  );
-                },
+                  ),
+                  const SizedBox(height: 16),
+                  _buildFooter(context),
+                  const SizedBox(height: 50),
+                ],
               ),
-              _buildTile(
-                PhosphorIcons.speedometer,
-                "Change Limit",
-                "Manage your transactions",
-                _handleChangeLimit,
-              ),
-              _buildTile(
-                PhosphorIcons.shieldCheck,
-                "Privacy Policy",
-                "Further secure your account for safety",
-                () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const PrivacyScreen(),
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: 16),
-              _buildFooter(context),
-              const SizedBox(height: 50),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -503,7 +515,7 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
   Widget _buildIconCircle(IconData icon, Color bg) => Container(
     padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
-    child: Icon(icon, color: Colors.white, size: 32),
+    child: Icon(icon, color: isDarkMode ? AppColors.colwhite : AppColors.colwhite, size: 32),
   );
 
   Widget _buildActionBtn(String text, Color bg, Color tx, VoidCallback? tap) =>
@@ -601,93 +613,105 @@ class _CustomRangeCalendarState extends State<_CustomRangeCalendar> {
 
   @override
   Widget build(BuildContext context) {
-    final days = DateUtils.getDaysInMonth(_viewDate.year, _viewDate.month);
-    final offset = DateTime(_viewDate.year, _viewDate.month, 1).weekday - 1;
+    MediaQuery.platformBrightnessOf(context);
 
-    return Container(
-      constraints: const BoxConstraints(maxHeight: 460),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.colwhite,
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: themeNotifier,
+      builder: (context, currentTheme, child) {
+        final days = DateUtils.getDaysInMonth(_viewDate.year, _viewDate.month);
+        final offset = DateTime(_viewDate.year, _viewDate.month, 1).weekday - 1;
+
+        return Container(
+          constraints: const BoxConstraints(maxHeight: 460),
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: AppColors.colwhite,
+            borderRadius: BorderRadius.circular(24),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              GestureDetector(
-                onTap: () => setState(() => _showPicker = !_showPicker),
-                child: Text(
-                  DateFormat('MMMM yyyy').format(_viewDate),
-                  style: GoogleFonts.montserrat(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 18,
-                    color: AppColors.colblack,
-                  ),
-                ),
-              ),
-              if (!_showPicker)
-                Row(
-                  children: [
-                    IconButton(
-                      icon: Icon(Icons.chevron_left, color: AppColors.colblack),
-                      onPressed: () => setState(
-                        () => _viewDate = DateTime(
-                          _viewDate.year,
-                          _viewDate.month - 1,
-                        ),
-                      ),
-                    ),
-                    IconButton(
-                      icon: Icon(
-                        Icons.chevron_right,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  GestureDetector(
+                    onTap: () => setState(() => _showPicker = !_showPicker),
+                    child: Text(
+                      DateFormat('MMMM yyyy').format(_viewDate),
+                      style: GoogleFonts.montserrat(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 18,
                         color: AppColors.colblack,
                       ),
-                      onPressed: () => setState(
-                        () => _viewDate = DateTime(
-                          _viewDate.year,
-                          _viewDate.month + 1,
-                        ),
-                      ),
                     ),
-                  ],
-                ),
+                  ),
+                  if (!_showPicker)
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: Icon(
+                            Icons.chevron_left,
+                            color: AppColors.colblack,
+                          ),
+                          onPressed: () => setState(
+                            () => _viewDate = DateTime(
+                              _viewDate.year,
+                              _viewDate.month - 1,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: Icon(
+                            Icons.chevron_right,
+                            color: AppColors.colblack,
+                          ),
+                          onPressed: () => setState(
+                            () => _viewDate = DateTime(
+                              _viewDate.year,
+                              _viewDate.month + 1,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                ],
+              ),
+              const SizedBox(height: 15),
+              Flexible(
+                child: _showPicker
+                    ? _buildSeparatePickers()
+                    : _buildCalendarGrid(days, offset),
+              ),
+              const SizedBox(height: 15),
+              Row(
+                children: [
+                  Expanded(
+                    child: _btn(
+                      "Cancel",
+                      AppColors.inputFill,
+                      AppColors.destructiveRed,
+                      () => Navigator.pop(context),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _btn(
+                      "Confirm",
+                      _start == null
+                          ? const Color(0xFFBABABA)
+                          : AppColors.primaryGreen,
+                      AppColors.colwhite,
+                      _start == null
+                          ? null
+                          : () => widget.onConfirm(_start!, _end),
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
-          const SizedBox(height: 15),
-          Flexible(
-            child: _showPicker
-                ? _buildSeparatePickers()
-                : _buildCalendarGrid(days, offset),
-          ),
-          const SizedBox(height: 15),
-          Row(
-            children: [
-              Expanded(
-                child: _btn(
-                  "Cancel",
-                  AppColors.inputFill,
-                  AppColors.destructiveRed,
-                  () => Navigator.pop(context),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _btn(
-                  "Confirm",
-                  _start == null
-                      ? const Color(0xFFBABABA)
-                      : AppColors.primaryGreen,
-                  AppColors.colwhite,
-                  _start == null ? null : () => widget.onConfirm(_start!, _end),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -915,232 +939,250 @@ class _ChangeLimitPopupState extends State<_ChangeLimitPopup>
 
   @override
   Widget build(BuildContext context) {
-    // Shake Animation Logic
-    final Animation<double> offsetAnimation = TweenSequence<double>([
-      TweenSequenceItem(tween: Tween(begin: 0.0, end: 10.0), weight: 1),
-      TweenSequenceItem(tween: Tween(begin: 10.0, end: -10.0), weight: 2),
-      TweenSequenceItem(tween: Tween(begin: -10.0, end: 10.0), weight: 2),
-      TweenSequenceItem(tween: Tween(begin: 10.0, end: 0.0), weight: 1),
-    ]).animate(CurvedAnimation(parent: _shakeController, curve: Curves.linear));
+    MediaQuery.platformBrightnessOf(context);
 
-    // Wrapped in AnimatedBuilder for shaking, and LayoutBuilder for responsiveness
-    return AnimatedBuilder(
-      animation: offsetAnimation,
-      builder: (context, child) {
-        return Transform.translate(
-          offset: Offset(offsetAnimation.value, 0),
-          child: child,
-        );
-      },
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Dialog(
-          backgroundColor: Colors.transparent,
-          insetPadding: const EdgeInsets.symmetric(
-            horizontal: 24,
-            vertical: 24,
-          ),
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: AppColors.bgWhite,
-              borderRadius: BorderRadius.circular(28),
-            ),
-            // FIX: Using SingleChildScrollView inside constraints prevents pixel errors
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: themeNotifier,
+      builder: (context, currentTheme, child) {
+        // Shake Animation Logic
+        final Animation<double> offsetAnimation =
+            TweenSequence<double>([
+              TweenSequenceItem(tween: Tween(begin: 0.0, end: 10.0), weight: 1),
+              TweenSequenceItem(
+                tween: Tween(begin: 10.0, end: -10.0),
+                weight: 2,
+              ),
+              TweenSequenceItem(
+                tween: Tween(begin: -10.0, end: 10.0),
+                weight: 2,
+              ),
+              TweenSequenceItem(tween: Tween(begin: 10.0, end: 0.0), weight: 1),
+            ]).animate(
+              CurvedAnimation(parent: _shakeController, curve: Curves.linear),
+            );
+
+        // Wrapped in AnimatedBuilder for shaking, and LayoutBuilder for responsiveness
+        return AnimatedBuilder(
+          animation: offsetAnimation,
+          builder: (context, child) {
+            return Transform.translate(
+              offset: Offset(offsetAnimation.value, 0),
+              child: child,
+            );
+          },
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Dialog(
+              backgroundColor: Colors.transparent,
+              insetPadding: const EdgeInsets.symmetric(
+                horizontal: 24,
+                vertical: 24,
+              ),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: AppColors.bgWhite,
+                  borderRadius: BorderRadius.circular(28),
+                ),
+                // FIX: Using SingleChildScrollView inside constraints prevents pixel errors
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "Change limit",
+                            style: GoogleFonts.montserrat(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.colblack,
+                            ),
+                          ),
+                          GestureDetector(
+                            onTap: () => Navigator.pop(context),
+                            child: Icon(
+                              Icons.close,
+                              size: 24,
+                              color: AppColors.colblack,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+
                       Text(
-                        "Change limit",
+                        "Current Limit : Rs. 0,000",
                         style: GoogleFonts.montserrat(
-                          fontSize: 20,
+                          fontSize: 18,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.colblack,
+                          color: AppColors.white600,
                         ),
                       ),
+
+                      const SizedBox(height: 20),
+
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.inputFill,
+                          borderRadius: BorderRadius.circular(12),
+                          border:
+                              _errorMsg != null &&
+                                      _errorMsg!.contains("valid") ||
+                                  _errorMsg != null &&
+                                      _errorMsg!.contains("exceed")
+                              ? Border.all(
+                                  color: AppColors.destructiveRed,
+                                  width: 1.5,
+                                )
+                              : null,
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: _limitCtrl,
+                                keyboardType: TextInputType.number,
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly,
+                                ],
+                                style: GoogleFonts.montserrat(
+                                  fontSize: 16,
+                                  color: AppColors.colblack,
+                                ),
+                                decoration: InputDecoration(
+                                  hintText: "Enter new limit",
+                                  hintStyle: GoogleFonts.montserrat(
+                                    color: AppColors.grey600,
+                                  ),
+                                  border: InputBorder.none,
+                                ),
+                                onChanged: (v) {
+                                  if (_errorMsg != null)
+                                    setState(() => _errorMsg = null);
+                                },
+                              ),
+                            ),
+                            Text(
+                              "INR",
+                              style: GoogleFonts.montserrat(
+                                color: AppColors.grey600,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 16),
+
                       GestureDetector(
-                        onTap: () => Navigator.pop(context),
-                        child: Icon(
-                          Icons.close,
-                          size: 24,
-                          color: AppColors.colblack,
+                        onTap: () {
+                          setState(() {
+                            _isChecked = !_isChecked;
+                            if (_isChecked) _errorMsg = null;
+                          });
+                        },
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Custom Checkbox mapping to your design
+                            AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              width: 20,
+                              height: 20,
+                              margin: const EdgeInsets.only(top: 2),
+                              decoration: BoxDecoration(
+                                color: _isChecked
+                                    ? AppColors.primaryGreen
+                                    : AppColors.inputFill,
+                                borderRadius: BorderRadius.circular(4),
+                                border:
+                                    _errorMsg != null &&
+                                        _errorMsg!.contains("agree") &&
+                                        !_isChecked
+                                    ? Border.all(
+                                        color: AppColors.destructiveRed,
+                                        width: 1.5,
+                                      )
+                                    : null,
+                              ),
+                              child: _isChecked
+                                  ? const Icon(
+                                      Icons.check,
+                                      size: 14,
+                                      color: Colors.white,
+                                    )
+                                  : null,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                "Limit can be changed only once a week",
+                                style: GoogleFonts.montserrat(
+                                  fontSize: 12,
+                                  color: AppColors.white500,
+                                  height: 1.4,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // Error Text Display
+                      if (_errorMsg != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 12.0),
+                          child: Text(
+                            _errorMsg!,
+                            style: GoogleFonts.poppins(
+                              color: AppColors.destructiveRed,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+
+                      const SizedBox(height: 24),
+
+                      SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: ElevatedButton(
+                          onPressed: _validateAndSubmit,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primaryGreen,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: Text(
+                            "Change",
+                            style: GoogleFonts.montserrat(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.colwhite,
+                            ),
+                          ),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
-
-                  Text(
-                    "Current Limit : Rs. 0,000",
-                    style: GoogleFonts.montserrat(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.white600,
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.inputFill,
-                      borderRadius: BorderRadius.circular(12),
-                      border:
-                          _errorMsg != null && _errorMsg!.contains("valid") ||
-                              _errorMsg != null && _errorMsg!.contains("exceed")
-                          ? Border.all(
-                              color: AppColors.destructiveRed,
-                              width: 1.5,
-                            )
-                          : null,
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _limitCtrl,
-                            keyboardType: TextInputType.number,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly,
-                            ],
-                            style: GoogleFonts.montserrat(
-                              fontSize: 16,
-                              color: AppColors.colblack,
-                            ),
-                            decoration: InputDecoration(
-                              hintText: "Enter new limit",
-                              hintStyle: GoogleFonts.montserrat(
-                                color: AppColors.grey600,
-                              ),
-                              border: InputBorder.none,
-                            ),
-                            onChanged: (v) {
-                              if (_errorMsg != null)
-                                setState(() => _errorMsg = null);
-                            },
-                          ),
-                        ),
-                        Text(
-                          "INR",
-                          style: GoogleFonts.montserrat(
-                            color: AppColors.grey600,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _isChecked = !_isChecked;
-                        if (_isChecked) _errorMsg = null;
-                      });
-                    },
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Custom Checkbox mapping to your design
-                        AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          width: 20,
-                          height: 20,
-                          margin: const EdgeInsets.only(top: 2),
-                          decoration: BoxDecoration(
-                            color: _isChecked
-                                ? AppColors.primaryGreen
-                                : AppColors.inputFill,
-                            borderRadius: BorderRadius.circular(4),
-                            border:
-                                _errorMsg != null &&
-                                    _errorMsg!.contains("agree") &&
-                                    !_isChecked
-                                ? Border.all(
-                                    color: AppColors.destructiveRed,
-                                    width: 1.5,
-                                  )
-                                : null,
-                          ),
-                          child: _isChecked
-                              ? const Icon(
-                                  Icons.check,
-                                  size: 14,
-                                  color: Colors.white,
-                                )
-                              : null,
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            "Limit can be changed only once a week",
-                            style: GoogleFonts.montserrat(
-                              fontSize: 12,
-                              color: AppColors.white500,
-                              height: 1.4,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // Error Text Display
-                  if (_errorMsg != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 12.0),
-                      child: Text(
-                        _errorMsg!,
-                        style: GoogleFonts.poppins(
-                          color: AppColors.destructiveRed,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-
-                  const SizedBox(height: 24),
-
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: _validateAndSubmit,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryGreen,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: Text(
-                        "Change",
-                        style: GoogleFonts.montserrat(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.colwhite,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

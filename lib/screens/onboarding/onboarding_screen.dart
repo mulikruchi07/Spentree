@@ -89,116 +89,134 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 
   @override
   Widget build(BuildContext context) {
-    // 1. DYNAMIC CALCULATIONS
-    final size = MediaQuery.of(context).size;
-    final double width = size.width;
-    final double height = size.height;
+    MediaQuery.platformBrightnessOf(context);
 
-    // --- NEW LOGIC: DYNAMIC MARGINS ---
-    // If screen is TALL (>800px), use 7% margin.
-    // If screen is SMALL/STANDARD, use 3% margin (Original).
-    final double marginPercentage = height > 800 ? 0.09 : 0.03;
-    final double symmetricMargin = height * marginPercentage;
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: themeNotifier,
+      builder: (context, currentTheme, child) {
+        // 1. DYNAMIC CALCULATIONS
+        final size = MediaQuery.of(context).size;
+        final double width = size.width;
+        final double height = size.height;
 
-    // Gaps (Kept exactly as you liked them)
-    final double gapImageToTitle = 20.0;
-    final double gapDescToProgress = 20.0;
-    final double gapProgressToButton = 38.0;
-    final double gapLogoToImage = height * 0.01;
+        // --- NEW LOGIC: DYNAMIC MARGINS ---
+        // If screen is TALL (>800px), use 7% margin.
+        // If screen is SMALL/STANDARD, use 3% margin (Original).
+        final double marginPercentage = height > 800 ? 0.09 : 0.03;
+        final double symmetricMargin = height * marginPercentage;
 
-    return Scaffold(
-      backgroundColor: AppColors.bgWhite,
-      body: SafeArea(
-        child: SizedBox(
-          width: double.infinity,
-          child: Column(
-            children: [
-              // -----------------------------------------------------------
-              // 1. TOP MARGIN (Dynamic)
-              // -----------------------------------------------------------
-              SizedBox(height: symmetricMargin),
+        // Gaps (Kept exactly as you liked them)
+        final double gapImageToTitle = 20.0;
+        final double gapDescToProgress = 20.0;
+        final double gapProgressToButton = 38.0;
+        final double gapLogoToImage = height * 0.01;
 
-              // LOGO (Static & Scaled)
-              ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxHeight: height * 0.06,
-                  maxWidth: 220,
-                ),
-                child: Hero(
-                  tag: 'logo-image',
-                  child: Image.asset(
-                    AppImages.logoName,
-                    fit: BoxFit.contain,
+        return Scaffold(
+          backgroundColor: AppColors.bgWhite,
+          body: SafeArea(
+            child: SizedBox(
+              width: double.infinity,
+              child: Column(
+                children: [
+                  // -----------------------------------------------------------
+                  // 1. TOP MARGIN (Dynamic)
+                  // -----------------------------------------------------------
+                  SizedBox(height: symmetricMargin),
+
+                  // LOGO (Static & Scaled)
+                  ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxHeight: height * 0.06,
+                      maxWidth: 220,
+                    ),
+                    child: Hero(
+                      tag: 'logo-image',
+                      child: Image.asset(
+                        AppImages.logoName,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
                   ),
-                ),
-              ),
 
-              // -----------------------------------------------------------
-              // 2. SCROLLABLE MIDDLE SECTION (Room + Tree + Text)
-              // -----------------------------------------------------------
-              Expanded(
-                child: PageView.builder(
-                  controller: _pageController,
-                  onPageChanged: (index) =>
-                      setState(() => _currentIndex = index),
-                  itemCount: _content.length,
-                  itemBuilder: (context, index) {
-                    return Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        SizedBox(height: gapLogoToImage),
+                  // -----------------------------------------------------------
+                  // 2. SCROLLABLE MIDDLE SECTION (Room + Tree + Text)
+                  // -----------------------------------------------------------
+                  Expanded(
+                    child: PageView.builder(
+                      controller: _pageController,
+                      onPageChanged: (index) =>
+                          setState(() => _currentIndex = index),
+                      itemCount: _content.length,
+                      itemBuilder: (context, index) {
+                        return Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            SizedBox(height: gapLogoToImage),
 
-                        // A. IMAGE STACK (Original Proportions)
-                        SizedBox(
-                          height: width * 0.8,
-                          width: width * 0.8,
-                          child: Stack(
-                            alignment: Alignment.bottomCenter,
-                            clipBehavior: Clip.none,
-                            children: [
-                              // Room (Slides Up)
-                              Positioned(
-                                bottom: 30,
-                                child: SlideTransition(
-                                  position: _slideUpRoomAnim,
-                                  child: Image.asset(
-                                    "assets/images/bg_room.png",
-                                    width: width * 0.75,
-                                    fit: BoxFit.contain,
+                            // A. IMAGE STACK (Original Proportions)
+                            SizedBox(
+                              height: width * 0.8,
+                              width: width * 0.8,
+                              child: Stack(
+                                alignment: Alignment.bottomCenter,
+                                clipBehavior: Clip.none,
+                                children: [
+                                  // Room (Slides Up)
+                                  Positioned(
+                                    bottom: 30,
+                                    child: SlideTransition(
+                                      position: _slideUpRoomAnim,
+                                      child: Image.asset(
+                                        "assets/images/bg_room.png",
+                                        width: width * 0.75,
+                                        fit: BoxFit.contain,
+                                      ),
+                                    ),
                                   ),
-                                ),
-                              ),
 
-                              // Tree (Fades In)
-                              Positioned(
-                                bottom: 25,
-                                child: FadeTransition(
-                                  opacity: _fadeTreeAnim,
-                                  child: Image.asset(
-                                    _content[index]["tree"]!,
-                                    width: width * 0.55,
-                                    fit: BoxFit.contain,
+                                  // Tree (Fades In)
+                                  Positioned(
+                                    bottom: 25,
+                                    child: FadeTransition(
+                                      opacity: _fadeTreeAnim,
+                                      child: Image.asset(
+                                        _content[index]["tree"]!,
+                                        width: width * 0.55,
+                                        fit: BoxFit.contain,
+                                      ),
+                                    ),
                                   ),
-                                ),
+                                ],
                               ),
-                            ],
-                          ),
-                        ),
+                            ),
 
-                        SizedBox(height: gapImageToTitle),
+                            SizedBox(height: gapImageToTitle),
 
-                        // B. TEXT SECTION
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 40),
-                          child: Column(
-                            children: [
-                              // Title
-                              index == 0
-                                  ? Hero(
-                                      tag: 'welcome-text',
-                                      child: Material(
-                                        type: MaterialType.transparency,
-                                        child: Text(
+                            // B. TEXT SECTION
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 40,
+                              ),
+                              child: Column(
+                                children: [
+                                  // Title
+                                  index == 0
+                                      ? Hero(
+                                          tag: 'welcome-text',
+                                          child: Material(
+                                            type: MaterialType.transparency,
+                                            child: Text(
+                                              _content[index]["title"]!,
+                                              textAlign: TextAlign.center,
+                                              style: GoogleFonts.montserrat(
+                                                fontSize: 24,
+                                                fontWeight: FontWeight.w600,
+                                                color: AppColors.colblack,
+                                              ),
+                                            ),
+                                          ),
+                                        )
+                                      : Text(
                                           _content[index]["title"]!,
                                           textAlign: TextAlign.center,
                                           style: GoogleFonts.montserrat(
@@ -207,122 +225,113 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                                             color: AppColors.colblack,
                                           ),
                                         ),
-                                      ),
-                                    )
-                                  : Text(
-                                      _content[index]["title"]!,
+
+                                  const SizedBox(height: 16),
+
+                                  // Description
+                                  SlideTransition(
+                                    position: _slideDownDescAnim,
+                                    child: Text(
+                                      _content[index]["desc"]!,
                                       textAlign: TextAlign.center,
                                       style: GoogleFonts.montserrat(
-                                        fontSize: 24,
-                                        fontWeight: FontWeight.w600,
-                                        color: AppColors.colblack,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w400,
+                                        color: OnboardingColors.textDesc,
+                                        height: 1.5,
                                       ),
                                     ),
-
-                              const SizedBox(height: 16),
-
-                              // Description
-                              SlideTransition(
-                                position: _slideDownDescAnim,
-                                child: Text(
-                                  _content[index]["desc"]!,
-                                  textAlign: TextAlign.center,
-                                  style: GoogleFonts.montserrat(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w400,
-                                    color: OnboardingColors.textDesc,
-                                    height: 1.5,
                                   ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  ),
+
+                  // -----------------------------------------------------------
+                  // 3. BOTTOM CONTROLS
+                  // -----------------------------------------------------------
+                  FadeTransition(
+                    opacity: _fadeControlsAnim,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SizedBox(height: gapDescToProgress),
+
+                        // Dots
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: List.generate(
+                            _content.length,
+                            (index) => buildDot(index),
+                          ),
+                        ),
+
+                        SizedBox(height: gapProgressToButton),
+
+                        // Button
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                          child: SizedBox(
+                            width: double.infinity,
+                            height: 64, // Original Height
+                            child: ElevatedButton(
+                              onPressed: () {
+                                if (_currentIndex == _content.length - 1) {
+                                  // 1. User is on the last slide ("Done") -> Navigate away
+                                  Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(
+                                      // Replace 'QuestionnaireScreen' with your actual next screen widget
+                                      builder: (context) =>
+                                          const QuestionnaireScreen(),
+                                    ),
+                                  );
+                                } else {
+                                  // 2. User is on earlier slides ("Next") -> Slide to next page
+                                  _pageController.nextPage(
+                                    duration: const Duration(milliseconds: 300),
+                                    curve: Curves.easeIn,
+                                  );
+                                }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primaryGreen,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
                                 ),
                               ),
-                            ],
+                              child: Text(
+                                _currentIndex == _content.length - 1
+                                    ? "Done"
+                                    : "Next",
+                                style: GoogleFonts.montserrat(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w500,
+                                  color: AppColors.colwhite,
+                                ),
+                              ),
+                            ),
                           ),
                         ),
                       ],
-                    );
-                  },
-                ),
-              ),
-
-              // -----------------------------------------------------------
-              // 3. BOTTOM CONTROLS
-              // -----------------------------------------------------------
-              FadeTransition(
-                opacity: _fadeControlsAnim,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SizedBox(height: gapDescToProgress),
-
-                    // Dots
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(
-                        _content.length,
-                        (index) => buildDot(index),
-                      ),
                     ),
+                  ),
 
-                    SizedBox(height: gapProgressToButton),
-
-                    // Button
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                      child: SizedBox(
-                        width: double.infinity,
-                        height: 64, // Original Height
-                        child: ElevatedButton(
-                          onPressed: () {
-                            if (_currentIndex == _content.length - 1) {
-                              // 1. User is on the last slide ("Done") -> Navigate away
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                  // Replace 'QuestionnaireScreen' with your actual next screen widget
-                                  builder: (context) =>
-                                      const QuestionnaireScreen(),
-                                ),
-                              );
-                            } else {
-                              // 2. User is on earlier slides ("Next") -> Slide to next page
-                              _pageController.nextPage(
-                                duration: const Duration(milliseconds: 300),
-                                curve: Curves.easeIn,
-                              );
-                            }
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primaryGreen,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                          ),
-                          child: Text(
-                            _currentIndex == _content.length - 1
-                                ? "Done"
-                                : "Next",
-                            style: GoogleFonts.montserrat(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.colwhite,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                  // -----------------------------------------------------------
+                  // 4. BOTTOM MARGIN (Dynamic - Matches Top)
+                  // -----------------------------------------------------------
+                  SizedBox(height: symmetricMargin),
+                ],
               ),
-
-              // -----------------------------------------------------------
-              // 4. BOTTOM MARGIN (Dynamic - Matches Top)
-              // -----------------------------------------------------------
-              SizedBox(height: symmetricMargin),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 

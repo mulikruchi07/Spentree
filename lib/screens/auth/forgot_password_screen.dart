@@ -50,126 +50,138 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.bgWhite,
-      resizeToAvoidBottomInset: true,
-      body: SafeArea(
-        child: CustomScrollView(
-          slivers: [
-            SliverFillRemaining(
-              hasScrollBody: false,
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-                child: Column(
-                  children: [
-                    const SizedBox(height: 110),
+    MediaQuery.platformBrightnessOf(context);
 
-                    Text(
-                      "Forgot Password",
-                      style: GoogleFonts.poppins(
-                        fontSize: 34,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.primaryGreen,
-                      ),
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: themeNotifier,
+      builder: (context, currentTheme, child) {
+        return Scaffold(
+          backgroundColor: AppColors.bgWhite,
+          resizeToAvoidBottomInset: true,
+          body: SafeArea(
+            child: CustomScrollView(
+              slivers: [
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: horizontalPadding,
                     ),
-                    const SizedBox(height: 16),
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 110),
 
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                      child: Text(
-                        "It happens! Reset your password to safely return to your forest.",
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w400,
-                          color: AppColors.grey700,
-                          height: 1.5,
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 32),
-
-                    _buildTextField(
-                      _newPasswordController,
-                      "New Password",
-                      isPassword: true,
-                      isVisible: _isNewPasswordVisible,
-                      onVisibilityChanged: () => setState(
-                        () => _isNewPasswordVisible = !_isNewPasswordVisible,
-                      ),
-                      errorText: _newPasswordError,
-                    ),
-
-                    SizedBox(height: inputGap),
-
-                    _buildTextField(
-                      _confirmPasswordController,
-                      "Confirm Password",
-                      isPassword: true,
-                      isVisible: _isConfirmPasswordVisible,
-                      onVisibilityChanged: () => setState(
-                        () => _isConfirmPasswordVisible =
-                            !_isConfirmPasswordVisible,
-                      ),
-                      errorText: _confirmPasswordError,
-                    ),
-
-                    // Left Aligned Text
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Padding(
-                        padding: const EdgeInsets.only(
-                          top: 16.0,
-                          left: 4,
-                          right: 4,
-                        ),
-                        child: Text(
-                          "Min. 8 Characters, 1 lowercase, 1 uppercase, 1 number and at least 1 special character.",
-                          textAlign: TextAlign.left,
+                        Text(
+                          "Forgot Password",
                           style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w400,
-                            color: AppColors.divider,
+                            fontSize: 34,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.primaryGreen,
                           ),
                         ),
-                      ),
+                        const SizedBox(height: 16),
+
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                          child: Text(
+                            "It happens! Reset your password to safely return to your forest.",
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.poppins(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w400,
+                              color: AppColors.grey700,
+                              height: 1.5,
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 32),
+
+                        _buildTextField(
+                          _newPasswordController,
+                          "New Password",
+                          isPassword: true,
+                          isVisible: _isNewPasswordVisible,
+                          onVisibilityChanged: () => setState(
+                            () =>
+                                _isNewPasswordVisible = !_isNewPasswordVisible,
+                          ),
+                          errorText: _newPasswordError,
+                        ),
+
+                        SizedBox(height: inputGap),
+
+                        _buildTextField(
+                          _confirmPasswordController,
+                          "Confirm Password",
+                          isPassword: true,
+                          isVisible: _isConfirmPasswordVisible,
+                          onVisibilityChanged: () => setState(
+                            () => _isConfirmPasswordVisible =
+                                !_isConfirmPasswordVisible,
+                          ),
+                          errorText: _confirmPasswordError,
+                        ),
+
+                        // Left Aligned Text
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Padding(
+                            padding: const EdgeInsets.only(
+                              top: 16.0,
+                              left: 4,
+                              right: 4,
+                            ),
+                            child: Text(
+                              "Min. 8 Characters, 1 lowercase, 1 uppercase, 1 number and at least 1 special character.",
+                              textAlign: TextAlign.left,
+                              style: GoogleFonts.poppins(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w400,
+                                color: AppColors.divider,
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 32),
+
+                        SizedBox(
+                          width: double.infinity,
+                          height: componentHeight,
+                          child: ElevatedButton(
+                            onPressed: _validateAndSubmit,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primaryGreen,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
+                                  cornerRadius,
+                                ),
+                              ),
+                              elevation: 0,
+                            ),
+                            child: Text(
+                              "Submit",
+                              style: GoogleFonts.poppins(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                                color: AppColors.colwhite,
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        const Spacer(flex: 3),
+                        const SizedBox(height: 20),
+                      ],
                     ),
-
-                    const SizedBox(height: 32),
-
-                    SizedBox(
-                      width: double.infinity,
-                      height: componentHeight,
-                      child: ElevatedButton(
-                        onPressed: _validateAndSubmit,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primaryGreen,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(cornerRadius),
-                          ),
-                          elevation: 0,
-                        ),
-                        child: Text(
-                          "Submit",
-                          style: GoogleFonts.poppins(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                            color: AppColors.colwhite,
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    const Spacer(flex: 3),
-                    const SizedBox(height: 20),
-                  ],
+                  ),
                 ),
-              ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 

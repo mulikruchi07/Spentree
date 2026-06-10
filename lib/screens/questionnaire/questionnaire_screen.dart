@@ -82,81 +82,92 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // DYNAMIC SCALING
-    final size = MediaQuery.of(context).size;
-    final double height = size.height;
-    final double scale = (height / 820.0).clamp(0.85, 1.0);
+    MediaQuery.platformBrightnessOf(context);
 
-    // --- PRECISE FIXED GAPS ---
-    final double topMargin = 90.0 * scale;
-    final double stepToBarGap = 20.0 * scale;
-    final double barToQuestionGap = 24.0 * scale; // Fixed Gap
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: themeNotifier,
+      builder: (context, currentTheme, child) {
+        // DYNAMIC SCALING
+        final size = MediaQuery.of(context).size;
+        final double height = size.height;
+        final double scale = (height / 820.0).clamp(0.85, 1.0);
 
-    return Scaffold(
-      backgroundColor: AppColors.bgWhite,
-      resizeToAvoidBottomInset: true,
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            // Calculate header height to determine remaining space for PageView
-            double headerHeight =
-                topMargin + (30 * scale) + stepToBarGap + 6 + barToQuestionGap;
-            double availableContentHeight =
-                constraints.maxHeight - headerHeight - topMargin;
+        // --- PRECISE FIXED GAPS ---
+        final double topMargin = 90.0 * scale;
+        final double stepToBarGap = 20.0 * scale;
+        final double barToQuestionGap = 24.0 * scale; // Fixed Gap
 
-            // Ensure a minimum height for PageView to prevent layout collapse
-            double finalPageViewHeight = max(300.0, availableContentHeight);
+        return Scaffold(
+          backgroundColor: AppColors.bgWhite,
+          resizeToAvoidBottomInset: true,
+          body: SafeArea(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                // Calculate header height to determine remaining space for PageView
+                double headerHeight =
+                    topMargin +
+                    (30 * scale) +
+                    stepToBarGap +
+                    6 +
+                    barToQuestionGap;
+                double availableContentHeight =
+                    constraints.maxHeight - headerHeight - topMargin;
 
-            return SingleChildScrollView(
-              // Main scroll handles keyboard events for the whole screen
-              child: Column(
-                children: [
-                  // 1. STATIC HEADER
-                  SizedBox(height: topMargin),
+                // Ensure a minimum height for PageView to prevent layout collapse
+                double finalPageViewHeight = max(300.0, availableContentHeight);
 
-                  Text(
-                    _currentIndex == 0
-                        ? "Step 1"
-                        : _currentIndex == 1
-                        ? "Step 2"
-                        : "We’re almost ready!",
-                    style: GoogleFonts.montserrat(
-                      fontSize: 20 * scale,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.primaryGreen,
-                    ),
+                return SingleChildScrollView(
+                  // Main scroll handles keyboard events for the whole screen
+                  child: Column(
+                    children: [
+                      // 1. STATIC HEADER
+                      SizedBox(height: topMargin),
+
+                      Text(
+                        _currentIndex == 0
+                            ? "Step 1"
+                            : _currentIndex == 1
+                            ? "Step 2"
+                            : "We’re almost ready!",
+                        style: GoogleFonts.montserrat(
+                          fontSize: 20 * scale,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primaryGreen,
+                        ),
+                      ),
+
+                      SizedBox(height: stepToBarGap),
+
+                      _buildProgressBar(),
+
+                      SizedBox(height: barToQuestionGap),
+
+                      // 2. CONTENT AREA (PageView)
+                      SizedBox(
+                        height: finalPageViewHeight,
+                        child: PageView(
+                          controller: _controller,
+                          physics: const NeverScrollableScrollPhysics(),
+                          onPageChanged: (index) =>
+                              setState(() => _currentIndex = index),
+                          children: [
+                            _buildSafePage(_buildQuestionOne(scale)),
+                            _buildSafePage(_buildQuestionTwo(scale)),
+                            _buildSafePage(_buildQuestionThree(scale)),
+                          ],
+                        ),
+                      ),
+
+                      // Bottom spacing
+                      SizedBox(height: topMargin),
+                    ],
                   ),
-
-                  SizedBox(height: stepToBarGap),
-
-                  _buildProgressBar(),
-
-                  SizedBox(height: barToQuestionGap),
-
-                  // 2. CONTENT AREA (PageView)
-                  SizedBox(
-                    height: finalPageViewHeight,
-                    child: PageView(
-                      controller: _controller,
-                      physics: const NeverScrollableScrollPhysics(),
-                      onPageChanged: (index) =>
-                          setState(() => _currentIndex = index),
-                      children: [
-                        _buildSafePage(_buildQuestionOne(scale)),
-                        _buildSafePage(_buildQuestionTwo(scale)),
-                        _buildSafePage(_buildQuestionThree(scale)),
-                      ],
-                    ),
-                  ),
-
-                  // Bottom spacing
-                  SizedBox(height: topMargin),
-                ],
-              ),
-            );
-          },
-        ),
-      ),
+                );
+              },
+            ),
+          ),
+        );
+      },
     );
   }
 

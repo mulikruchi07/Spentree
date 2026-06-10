@@ -87,319 +87,331 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.bgWhite,
-      resizeToAvoidBottomInset: true,
-      body: SafeArea(
-        child: CustomScrollView(
-          slivers: [
-            SliverFillRemaining(
-              hasScrollBody: false,
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
-                child: Column(
-                  children: [
-                    // --- TOP MARGIN ---
-                    const Spacer(flex: 1),
-                    const SizedBox(height: 20),
+    MediaQuery.platformBrightnessOf(context);
 
-                    Text(
-                      "Sign Up",
-                      style: GoogleFonts.poppins(
-                        fontSize: 34,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.primaryGreen,
-                      ),
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: themeNotifier,
+      builder: (context, currentTheme, child) {
+        return Scaffold(
+          backgroundColor: AppColors.bgWhite,
+          resizeToAvoidBottomInset: true,
+          body: SafeArea(
+            child: CustomScrollView(
+              slivers: [
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: horizontalPadding,
                     ),
-
-                    const SizedBox(height: 12),
-
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                      child: Text(
-                        "Create a new account and start growing today.",
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w400,
-                          color: AppColors.grey700,
-                          height: 1.5,
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    // --- INPUTS ---
-                    _buildTextField(
-                      _nameController,
-                      "Name",
-                      errorText: _nameError,
-                    ),
-                    SizedBox(height: inputGap),
-
-                    _buildTextField(
-                      _phoneController,
-                      "Phone Number",
-                      isPhone: true,
-                      errorText: _phoneError,
-                    ),
-                    SizedBox(height: inputGap),
-
-                    _buildTextField(
-                      _passwordController,
-                      "New Password",
-                      isPassword: true,
-                      isVisible: _isPasswordVisible,
-                      onVisibilityChanged: () => setState(
-                        () => _isPasswordVisible = !_isPasswordVisible,
-                      ),
-                      errorText: _passwordError,
-                    ),
-                    SizedBox(height: inputGap),
-
-                    _buildTextField(
-                      _confirmPasswordController,
-                      "Confirm Password",
-                      isPassword: true,
-                      isVisible: _isConfirmPasswordVisible,
-                      onVisibilityChanged: () => setState(
-                        () => _isConfirmPasswordVisible =
-                            !_isConfirmPasswordVisible,
-                      ),
-                      errorText: _confirmPasswordError,
-                    ),
-
-                    SizedBox(height: inputTermsGap),
-
-                    // --- COMBINED STACK FOR TERMS AND BUTTON ---
-                    // This Stack ensures the Tooltip (defined last) paints ON TOP of the button.
-                    Stack(
-                      clipBehavior: Clip.none,
+                    child: Column(
                       children: [
-                        // LAYER 1: Content (Terms -> Gap -> Button)
-                        Column(
+                        // --- TOP MARGIN ---
+                        const Spacer(flex: 1),
+                        const SizedBox(height: 20),
+
+                        Text(
+                          "Sign Up",
+                          style: GoogleFonts.poppins(
+                            fontSize: 34,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.primaryGreen,
+                          ),
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                          child: Text(
+                            "Create a new account and start growing today.",
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.poppins(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w400,
+                              color: AppColors.grey700,
+                              height: 1.5,
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 24),
+
+                        // --- INPUTS ---
+                        _buildTextField(
+                          _nameController,
+                          "Name",
+                          errorText: _nameError,
+                        ),
+                        SizedBox(height: inputGap),
+
+                        _buildTextField(
+                          _phoneController,
+                          "Phone Number",
+                          isPhone: true,
+                          errorText: _phoneError,
+                        ),
+                        SizedBox(height: inputGap),
+
+                        _buildTextField(
+                          _passwordController,
+                          "New Password",
+                          isPassword: true,
+                          isVisible: _isPasswordVisible,
+                          onVisibilityChanged: () => setState(
+                            () => _isPasswordVisible = !_isPasswordVisible,
+                          ),
+                          errorText: _passwordError,
+                        ),
+                        SizedBox(height: inputGap),
+
+                        _buildTextField(
+                          _confirmPasswordController,
+                          "Confirm Password",
+                          isPassword: true,
+                          isVisible: _isConfirmPasswordVisible,
+                          onVisibilityChanged: () => setState(
+                            () => _isConfirmPasswordVisible =
+                                !_isConfirmPasswordVisible,
+                          ),
+                          errorText: _confirmPasswordError,
+                        ),
+
+                        SizedBox(height: inputTermsGap),
+
+                        // --- COMBINED STACK FOR TERMS AND BUTTON ---
+                        // This Stack ensures the Tooltip (defined last) paints ON TOP of the button.
+                        Stack(
+                          clipBehavior: Clip.none,
                           children: [
-                            // Terms Row
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                            // LAYER 1: Content (Terms -> Gap -> Button)
+                            Column(
                               children: [
-                                GestureDetector(
-                                  onTap: () {
-                                    setState(() {
-                                      _isChecked = !_isChecked;
-                                      if (_isChecked) _showTermsError = false;
-                                    });
-                                  },
-                                  child: AnimatedContainer(
-                                    duration: const Duration(milliseconds: 200),
-                                    width: 22,
-                                    height: 22,
-                                    margin: const EdgeInsets.only(top: 2),
-                                    decoration: BoxDecoration(
-                                      color: _isChecked
-                                          ? AppColors.primaryGreen
-                                          : AppColors.inputFill,
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: _isChecked
-                                        ? Icon(
-                                            Icons.check,
-                                            size: 16,
-                                            color: AppColors.colwhite,
-                                          )
-                                        : null,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: RichText(
-                                    text: TextSpan(
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w400,
-                                        color: AppColors.grey800,
+                                // Terms Row
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    GestureDetector(
+                                      onTap: () {
+                                        setState(() {
+                                          _isChecked = !_isChecked;
+                                          if (_isChecked)
+                                            _showTermsError = false;
+                                        });
+                                      },
+                                      child: AnimatedContainer(
+                                        duration: const Duration(
+                                          milliseconds: 200,
+                                        ),
+                                        width: 22,
+                                        height: 22,
+                                        margin: const EdgeInsets.only(top: 2),
+                                        decoration: BoxDecoration(
+                                          color: _isChecked
+                                              ? AppColors.primaryGreen
+                                              : AppColors.inputFill,
+                                          borderRadius: BorderRadius.circular(
+                                            6,
+                                          ),
+                                        ),
+                                        child: _isChecked
+                                            ? Icon(
+                                                Icons.check,
+                                                size: 16,
+                                                color: AppColors.colwhite,
+                                              )
+                                            : null,
                                       ),
-                                      children: [
-                                        TextSpan(text: "I agree to the "),
-                                        TextSpan(
-                                          text: "terms and conditions",
-                                          style: const TextStyle(
-                                            color: AppColors.primaryGreen,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: RichText(
+                                        text: TextSpan(
+                                          style: GoogleFonts.poppins(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w400,
+                                            color: AppColors.grey800,
                                           ),
-                                          recognizer: TapGestureRecognizer()
-                                            ..onTap = () {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (context) =>
-                                                      const TermsScreen(),
-                                                ),
-                                              );
-                                            },
+                                          children: [
+                                            TextSpan(text: "I agree to the "),
+                                            TextSpan(
+                                              text: "terms and conditions",
+                                              style: const TextStyle(
+                                                color: AppColors.primaryGreen,
+                                              ),
+                                              recognizer: TapGestureRecognizer()
+                                                ..onTap = () {
+                                                  Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          const TermsScreen(),
+                                                    ),
+                                                  );
+                                                },
+                                            ),
+                                            TextSpan(text: " and "),
+                                            TextSpan(
+                                              text: "Privacy Policy",
+                                              style: const TextStyle(
+                                                color: AppColors.primaryGreen,
+                                              ),
+                                              recognizer: TapGestureRecognizer()
+                                                ..onTap = () {
+                                                  Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          const PrivacyScreen(),
+                                                    ),
+                                                  );
+                                                },
+                                            ),
+                                          ],
                                         ),
-                                        TextSpan(text: " and "),
-                                        TextSpan(
-                                          text: "Privacy Policy",
-                                          style: const TextStyle(
-                                            color: AppColors.primaryGreen,
-                                          ),
-                                          recognizer: TapGestureRecognizer()
-                                            ..onTap = () {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (context) =>
-                                                      const PrivacyScreen(),
-                                                ),
-                                              );
-                                            },
+                                      ),
+                                    ),
+                                  ],
+                                ),
+
+                                SizedBox(height: termsButtonGap),
+
+                                // Create Account Button
+                                SizedBox(
+                                  width: double.infinity,
+                                  height: componentHeight,
+                                  child: ElevatedButton(
+                                    onPressed: _validateAndSubmit,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppColors.primaryGreen,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(
+                                          cornerRadius,
                                         ),
-                                      ],
+                                      ),
+                                      elevation: 0,
+                                    ),
+                                    child: Text(
+                                      "Create Account",
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w500,
+                                        color: AppColors.colwhite,
+                                      ),
                                     ),
                                   ),
                                 ),
                               ],
                             ),
 
-                            SizedBox(height: termsButtonGap),
-
-                            // Create Account Button
-                            SizedBox(
-                              width: double.infinity,
-                              height: componentHeight,
-                              child: ElevatedButton(
-                                onPressed: _validateAndSubmit,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.primaryGreen,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(
-                                      cornerRadius,
+                            // LAYER 2: Tooltip (Floating on top)
+                            if (_showTermsError)
+                              Positioned(
+                                left: -5,
+                                top: 35, // Pushes it down over the button
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Padding(
+                                      padding: const EdgeInsets.only(left: 12),
+                                      child: CustomPaint(
+                                        size: const Size(12, 8),
+                                        painter: _ArrowPainter(),
+                                      ),
                                     ),
-                                  ),
-                                  elevation: 0,
-                                ),
-                                child: Text(
-                                  "Create Account",
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500,
-                                    color: AppColors.colwhite,
-                                  ),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 8,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: AppColors.colwhite,
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(
+                                          color: Colors.orangeAccent
+                                              .withOpacity(0.5),
+                                        ),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: AppColors.colblack
+                                                .withOpacity(0.1),
+                                            blurRadius: 10,
+                                            offset: const Offset(0, 4),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          const Icon(
+                                            Icons.info_outline,
+                                            size: 16,
+                                            color: Colors.orange,
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            "Please check this box to proceed.",
+                                            style: GoogleFonts.poppins(
+                                              fontSize: 12,
+                                              color: AppColors.colblack,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                            ),
                           ],
                         ),
 
-                        // LAYER 2: Tooltip (Floating on top)
-                        if (_showTermsError)
-                          Positioned(
-                            left: -5,
-                            top: 35, // Pushes it down over the button
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                        const SizedBox(height: 20),
+
+                        // --- SIGN IN LINK ---
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: RichText(
+                            text: TextSpan(
+                              style: GoogleFonts.poppins(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w400,
+                                color: AppColors.grey800,
+                              ),
                               children: [
-                                Padding(
-                                  padding: const EdgeInsets.only(left: 12),
-                                  child: CustomPaint(
-                                    size: const Size(12, 8),
-                                    painter: _ArrowPainter(),
+                                TextSpan(text: "Do you have account? "),
+                                TextSpan(
+                                  text: "Sign In",
+                                  style: const TextStyle(
+                                    color: AppColors.primaryGreen,
+                                    fontWeight: FontWeight.w400,
                                   ),
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 8,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.colwhite,
-                                    borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(
-                                      color: Colors.orangeAccent.withOpacity(
-                                        0.5,
-                                      ),
-                                    ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: AppColors.colblack.withOpacity(
-                                          0.1,
+                                  recognizer: TapGestureRecognizer()
+                                    ..onTap = () {
+                                      Navigator.pushReplacement(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              const SignInScreen(),
                                         ),
-                                        blurRadius: 10,
-                                        offset: const Offset(0, 4),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      const Icon(
-                                        Icons.info_outline,
-                                        size: 16,
-                                        color: Colors.orange,
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        "Please check this box to proceed.",
-                                        style: GoogleFonts.poppins(
-                                          fontSize: 12,
-                                          color: AppColors.colblack,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
+                                      );
+                                    },
                                 ),
                               ],
                             ),
                           ),
+                        ),
+
+                        const Spacer(flex: 3),
+                        const SizedBox(height: 20),
                       ],
                     ),
-
-                    const SizedBox(height: 20),
-
-                    // --- SIGN IN LINK ---
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: RichText(
-                        text: TextSpan(
-                          style: GoogleFonts.poppins(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w400,
-                            color: AppColors.grey800,
-                          ),
-                          children: [
-                            TextSpan(text: "Do you have account? "),
-                            TextSpan(
-                              text: "Sign In",
-                              style: const TextStyle(
-                                color: AppColors.primaryGreen,
-                                fontWeight: FontWeight.w400,
-                              ),
-                              recognizer: TapGestureRecognizer()
-                                ..onTap = () {
-                                  Navigator.pushReplacement(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          const SignInScreen(),
-                                    ),
-                                  );
-                                },
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                    const Spacer(flex: 3),
-                    const SizedBox(height: 20),
-                  ],
+                  ),
                 ),
-              ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 

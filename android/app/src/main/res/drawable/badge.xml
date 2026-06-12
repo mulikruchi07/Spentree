@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<level-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:minLevel="1" android:maxLevel="1">
+        <shape android:shape="rectangle">
+            <solid android:color="#34C759" />
+            <corners android:radius="20dp" />
+        </shape>
+    </item>
+    <item android:minLevel="2" android:maxLevel="2">
+        <shape android:shape="rectangle">
+            <solid android:color="#FFCC00" />
+            <corners android:radius="20dp" />
+        </shape>
+    </item>
+    <item android:minLevel="3" android:maxLevel="3">
+        <shape android:shape="rectangle">
+            <solid android:color="#FF383C" />
+            <corners android:radius="20dp" />
+        </shape>
+    </item>
+</level-list>

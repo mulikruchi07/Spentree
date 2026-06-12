@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    widget_card_bg.xml
+    Place in: res/drawable/widget_card_bg.xml
+
+    White rounded card that matches the Flutter Container with
+    borderRadius: 40.31 and a soft drop shadow.
+    (Android drawables can't replicate box-shadow exactly,
+     so we approximate with a layer-list + offset solid.)
+-->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Subtle shadow layer (offset solid, clipped by card) -->
+    <item
+        android:top="4dp"
+        android:left="2dp">
+        <shape android:shape="rectangle">
+            <solid android:color="#08000000" />
+            <corners android:radius="40dp" />
+        </shape>
+    </item>
+
+    <!-- Main white card surface -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/bgWhite" />
+            <corners android:radius="40dp" />
+        </shape>
+    </item>
+
+</layer-list>

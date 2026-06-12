@@ -2,9 +2,8 @@
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:minWidth="110dp"
     android:minHeight="110dp"
-    android:targetCellWidth="2"
-    android:targetCellHeight="2"
     android:updatePeriodMillis="0"
     android:initialLayout="@layout/widget_mini_tree" 
-    android:previewImage="@drawable/mini_tree" android:resizeMode="horizontal|vertical"
+    android:resizeMode="none"
+    android:previewImage="@drawable/mini_tree"
     android:widgetCategory="home_screen" />

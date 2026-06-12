@@ -1247,6 +1247,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:home_widget/home_widget.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -1585,6 +1586,7 @@ class _AccountScreenState extends State<AccountScreen> {
         final String base64Image = base64Encode(bytes);
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('profile_image', base64Image);
+        await HomeWidget.updateWidget(name: 'GreetingWidgetProvider', iOSName: 'GreetingWidgetProvider');
 
         setState(() {
           _profileBytes = bytes;

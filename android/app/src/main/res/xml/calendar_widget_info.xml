@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    calendar_widget_info.xml
+    Place in: res/xml/calendar_widget_info.xml
+
+    - minWidth / minHeight  →  sized for a roughly 4×3 widget cell
+    - updatePeriodMillis    →  OS minimum is 1 800 000 ms (30 min).
+                               Real-time updates come from explicit
+                               AppWidgetManager.updateAppWidget() calls
+                               triggered by data changes, NOT this timer.
+    - initialLayout         →  points to widget_calendar.xml
+-->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="250dp"
+    android:minHeight="300dp"
+    android:minResizeWidth="180dp"
+    android:minResizeHeight="240dp"
+    android:targetCellWidth="4"
+    android:targetCellHeight="4"
+    android:updatePeriodMillis="1800000"
+    android:initialLayout="@layout/widget_calendar"
+    android:resizeMode="horizontal|vertical"
+    android:widgetCategory="home_screen"
+    android:previewImage="@drawable/widget_card_bg" />

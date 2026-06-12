@@ -13,7 +13,6 @@ class AddExpenseWidgetProvider : HomeWidgetProvider() {
         for (appWidgetId in appWidgetIds) {
             val views = RemoteViews(context.packageName, R.layout.widget_add_expense)
             
-            // This is the bridge that tells main.dart to open the form!
             val intent = Intent(context, MainActivity::class.java).apply {
                 action = "OPEN_ADD_EXPENSE"
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP

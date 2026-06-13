@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Shadow layer: slightly offset down, very low opacity -->
+    <item android:top="2dp">
+        <shape android:shape="oval">
+            <solid android:color="#14000000" />
+        </shape>
+    </item>
+    <!-- White circle on top -->
+    <item android:bottom="2dp">
+        <shape android:shape="oval">
+            <solid android:color="@color/bgWhite" />
+        </shape>
+    </item>
+</layer-list>

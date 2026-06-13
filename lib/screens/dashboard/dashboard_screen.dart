@@ -777,10 +777,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     super.initState();
     _today = DateTime.now();
     _focusedDate = _today;
-
-    // Attempt to load saved limit, fallback to UserData, then 5000
     _loadLimit();
-
+    TransactionService().syncWidget(); // NEW
     TransactionService().addListener(_onDataChanged);
   }
 

@@ -3,22 +3,39 @@
     android:id="@+id/widget_background"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/bgWhite"
+    android:background="@drawable/bg_widget_card"
     android:orientation="vertical"
     android:padding="16dp">
 
-    <RelativeLayout android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:layout_marginBottom="12dp" android:paddingLeft="6dp">
-        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
-            android:text="Today's Tree" android:textColor="@color/colblack" android:textSize="20sp"
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="8dp"
+        android:paddingLeft="12dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Today's Tree"
+            android:textColor="@color/colblack"
+            android:textSize="20sp"
             android:fontFamily="sans-serif-medium" />
-        <FrameLayout android:layout_width="40dp" android:layout_height="40dp"
-            android:layout_alignParentEnd="true" android:background="@drawable/bg_profile_circle">
-            <ImageView android:layout_width="20dp" android:layout_height="20dp"
-                android:layout_gravity="center" android:tint="@color/colblack"
+
+        <FrameLayout
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@drawable/bg_profile_circle">
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_gravity="center"
+                android:tint="@color/colblack"
                 android:src="@drawable/ic_chevron_right" />
         </FrameLayout>
-    </RelativeLayout>
+    </LinearLayout>
 
     <RelativeLayout
         android:id="@+id/tree_container"
@@ -64,7 +81,8 @@
                 android:background="@drawable/bg_green_rect" android:gravity="center"
                 android:paddingHorizontal="12dp">
                 <ImageView android:id="@+id/badge_icon" android:layout_width="14dp"
-                    android:layout_height="15dp" android:tint="@color/colwhite" android:layout_marginEnd="4dp" />
+                    android:layout_height="15dp" android:tint="@color/colwhite"
+                    android:layout_marginEnd="4dp" />
                 <TextView android:id="@+id/badge_text" android:layout_width="wrap_content"
                     android:layout_height="wrap_content" android:textColor="@color/colwhite"
                     android:textSize="14sp" />

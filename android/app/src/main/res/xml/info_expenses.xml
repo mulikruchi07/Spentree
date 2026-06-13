@@ -5,6 +5,7 @@
     android:targetCellWidth="4"
     android:targetCellHeight="4"
     android:updatePeriodMillis="0"
-    android:initialLayout="@layout/widget_expenses" 
-    android:previewImage="@drawable/expenses" android:resizeMode="horizontal|vertical"
+    android:initialLayout="@layout/widget_expenses"
+    android:previewImage="@drawable/expenses"
+    android:resizeMode="horizontal|vertical"
     android:widgetCategory="home_screen" />

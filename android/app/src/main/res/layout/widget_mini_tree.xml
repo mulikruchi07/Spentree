@@ -3,6 +3,7 @@
     android:id="@+id/widget_background"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:radius="25dp"
     android:background="#34C759">
 
     <ImageView
@@ -13,22 +14,29 @@
         android:scaleType="fitEnd" />
 
     <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:layout_height="30dp"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="16dp"
-        android:background="@drawable/badge_bg"
+        android:background="@drawable/badge_bg_white"
         android:paddingHorizontal="10dp"
         android:paddingVertical="4dp"
-        android:orientation="horizontal">
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <ImageView
+            android:id="@+id/badge_icon"
+            android:layout_width="14dp"
+            android:layout_height="14dp"
+            android:layout_marginEnd="4dp"
+            android:src="@drawable/ic_trending_up" />
 
         <TextView
             android:id="@+id/badge_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Great"
-            android:textSize="12sp"
-            android:textStyle="bold"
+            android:textSize="13sp"
             android:textColor="#34C759" />
     </LinearLayout>
 </RelativeLayout>

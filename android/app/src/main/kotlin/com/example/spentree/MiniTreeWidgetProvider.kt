@@ -7,7 +7,7 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.graphics.Color
 import android.widget.RemoteViews
-import es.antonborri.home_widget.HomeWidgetProvider 
+import es.antonborri.home_widget.HomeWidgetProvider
 
 class MiniTreeWidgetProvider : HomeWidgetProvider() {
 
@@ -34,15 +34,13 @@ class MiniTreeWidgetProvider : HomeWidgetProvider() {
 
             // Background Color Update
             views.setInt(R.id.widget_background, "setBackgroundColor", Color.parseColor(statusColor))
-            
-            // Text & Icon
+
+            // Badge text & icon — tinted to status color, sit on white badge box
             views.setTextViewText(R.id.badge_text, badgeText)
             views.setTextColor(R.id.badge_text, Color.parseColor(statusColor))
             views.setImageViewResource(R.id.badge_icon, iconRes)
-            
-            // Applying tint to the icon to match status color
             views.setInt(R.id.badge_icon, "setColorFilter", Color.parseColor(statusColor))
-            
+
             // Tree Image
             views.setImageViewResource(R.id.tree_image, treeImageRes)
 

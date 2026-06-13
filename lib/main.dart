@@ -470,10 +470,19 @@ import 'package:spentree/screens/dashboard/dashboard_screen.dart';
 import 'package:spentree/screens/main_wrapper.dart';
 import 'core/app_style.dart';
 import 'core/transaction_service.dart';
-import 'core/widget_updater.dart';
 import 'package:flutter/services.dart';
+import 'package:home_widget/home_widget.dart';
+
+@pragma('vm:entry-point')
+Future<void> backgroundCallback(Uri? uri) async {
+  if (uri?.host == 'sms_received') {
+    await TransactionService().initService(); // re-parses SMS + calls syncWidget()
+  }
+}
+
 
 void main() async {
+  HomeWidget.registerInteractivityCallback(backgroundCallback);
   WidgetsFlutterBinding.ensureInitialized();
 
   await TransactionService().initService();
@@ -481,20 +490,7 @@ void main() async {
   const platform = MethodChannel('spentree_widget_channel');
   platform.setMethodCallHandler((call) async {
     if (call.method == "themeChanged") {
-      // Re-run the syncAllWidgets function here!
-      final today = DateTime.now();
-      final dailyTx = TransactionService().getTransactionsForDay(today);
-      double todayTotal = dailyTx.fold(0, (sum, item) => sum + item.amount);
-      final prefs = await SharedPreferences.getInstance();
-      int limit = prefs.getInt('daily_expense_limit') ?? 5000;
-      String? profileImage = prefs.getString('profile_image');
-
-      await WidgetUpdater.syncAllWidgets(
-        todayExpense: todayTotal,
-        dailyLimit: limit,
-        todayTransactions: dailyTx,
-        profileImagePath: profileImage,
-      );
+      await TransactionService().syncWidget();
     }
   });
   String? action;

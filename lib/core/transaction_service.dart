@@ -1,9 +1,14 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:home_widget/home_widget.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // ADDED for fetching limit
 import 'dart:math' as math;
+import 'dart:convert'; // Required for jsonEncode
+import 'package:flutter/material.dart'; // Required for DateUtils
+import 'package:spentree/core/user_data.dart';
 
 class Transaction {
   String id;
@@ -114,6 +119,11 @@ class TransactionService extends ChangeNotifier {
       _sortTransactions();
       isLoading = false;
       notifyListeners();
+
+      // ==========================================
+      // NEW: Sync the Android Widget after parsing SMS
+      // ==========================================
+      syncWidget();
     } catch (e) {
       isLoading = false;
       notifyListeners();
@@ -122,7 +132,6 @@ class TransactionService extends ChangeNotifier {
   }
 
   void _sortTransactions() {
-    // Sorts by exact Date and Time descending (Recent on top)
     _allTransactions.sort((a, b) => b.date.compareTo(a.date));
   }
 
@@ -197,6 +206,11 @@ class TransactionService extends ChangeNotifier {
     );
     _sortTransactions();
     notifyListeners();
+
+    // ==========================================
+    // NEW: Sync the Android Widget after adding an expense
+    // ==========================================
+    syncWidget();
   }
 
   void updateExpense(
@@ -210,7 +224,6 @@ class TransactionService extends ChangeNotifier {
     if (index != -1) {
       _allTransactions[index].title = title;
 
-      // If it's a bank SMS, we ONLY update the title. The rest stays locked.
       if (_allTransactions[index].isManual) {
         _allTransactions[index].amount = amount;
         _allTransactions[index].category = category;
@@ -229,6 +242,8 @@ class TransactionService extends ChangeNotifier {
 
       _sortTransactions();
       notifyListeners();
+
+      syncWidget();
     }
   }
 
@@ -241,5 +256,93 @@ class TransactionService extends ChangeNotifier {
               tx.date.day == date.day,
         )
         .toList();
+  }
+
+  Future<void> syncWidget() async {
+    if (kIsWeb) return;
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+
+      int limit = prefs.getInt('daily_expense_limit') ?? 5000;
+      await HomeWidget.saveWidgetData<int>('daily_expense_limit', limit);
+
+      final now = DateTime.now();
+
+      // --- NEW: today's total expense + limit as strings for Tree/MiniTree/Greeting widgets ---
+      final todaysTx = getTransactionsForDay(now);
+      double todayTotal = todaysTx.fold(0, (sum, item) => sum + item.amount);
+
+      await HomeWidget.saveWidgetData<String>(
+        'widget_expense_str',
+        todayTotal.toString(),
+      );
+      await HomeWidget.saveWidgetData<String>(
+        'widget_limit_str',
+        limit.toString(),
+      );
+
+      // --- NEW: recent 4 transactions for the Expenses widget ---
+      final recentList = todaysTx.take(4).map((tx) {
+        final hour = tx.time.hourOfPeriod == 0 ? 12 : tx.time.hourOfPeriod;
+        final minute = tx.time.minute.toString().padLeft(2, '0');
+        final period = tx.time.period == DayPeriod.am ? "AM" : "PM";
+        return {
+          "title": tx.title,
+          "category": tx.category,
+          "amount": tx.amount,
+          "time": "$hour:$minute $period",
+          "isManual": tx.isManual,
+        };
+      }).toList();
+
+      await HomeWidget.saveWidgetData<String>(
+        'today_transactions_json',
+        jsonEncode(recentList),
+      );
+
+      // --- Month map for calendar widget ---
+      final daysInMonth = DateUtils.getDaysInMonth(now.year, now.month);
+      Map<String, Map<String, dynamic>> monthMap = {};
+
+      for (int i = 1; i <= daysInMonth; i++) {
+        final date = DateTime(now.year, now.month, i);
+        if (date.isBefore(now) ||
+            (date.year == now.year &&
+                date.month == now.month &&
+                date.day == now.day)) {
+          final dailyTx = getTransactionsForDay(date);
+          double total = dailyTx.fold(0, (sum, item) => sum + item.amount);
+          monthMap[i.toString()] = {"amount": total};
+        }
+      }
+
+      String jsonString = jsonEncode(monthMap);
+      await HomeWidget.saveWidgetData<String>('transactions_json', jsonString);
+
+      // --- Trigger updates for ALL widgets ---
+      await HomeWidget.updateWidget(
+        name: 'CalendarWidgetProvider',
+        androidName: 'CalendarWidgetProvider',
+      );
+      await HomeWidget.updateWidget(
+        name: 'MiniTreeWidgetProvider',
+        androidName: 'MiniTreeWidgetProvider',
+      );
+      await HomeWidget.updateWidget(
+        name: 'GreetingWidgetProvider',
+        androidName: 'GreetingWidgetProvider',
+      );
+      await HomeWidget.updateWidget(
+        name: 'TreeWidgetProvider',
+        androidName: 'TreeWidgetProvider',
+      );
+      await HomeWidget.updateWidget(
+        name: 'ExpensesWidgetProvider',
+        androidName: 'ExpensesWidgetProvider',
+      );
+    } catch (e) {
+      debugPrint("Failed to sync widget: $e");
+    }
   }
 }

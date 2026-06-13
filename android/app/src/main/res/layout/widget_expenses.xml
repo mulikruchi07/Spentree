@@ -37,14 +37,15 @@
                 android:src="@drawable/ic_chevron_right" />
         </FrameLayout>
     </LinearLayout>
+
     <!-- ===================== SLOT 0 ===================== -->
     <FrameLayout
+        android:id="@+id/slot_0"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
         android:layout_marginBottom="8dp">
 
-        <!-- Transaction row -->
         <LinearLayout
             android:id="@+id/row_0"
             android:layout_width="match_parent"
@@ -125,37 +126,11 @@
                     android:textColor="@color/white600" />
             </LinearLayout>
         </LinearLayout>
-
-        <!-- Empty placeholder -->
-        <LinearLayout
-            android:id="@+id/empty_0"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="horizontal"
-            android:gravity="center"
-            android:background="@drawable/bg_pill"
-            android:visibility="gone">
-
-            <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_leaf"
-                android:tint="@color/white500" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:text="No expenses"
-                android:textSize="16sp"
-                android:textStyle="normal"
-                android:fontFamily="sans-serif-medium"
-                android:textColor="@color/white600" />
-        </LinearLayout>
     </FrameLayout>
 
     <!-- ===================== SLOT 1 ===================== -->
     <FrameLayout
+        android:id="@+id/slot_1"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
@@ -180,7 +155,8 @@
 
                 <ImageView
                     android:id="@+id/icon_1"
-                    android:layout_width="40dp" android:layout_height="40dp"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
                     android:layout_gravity="center"
                     android:scaleType="fitCenter"
                     android:tint="@color/colblack" />
@@ -240,36 +216,11 @@
                     android:textColor="@color/white600" />
             </LinearLayout>
         </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/empty_1"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="horizontal"
-            android:gravity="center"
-            android:background="@drawable/bg_pill"
-            android:visibility="gone">
-
-            <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_leaf"
-                android:tint="@color/white500" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:text="No more expenses"
-                android:textSize="13sp"
-                android:textStyle="bold"
-                android:fontFamily="sans-serif-medium"
-                android:textColor="@color/white600" />
-        </LinearLayout>
     </FrameLayout>
 
     <!-- ===================== SLOT 2 ===================== -->
     <FrameLayout
+        android:id="@+id/slot_2"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
@@ -294,7 +245,8 @@
 
                 <ImageView
                     android:id="@+id/icon_2"
-                    android:layout_width="40dp" android:layout_height="40dp"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
                     android:layout_gravity="center"
                     android:scaleType="fitCenter"
                     android:tint="@color/colblack" />
@@ -354,36 +306,11 @@
                     android:textColor="@color/white600" />
             </LinearLayout>
         </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/empty_2"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="horizontal"
-            android:gravity="center"
-            android:background="@drawable/bg_pill"
-            android:visibility="gone">
-
-            <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_leaf"
-                android:tint="@color/white500" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:text="No more expenses"
-                android:textSize="13sp"
-                android:textStyle="bold"
-                android:fontFamily="sans-serif"
-                android:textColor="@color/white600" />
-        </LinearLayout>
     </FrameLayout>
 
     <!-- ===================== SLOT 3 (last, no bottom margin) ===================== -->
     <FrameLayout
+        android:id="@+id/slot_3"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1">
@@ -407,7 +334,8 @@
 
                 <ImageView
                     android:id="@+id/icon_3"
-                    android:layout_width="40dp" android:layout_height="40dp"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
                     android:layout_gravity="center"
                     android:scaleType="fitCenter"
                     android:tint="@color/colblack" />
@@ -467,32 +395,119 @@
                     android:textColor="@color/white600" />
             </LinearLayout>
         </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/empty_3"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="horizontal"
-            android:gravity="center"
-            android:background="@drawable/bg_pill"
-            android:visibility="gone">
-
-            <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/ic_leaf"
-                android:tint="@color/white500" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:text="No more expenses"
-                android:textSize="15sp"
-                android:textStyle="bold"
-                android:fontFamily="sans-serif"
-                android:textColor="@color/white600" />
-        </LinearLayout>
     </FrameLayout>
+
+    <!-- ===================== COMBINED EMPTY BLOCKS (only one of these 4 shown) ===================== -->
+
+    <!-- All 4 slots empty -->
+    <LinearLayout
+        android:id="@+id/empty_all4"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="4"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:background="@drawable/bg_pill"
+        android:visibility="gone">
+
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_leaf"
+            android:tint="@color/white500" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="No expenses found."
+            android:textSize="16sp"
+            android:fontFamily="sans-serif-medium"
+            android:textColor="@color/white600" />
+    </LinearLayout>
+
+    <!-- 3 of 4 slots empty (1 transaction shown) -->
+    <LinearLayout
+        android:id="@+id/empty_3of4"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="3"
+        android:layout_marginTop="8dp"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:background="@drawable/bg_pill"
+        android:visibility="gone">
+
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_leaf"
+            android:tint="@color/white500" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="No more expenses."
+            android:textSize="15sp"
+            android:fontFamily="sans-serif-medium"
+            android:textColor="@color/white600" />
+    </LinearLayout>
+
+    <!-- 2 of 4 slots empty (2 transactions shown) -->
+    <LinearLayout
+        android:id="@+id/empty_2of4"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="2"
+        android:layout_marginTop="8dp"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:background="@drawable/bg_pill"
+        android:visibility="gone">
+
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_leaf"
+            android:tint="@color/white500" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="No more expenses."
+            android:textSize="15sp"
+            android:fontFamily="sans-serif-medium"
+            android:textColor="@color/white600" />
+    </LinearLayout>
+
+    <!-- 1 of 4 slots empty (3 transactions shown) -->
+    <LinearLayout
+        android:id="@+id/empty_1of4"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginTop="8dp"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:background="@drawable/bg_pill"
+        android:visibility="gone">
+
+        <ImageView
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_leaf"
+            android:tint="@color/white500" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:text="No more expenses"
+            android:textSize="15sp"
+            android:fontFamily="sans-serif-medium"
+            android:textColor="@color/white600" />
+    </LinearLayout>
 
 </LinearLayout>

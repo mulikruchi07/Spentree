@@ -44,8 +44,8 @@ class ExpensesWidgetProvider : HomeWidgetProvider() {
 
         val jsonString = widgetData.getString("today_transactions_json", "[]") ?: "[]"
 
+        val slotIds = intArrayOf(R.id.slot_0, R.id.slot_1, R.id.slot_2, R.id.slot_3)
         val rowIds = intArrayOf(R.id.row_0, R.id.row_1, R.id.row_2, R.id.row_3)
-        val emptyIds = intArrayOf(R.id.empty_0, R.id.empty_1, R.id.empty_2, R.id.empty_3)
         val iconIds = intArrayOf(R.id.icon_0, R.id.icon_1, R.id.icon_2, R.id.icon_3)
         val titleIds = intArrayOf(R.id.title_0, R.id.title_1, R.id.title_2, R.id.title_3)
         val subtitleIds = intArrayOf(R.id.subtitle_0, R.id.subtitle_1, R.id.subtitle_2, R.id.subtitle_3)
@@ -60,6 +60,7 @@ class ExpensesWidgetProvider : HomeWidgetProvider() {
 
         val count = txArray.length().coerceAtMost(4)
 
+        // Fill visible slots with transaction data, hide unused slots entirely
         for (i in 0 until 4) {
             if (i < count) {
                 val tx = txArray.getJSONObject(i)
@@ -69,8 +70,8 @@ class ExpensesWidgetProvider : HomeWidgetProvider() {
                 val time = tx.optString("time", "")
                 val isManual = tx.optBoolean("isManual", false)
 
+                views.setViewVisibility(slotIds[i], View.VISIBLE)
                 views.setViewVisibility(rowIds[i], View.VISIBLE)
-                views.setViewVisibility(emptyIds[i], View.GONE)
 
                 views.setImageViewResource(iconIds[i], iconFor(category))
                 views.setTextViewText(titleIds[i], title)
@@ -78,10 +79,17 @@ class ExpensesWidgetProvider : HomeWidgetProvider() {
                 views.setTextViewText(amountIds[i], "- Rs. ${formatAmount(amount)}")
                 views.setTextViewText(timeIds[i], time)
             } else {
-                views.setViewVisibility(rowIds[i], View.GONE)
-                views.setViewVisibility(emptyIds[i], View.VISIBLE)
+                // Hide the whole slot (removes it from weight distribution)
+                views.setViewVisibility(slotIds[i], View.GONE)
             }
         }
+
+        // Show exactly one combined empty block based on how many slots are empty
+        val emptySlots = 4 - count
+        views.setViewVisibility(R.id.empty_all4, if (emptySlots == 4) View.VISIBLE else View.GONE)
+        views.setViewVisibility(R.id.empty_3of4, if (emptySlots == 3) View.VISIBLE else View.GONE)
+        views.setViewVisibility(R.id.empty_2of4, if (emptySlots == 2) View.VISIBLE else View.GONE)
+        views.setViewVisibility(R.id.empty_1of4, if (emptySlots == 1) View.VISIBLE else View.GONE)
 
         val intent = Intent(context, MainActivity::class.java).apply {
             action = "OPEN_DASHBOARD"

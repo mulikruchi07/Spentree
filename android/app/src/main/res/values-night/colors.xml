@@ -17,6 +17,7 @@
     <color name="colwhite">#000000</color>
     <color name="colblack">#FFFFFF</color>
     <color name="navbar">#343434</color>
+    <color name="renavbar">#252525</color>
     <color name="bgWhite">#161616</color>
     <color name="grey800">#D0D1D0</color>
     <color name="white500">#999999</color>

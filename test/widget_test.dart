@@ -6,7 +6,6 @@
 // tree, read text, and verify that the values of widget properties are correct.
 
 import 'package:flutter/material.dart';
-import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:spentree/main.dart';
@@ -14,7 +13,8 @@ import 'package:spentree/main.dart';
 void main() {
   testWidgets('Counter increments smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp(startScreen: SizedBox()));
+    // Use initialTab instead of startScreen
+await tester.pumpWidget(const MyApp(initialTab: 0));
     // Verify that our counter starts at 0.
     expect(find.text('0'), findsOneWidget);
     expect(find.text('1'), findsNothing);

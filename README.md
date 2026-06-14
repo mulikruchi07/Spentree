@@ -1,4 +1,4 @@
-# spentree
+# Spentree
 
 A new Flutter project.
 

@@ -463,59 +463,147 @@
 // }
 
 // android home screen widgets rendering test
+// import 'package:flutter/material.dart';
+// import 'package:shared_preferences/shared_preferences.dart';
+// import 'package:spentree/screens/analytics/analytics_screen.dart';
+// import 'package:spentree/screens/dashboard/dashboard_screen.dart';
+// import 'package:spentree/screens/main_wrapper.dart';
+// import 'core/app_style.dart';
+// import 'core/transaction_service.dart';
+// import 'package:flutter/services.dart';
+// import 'package:home_widget/home_widget.dart';
+
+// @pragma('vm:entry-point')
+// Future<void> backgroundCallback(Uri? uri) async {
+//   if (uri?.host == 'sms_received') {
+//     await TransactionService().initService(); // re-parses SMS + calls syncWidget()
+//   }
+// }
+
+
+// void main() async {
+//   HomeWidget.registerInteractivityCallback(backgroundCallback);
+//   WidgetsFlutterBinding.ensureInitialized();
+
+//   await TransactionService().initService();
+
+//   const platform = MethodChannel('spentree_widget_channel');
+//   platform.setMethodCallHandler((call) async {
+//     if (call.method == "themeChanged") {
+//       await TransactionService().syncWidget();
+//     }
+//   });
+//   String? action;
+//   try {
+//     action = await platform.invokeMethod('getWidgetAction');
+//   } catch (e) {
+//     debugPrint("Failed to get widget action: $e");
+//   }
+
+//   // If action is OPEN_ADD_EXPENSE, jump to Tab 1 (Analytics). Otherwise, Tab 0 (Dashboard)
+//   int startTab = 0;
+//   if (action == "OPEN_ADD_EXPENSE") {
+//     startTab = 1; // Tab 1
+//     AnalyticsScreen.triggerOpenForm.value = true; // Tell form to open!
+//   } else if (action == "OPEN_DASHBOARD") {
+//     startTab = 0; // Tab 0
+//   }
+
+//   // Pass the startTab to MainWrapper
+//   runApp(MyApp(startScreen: MainWrapper(initialIndex: startTab)));
+// }
+
+// class MyApp extends StatelessWidget {
+//   final Widget startScreen; // Updated to accept the dynamic start screen
+//   const MyApp({super.key, required this.startScreen});
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return ValueListenableBuilder<ThemeMode>(
+//       valueListenable: themeNotifier,
+//       builder: (context, currentMode, child) {
+//         return MaterialApp(
+//           debugShowCheckedModeBanner: false,
+//           title: 'SpenTree',
+//           themeMode: currentMode,
+//           theme: ThemeData(
+//             colorScheme: ColorScheme.fromSeed(
+//               seedColor: AppColors.primaryGreen,
+//               brightness: Brightness.light,
+//             ),
+//             useMaterial3: true,
+//             scaffoldBackgroundColor: AppColors.bgWhite,
+//           ),
+//           darkTheme: ThemeData(
+//             colorScheme: ColorScheme.fromSeed(
+//               seedColor: AppColors.primaryGreen,
+//               brightness: Brightness.dark,
+//             ),
+//             useMaterial3: true,
+//             scaffoldBackgroundColor: AppColors.bgWhite,
+//           ),
+//           home: startScreen, // Uses the dynamic start screen!
+//         );
+//       },
+//     );
+//   }
+// }
+
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/services.dart';
+import 'package:home_widget/home_widget.dart';
 import 'package:spentree/screens/analytics/analytics_screen.dart';
-import 'package:spentree/screens/dashboard/dashboard_screen.dart';
 import 'package:spentree/screens/main_wrapper.dart';
 import 'core/app_style.dart';
 import 'core/transaction_service.dart';
-import 'package:flutter/services.dart';
-import 'package:home_widget/home_widget.dart';
+import 'dart:io' show Platform; 
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 @pragma('vm:entry-point')
 Future<void> backgroundCallback(Uri? uri) async {
   if (uri?.host == 'sms_received') {
-    await TransactionService().initService(); // re-parses SMS + calls syncWidget()
+    await TransactionService().initService();
   }
 }
 
-
 void main() async {
-  HomeWidget.registerInteractivityCallback(backgroundCallback);
   WidgetsFlutterBinding.ensureInitialized();
 
-  await TransactionService().initService();
+  // ONLY register widget code if we are NOT on the web
+  if (!kIsWeb) {
+    HomeWidget.registerInteractivityCallback(backgroundCallback);
+    await TransactionService().initService();
 
-  const platform = MethodChannel('spentree_widget_channel');
-  platform.setMethodCallHandler((call) async {
-    if (call.method == "themeChanged") {
-      await TransactionService().syncWidget();
-    }
-  });
-  String? action;
-  try {
-    action = await platform.invokeMethod('getWidgetAction');
-  } catch (e) {
-    debugPrint("Failed to get widget action: $e");
+    // Method Channel setup is also platform-specific
+    const platform = MethodChannel('spentree_widget_channel');
+    platform.setMethodCallHandler((call) async {
+      if (call.method == "themeChanged") {
+        await TransactionService().syncWidget();
+      }
+    });
   }
 
-  // If action is OPEN_ADD_EXPENSE, jump to Tab 1 (Analytics). Otherwise, Tab 0 (Dashboard)
+  // Handle widget actions only if not on Web
   int startTab = 0;
-  if (action == "OPEN_ADD_EXPENSE") {
-    startTab = 1; // Tab 1
-    AnalyticsScreen.triggerOpenForm.value = true; // Tell form to open!
-  } else if (action == "OPEN_DASHBOARD") {
-    startTab = 0; // Tab 0
+  if (!kIsWeb) {
+    try {
+      const platform = MethodChannel('spentree_widget_channel');
+      final action = await platform.invokeMethod('getWidgetAction');
+      if (action == "OPEN_ADD_EXPENSE") {
+        startTab = 1;
+        AnalyticsScreen.triggerOpenForm.value = true;
+      }
+    } catch (e) {
+      debugPrint("Failed to get widget action: $e");
+    }
   }
 
-  // Pass the startTab to MainWrapper
-  runApp(MyApp(startScreen: MainWrapper(initialIndex: startTab)));
+  runApp(MyApp(initialTab: startTab));
 }
 
 class MyApp extends StatelessWidget {
-  final Widget startScreen; // Updated to accept the dynamic start screen
-  const MyApp({super.key, required this.startScreen});
+  final int initialTab;
+  const MyApp({super.key, required this.initialTab});
 
   @override
   Widget build(BuildContext context) {
@@ -527,22 +615,16 @@ class MyApp extends StatelessWidget {
           title: 'SpenTree',
           themeMode: currentMode,
           theme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: AppColors.primaryGreen,
-              brightness: Brightness.light,
-            ),
+            colorScheme: ColorScheme.fromSeed(seedColor: AppColors.primaryGreen, brightness: Brightness.light),
             useMaterial3: true,
             scaffoldBackgroundColor: AppColors.bgWhite,
           ),
           darkTheme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: AppColors.primaryGreen,
-              brightness: Brightness.dark,
-            ),
+            colorScheme: ColorScheme.fromSeed(seedColor: AppColors.primaryGreen, brightness: Brightness.dark),
             useMaterial3: true,
-            scaffoldBackgroundColor: AppColors.bgWhite,
+            scaffoldBackgroundColor: const Color(0xFF121212),
           ),
-          home: startScreen, // Uses the dynamic start screen!
+          home: MainWrapper(initialIndex: initialTab),
         );
       },
     );

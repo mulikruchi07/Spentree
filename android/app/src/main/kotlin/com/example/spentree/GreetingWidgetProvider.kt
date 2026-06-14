@@ -28,11 +28,14 @@ class GreetingWidgetProvider : HomeWidgetProvider() {
         val statusIconRes: Int
         val level: Int
 
-        when {
-            percentage >= 0.66 -> { badgeText = "Great"; statusIconRes = R.drawable.ic_trending_up; level = 1 }
-            percentage >= 0.33 -> { badgeText = "Warning"; statusIconRes = R.drawable.ic_warning; level = 2 }
-            else -> { badgeText = "Poor"; statusIconRes = R.drawable.ic_trending_down; level = 3 }
-        }
+when {
+    percentage >= 0.83 -> { badgeText = "Great"; statusIconRes = R.drawable.ic_trending_up; level = 1 }
+    percentage >= 0.66 -> { badgeText = "Good"; statusIconRes = R.drawable.ic_trending_up; level = 2 }
+    percentage >= 0.50 -> { badgeText = "Warning"; statusIconRes = R.drawable.ic_warning; level = 3 }
+    percentage >= 0.33 -> { badgeText = "Careful"; statusIconRes = R.drawable.ic_warning; level = 4 }
+    percentage >= 0.16 -> { badgeText = "Poor"; statusIconRes = R.drawable.ic_trending_down; level = 5 }
+    else -> { badgeText = "Empty"; statusIconRes = R.drawable.ic_trending_down; level = 6 }
+}
 
         val formattedAmount = "Rs. ${NumberFormat.getNumberInstance(Locale("en", "IN")).format(todayExpense)}"
         val formattedDate = "Today's Expense • ${SimpleDateFormat("E, d MMMM ''yy", Locale.getDefault()).format(Date())}"

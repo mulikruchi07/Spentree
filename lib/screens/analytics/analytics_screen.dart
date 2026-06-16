@@ -1592,10 +1592,7 @@ import '../../core/transaction_service.dart'; // Make sure this path points to y
 class AnalyticsScreen extends StatefulWidget {
   static final ValueNotifier<bool> triggerOpenForm = ValueNotifier(false);
   final bool startWithAddExpense;
-  const AnalyticsScreen({
-    super.key, 
-    this.startWithAddExpense = false,
-  });
+  const AnalyticsScreen({super.key, this.startWithAddExpense = false});
   @override
   State<AnalyticsScreen> createState() => _AnalyticsScreenState();
 }
@@ -1645,7 +1642,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
       curve: Curves.easeOutCubic,
     );
     AnalyticsScreen.triggerOpenForm.addListener(_onGlobalTrigger);
-    
+
     if (AnalyticsScreen.triggerOpenForm.value) {
       _onGlobalTrigger();
     }
@@ -1808,14 +1805,16 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
     bool isEmpty = dailyTx.isEmpty;
     var chartData = _calculateChartData(dailyTx);
 
-    if (widget.startWithAddExpense && !_hasAutoOpenedForm && !TransactionService().isLoading) {
+    if (widget.startWithAddExpense &&
+        !_hasAutoOpenedForm &&
+        !TransactionService().isLoading) {
       // We wrap this in a post-frame callback so it doesn't interrupt the current drawing phase
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted && !_isAddingExpense) {
           setState(() {
             _hasAutoOpenedForm = true; // Lock it so it only happens once
           });
-          _toggleAddExpense(); 
+          _toggleAddExpense();
         }
       });
     }
@@ -2681,7 +2680,13 @@ class _ExpenseFormState extends State<ExpenseForm> {
         : (_titleCtrl.text.isEmpty ? "New Expense" : _titleCtrl.text);
 
     // If Editing and NOT Manual (i.e. Auto-fetched Bank SMS), lock inputs
-    bool canEditAll = !widget.isEditing || widget.isManual;
+    bool canEditTitle =
+        true; // Always editable (Add, Manual Edit, Auto-Fetched Edit)
+    bool canEditCategory = true; // Always editable
+    bool canEditAmount =
+        !widget.isEditing || widget.isManual; // Locked for auto-fetched edits
+    bool canEditTime =
+        !widget.isEditing || widget.isManual; // Locked for auto-fetched edits
     Color disabledColor = AppColors.grey600;
 
     return Container(
@@ -2717,27 +2722,31 @@ class _ExpenseFormState extends State<ExpenseForm> {
                 ),
               ),
               const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    headerTitle,
-                    style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.colblack,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      headerTitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.poppins(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.colblack,
+                      ),
                     ),
-                  ),
-                  Text(
-                    widget.isManual ? "Cash" : "Bank account",
-                    style: GoogleFonts.poppins(
-                      fontSize: 12,
-                      color: AppColors.white500,
+                    Text(
+                      widget.isManual ? "Cash" : "Bank account",
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        color: AppColors.white500,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-              const Spacer(),
+              const SizedBox(width: 8),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
@@ -2789,7 +2798,7 @@ class _ExpenseFormState extends State<ExpenseForm> {
           const SizedBox(height: 10),
 
           GestureDetector(
-            onTap: canEditAll
+            onTap: canEditCategory
                 ? () {
                     FocusScope.of(context).unfocus();
                     setState(() {
@@ -2813,7 +2822,9 @@ class _ExpenseFormState extends State<ExpenseForm> {
                     _selectedCategory,
                     style: GoogleFonts.poppins(
                       fontSize: 14,
-                      color: canEditAll ? AppColors.colblack : disabledColor,
+                      color: canEditCategory
+                          ? AppColors.colblack
+                          : disabledColor,
                     ),
                   ),
                   Icon(
@@ -2862,7 +2873,9 @@ class _ExpenseFormState extends State<ExpenseForm> {
                                 decoration: BoxDecoration(
                                   border: cat != _categories.last
                                       ? Border(
-                                          bottom: BorderSide(color: AppColors.inputFill),
+                                          bottom: BorderSide(
+                                            color: AppColors.inputFill,
+                                          ),
                                         )
                                       : null,
                                 ),
@@ -2888,7 +2901,7 @@ class _ExpenseFormState extends State<ExpenseForm> {
               Expanded(
                 flex: 2,
                 child: GestureDetector(
-                  onTap: canEditAll
+                  onTap: canEditTime
                       ? () {
                           FocusScope.of(context).unfocus();
                           setState(() {
@@ -2915,7 +2928,7 @@ class _ExpenseFormState extends State<ExpenseForm> {
                           style: GoogleFonts.poppins(
                             fontSize: 14,
                             color:
-                                (canEditAll &&
+                                (canEditTime &&
                                     (_isTimePickerVisible ||
                                         _selectedTime != widget.initialTime))
                                 ? AppColors.colblack
@@ -2934,11 +2947,11 @@ class _ExpenseFormState extends State<ExpenseForm> {
                 child: _buildInputBlock(
                   child: TextField(
                     controller: _amountCtrl,
-                    readOnly: !canEditAll,
+                    readOnly: !canEditAmount,
                     focusNode: _amountFocus,
                     onTap: _closePickers,
                     style: GoogleFonts.poppins(
-                      color: canEditAll ? AppColors.colblack : disabledColor,
+                      color: canEditAmount ? AppColors.colblack : disabledColor,
                       fontSize: 14,
                     ),
                     keyboardType: TextInputType.number,

@@ -223,6 +223,8 @@ class TransactionService extends ChangeNotifier {
     int index = _allTransactions.indexWhere((tx) => tx.id == id);
     if (index != -1) {
       _allTransactions[index].title = title;
+      _allTransactions[index].category = category;
+      _allTransactions[index].icon = _getIconForCategory(category);
 
       if (_allTransactions[index].isManual) {
         _allTransactions[index].amount = amount;

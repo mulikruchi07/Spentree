@@ -554,9 +554,10 @@ import 'package:flutter/services.dart';
 import 'package:home_widget/home_widget.dart';
 import 'package:spentree/screens/analytics/analytics_screen.dart';
 import 'package:spentree/screens/main_wrapper.dart';
+import 'app_lock.dart';
 import 'core/app_style.dart';
 import 'core/transaction_service.dart';
-import 'dart:io' show Platform; 
+import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 
 @pragma('vm:entry-point')
@@ -568,6 +569,11 @@ Future<void> backgroundCallback(Uri? uri) async {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // ── Initialise lock BEFORE runApp so the overlay is ready on frame 1 ──
+  // The notifier starts as AppLockState.locked (pessimistic). initialize()
+  // reads SharedPreferences and flips to unlocked if lock is disabled.
+  await AppLockController.initialize();
 
   // ONLY register widget code if we are NOT on the web
   if (!kIsWeb) {
@@ -615,16 +621,31 @@ class MyApp extends StatelessWidget {
           title: 'SpenTree',
           themeMode: currentMode,
           theme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(seedColor: AppColors.primaryGreen, brightness: Brightness.light),
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: AppColors.primaryGreen,
+              brightness: Brightness.light,
+            ),
             useMaterial3: true,
             scaffoldBackgroundColor: AppColors.bgWhite,
           ),
           darkTheme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(seedColor: AppColors.primaryGreen, brightness: Brightness.dark),
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: AppColors.primaryGreen,
+              brightness: Brightness.dark,
+            ),
             useMaterial3: true,
             scaffoldBackgroundColor: const Color(0xFF121212),
           ),
           home: MainWrapper(initialIndex: initialTab),
+
+          // ── Global lock overlay ─────────────────────────────────────────
+          // The `builder` layer sits ABOVE the Navigator's entire route stack,
+          // including every pushed route AND every showDialog / showModalBottomSheet.
+          // AppLockWrapper renders the blur overlay at this level so nothing
+          // — no screen, no dialog, no bottom sheet — can slip through.
+          builder: (context, child) {
+            return AppLockWrapper(child: child ?? const SizedBox.shrink());
+          },
         );
       },
     );

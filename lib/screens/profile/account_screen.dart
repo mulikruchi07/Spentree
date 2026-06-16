@@ -1251,6 +1251,7 @@ import 'package:home_widget/home_widget.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:spentree/app_lock.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
@@ -1642,20 +1643,20 @@ class _AccountScreenState extends State<AccountScreen> {
 
   void _handleFaceIdToggle(bool val) async {
     if (val) {
-      if (await BiometricService.authenticateUser()) {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setBool('isFaceIdEnabled', true);
+      // Authenticate first; only enable the lock if auth succeeds.
+      final result = await BiometricService.authenticate();
+      if (result == AuthResult.success) {
+        await AppLockController.setLockEnabled(true);
         setState(() => _isFaceIdEnabled = true);
       }
     } else {
       _showConfirmationDialog(
-        title: "Remove App Lock",
-        message: "Are you sure you want to remove app-lock?",
-        confirmText: "Remove",
+        title: 'Remove App Lock',
+        message: 'Are you sure you want to remove app-lock?',
+        confirmText: 'Remove',
         icon: Icons.fingerprint,
         onConfirm: () async {
-          final prefs = await SharedPreferences.getInstance();
-          await prefs.setBool('isFaceIdEnabled', false);
+          await AppLockController.setLockEnabled(false);
           setState(() => _isFaceIdEnabled = false);
         },
       );

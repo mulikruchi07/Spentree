@@ -6,7 +6,93 @@ import 'package:intl/intl.dart';
 import 'package:spentree/core/app_style.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../core/transaction_service.dart';
+import '../../core/user_data.dart';
 import 'spentwrap_intro_screen.dart';
+
+// NEW: Centralized 6-state tree status helper (mirrors Dashboard logic)
+class TreeStatus {
+  final String label; // tree type name
+  final String image; // tree image filename
+  final int treesGrown;
+
+  const TreeStatus({
+    required this.label,
+    required this.image,
+    required this.treesGrown,
+  });
+}
+
+TreeStatus getTreeStatusForPercentage(double percentage) {
+  if (percentage >= 0.83) {
+    return const TreeStatus(label: "Dense Forest", image: "dense_forest.png", treesGrown: 5);
+  } else if (percentage >= 0.66) {
+    return const TreeStatus(label: "Grand Forest", image: "grand_forest.png", treesGrown: 3);
+  } else if (percentage >= 0.50) {
+    return const TreeStatus(label: "Forest", image: "forest.png", treesGrown: 2);
+  } else if (percentage >= 0.33) {
+    return const TreeStatus(label: "String Tree", image: "string_tree.png", treesGrown: 1);
+  } else if (percentage >= 0.16) {
+    return const TreeStatus(label: "Drying Tree", image: "drying_tree.png", treesGrown: 0);
+  } else {
+    return const TreeStatus(label: "Dry Tree", image: "dry_tree.png", treesGrown: 0);
+  }
+}
+
+// NEW: Forest-level (monthly) 5-state status helper
+class ForestStatus {
+  final String label; // Great/Good/Warning/Poor/Empty
+  final IconData icon;
+  final Color color;
+  final String image; // forest_*.png
+
+  const ForestStatus({
+    required this.label,
+    required this.icon,
+    required this.color,
+    required this.image,
+  });
+}
+
+ForestStatus getForestStatusForPercentage(double percentage) {
+  // percentage = pendingBudget / allowedBudget (higher = better, same direction as Dashboard)
+  if (percentage >= 0.83) {
+    return const ForestStatus(
+      label: "Great",
+      icon: Icons.trending_up,
+      color: Color(0xFF34C759),
+      image: "forest_great.png",
+    );
+  } else if (percentage >= 0.66) {
+    return const ForestStatus(
+      label: "Good",
+      icon: Icons.trending_up,
+      color: Color(0xFF34C759),
+      image: "forest_good.png",
+    );
+  } else if (percentage >= 0.33) {
+    return const ForestStatus(
+      label: "Warning",
+      icon: Icons.warning_amber_rounded,
+      color: Color(0xFFFFCC00),
+      image: "forest_warning.png",
+    );
+  } else if (percentage >= 0.16) {
+    return const ForestStatus(
+      label: "Poor",
+      icon: Icons.trending_down,
+      color: Color(0xFFFF383C),
+      image: "forest_poor.png",
+    );
+  } else {
+    return const ForestStatus(
+      label: "Empty",
+      icon: Icons.trending_down,
+      color: Color(0xFFFF383C),
+      image: "forest_empty.png",
+    );
+  }
+}
 
 class ForestScreen extends StatefulWidget {
   final bool isActive;
@@ -27,6 +113,9 @@ class _ForestScreenState extends State<ForestScreen> {
   final double cardRadius = 15.0;
   final double boxHeight = 76.0;
 
+  // NEW: daily limit, loaded from SharedPreferences (same key as Dashboard)
+  int _dailyLimit = 5000;
+
   // Dynamic Palette (Darkest to Lightest)
   final List<Color> _greenPalette = [
     const Color(0xFF005A32),
@@ -37,33 +126,15 @@ class _ForestScreenState extends State<ForestScreen> {
     const Color(0xFFC7E9C0),
   ];
 
-  // Data
+  // Data (now computed, not hardcoded)
   late List<Map<String, dynamic>> _sortedCategories;
-
-  final List<Map<String, dynamic>> _rawCategoryData = [
-    {"name": "Food & Beverages", "amount": 3000},
-    {"name": "Shopping", "amount": 15000},
-    {"name": "To People", "amount": 12000},
-    {"name": "Fuel", "amount": 7000},
-    {"name": "Bills & Subscriptions", "amount": 6000},
-    {"name": "Other", "amount": 2000},
-  ];
-
-  // Tree Data for the list
-  final List<Map<String, String>> _treeTypes = [
-    {"name": "Dense Forest", "image": "dense_forest.png", "count": "02"},
-    {"name": "Grand Forest", "image": "grand_forest.png", "count": "05"},
-    {"name": "Forest", "image": "forest.png", "count": "08"},
-    {"name": "String Tree", "image": "string_tree.png", "count": "10"},
-    {"name": "Drying Tree", "image": "drying_tree.png", "count": "04"},
-    {"name": "Dry Tree", "image": "dry_tree.png", "count": "02"},
-  ];
 
   @override
   void initState() {
     super.initState();
     _focusedDate = DateTime.now();
-    _processCategoryData();
+    _loadLimitAndData();
+    TransactionService().addListener(_onDataChanged);
     if (widget.isActive) _playForestSound();
   }
 
@@ -78,46 +149,249 @@ class _ForestScreenState extends State<ForestScreen> {
 
   @override
   void dispose() {
+    TransactionService().removeListener(_onDataChanged);
     _audioPlayer.dispose();
     super.dispose();
   }
 
-  // --- NEW: PLAYBACK LOGIC ---
-  Future<void> _playForestSound() async {
-    // CHECK PREFERENCE FIRST
-    final prefs = await SharedPreferences.getInstance();
-    final bool isSoundEnabled =
-        prefs.getBool('sound_effects') ?? true; // Defaults to true
+  void _onDataChanged() {
+    if (mounted) setState(() {});
+  }
 
-    // If user turned it off, do not play!
+  // NEW: load daily limit (same SharedPreferences key as DashboardScreen)
+  Future<void> _loadLimitAndData() async {
+    final prefs = await SharedPreferences.getInstance();
+    int? savedLimit = prefs.getInt('daily_expense_limit');
+    setState(() {
+      if (savedLimit != null) {
+        _dailyLimit = savedLimit;
+      } else {
+        int? parsedLimit = int.tryParse(
+          UserData.dailyLimit.replaceAll(RegExp(r'[^0-9]'), ''),
+        );
+        _dailyLimit = parsedLimit ?? 5000;
+      }
+    });
+  }
+
+  // --- NEW: PLAYBACK LOGIC (unchanged) ---
+  Future<void> _playForestSound() async {
+    final prefs = await SharedPreferences.getInstance();
+    final bool isSoundEnabled = prefs.getBool('sound_effects') ?? true;
+
     if (!isSoundEnabled) return;
 
-    // PLAY SOUND
     final hour = DateTime.now().hour;
-    // Define Night as between 6:00 PM (18) and 5:59 AM (6)
     final bool isNight = hour >= 18 || hour < 6;
 
-    // Selects the sound based on time
     final String audioFile = isNight
         ? 'audio/night_forest.m4a'
         : 'audio/morning_forest.m4a';
 
-    // Stop any currently playing sound and start the new one
     await _audioPlayer.stop();
     await _audioPlayer.play(AssetSource(audioFile));
   }
 
-  void _processCategoryData() {
-    // 1. Sort by amount descending (High to Low)
-    _sortedCategories = List.from(_rawCategoryData);
-    _sortedCategories.sort(
-      (a, b) => (b['amount'] as int).compareTo(a['amount'] as int),
-    );
+  // ==========================================
+  // NEW: MONTHLY DATA CALCULATIONS
+  // ==========================================
 
-    // 2. Assign colors from palette based on index
-    for (int i = 0; i < _sortedCategories.length; i++) {
-      _sortedCategories[i]['color'] = _greenPalette[i % _greenPalette.length];
+  int _daysInMonth(DateTime date) {
+    return DateTime(date.year, date.month + 1, 0).day;
+  }
+
+  /// Returns daily tree percentage using the same formula as Dashboard:
+  /// percentage = pendingLimit / dailyLimit, where
+  /// pendingLimit = (dailyLimit - dailyExpense).clamp(0, dailyLimit)
+  double _dailyPercentage(double dailyExpense) {
+    if (_dailyLimit <= 0) return 0.0;
+    double pendingLimit = (_dailyLimit - dailyExpense).clamp(
+      0.0,
+      _dailyLimit.toDouble(),
+    );
+    return (pendingLimit / _dailyLimit).clamp(0.0, 1.0);
+  }
+
+  /// Computes per-day expense totals for every day of the focused month.
+  Map<int, double> _monthlyDailyExpenses() {
+    final daysInMonth = _daysInMonth(_focusedDate);
+    final Map<int, double> dailyTotals = {};
+
+    for (int day = 1; day <= daysInMonth; day++) {
+      final date = DateTime(_focusedDate.year, _focusedDate.month, day);
+      final tx = TransactionService().getTransactionsForDay(date);
+      final total = tx.fold(0.0, (sum, item) => sum + item.amount);
+      dailyTotals[day] = total;
     }
+    return dailyTotals;
+  }
+
+  /// Computes tree-type counts and total trees grown for the month.
+  Map<String, dynamic> _computeForestStats() {
+    final dailyTotals = _monthlyDailyExpenses();
+
+    // Counts per tree type, in tree_1..tree_6 order
+    int dense = 0, grand = 0, forest = 0, string = 0, drying = 0, dry = 0;
+    int totalTreesGrown = 0;
+
+    dailyTotals.forEach((day, expense) {
+      final pct = _dailyPercentage(expense);
+      final status = getTreeStatusForPercentage(pct);
+      totalTreesGrown += status.treesGrown;
+
+      switch (status.label) {
+        case "Dense Forest":
+          dense++;
+          break;
+        case "Grand Forest":
+          grand++;
+          break;
+        case "Forest":
+          forest++;
+          break;
+        case "String Tree":
+          string++;
+          break;
+        case "Drying Tree":
+          drying++;
+          break;
+        case "Dry Tree":
+          dry++;
+          break;
+      }
+    });
+
+    return {
+      "totalTreesGrown": totalTreesGrown,
+      "treeCounts": [
+        {"name": "Dense Forest", "image": "dense_forest.png", "count": dense},
+        {"name": "Grand Forest", "image": "grand_forest.png", "count": grand},
+        {"name": "Forest", "image": "forest.png", "count": forest},
+        {"name": "String Tree", "image": "string_tree.png", "count": string},
+        {"name": "Drying Tree", "image": "drying_tree.png", "count": drying},
+        {"name": "Dry Tree", "image": "dry_tree.png", "count": dry},
+      ],
+    };
+  }
+
+  /// Total monthly expense for the focused month.
+  double _monthlyExpense() {
+    final dailyTotals = _monthlyDailyExpenses();
+    return dailyTotals.values.fold(0.0, (sum, v) => sum + v);
+  }
+
+  /// Monthly allowed budget = dailyLimit * daysInMonth
+  int _monthlyAllowedBudget() {
+    return _dailyLimit * _daysInMonth(_focusedDate);
+  }
+
+  /// Forest-level percentage: how much of the monthly budget remains.
+  /// percentage = pendingMonthlyBudget / monthlyAllowedBudget
+  double _monthlyPercentage() {
+    final allowed = _monthlyAllowedBudget();
+    if (allowed <= 0) return 0.0;
+    final expense = _monthlyExpense();
+    final pending = (allowed - expense).clamp(0.0, allowed.toDouble());
+    return (pending / allowed).clamp(0.0, 1.0);
+  }
+
+  /// Days passed in the focused month (capped to today if current month).
+  int _daysPassed() {
+    final now = DateTime.now();
+    final daysInMonth = _daysInMonth(_focusedDate);
+    if (_focusedDate.year == now.year && _focusedDate.month == now.month) {
+      return now.day;
+    }
+    // For past months, all days have passed; for future months, 0.
+    if (DateTime(_focusedDate.year, _focusedDate.month, 1).isBefore(
+      DateTime(now.year, now.month, 1),
+    )) {
+      return daysInMonth;
+    }
+    return 0;
+  }
+
+  double _averageDailyExpense() {
+    final daysPassed = _daysPassed();
+    if (daysPassed <= 0) return 0.0;
+    return _monthlyExpense() / daysPassed;
+  }
+
+  /// Returns a comparable "score" for a given month: pendingBudget / allowedBudget.
+  /// Used to compare current vs previous month.
+  double _monthScore(DateTime monthDate) {
+    final daysInMonth = DateTime(monthDate.year, monthDate.month + 1, 0).day;
+    final allowed = _dailyLimit * daysInMonth;
+    if (allowed <= 0) return 0.0;
+
+    double monthExpense = 0.0;
+    for (int day = 1; day <= daysInMonth; day++) {
+      final date = DateTime(monthDate.year, monthDate.month, day);
+      final tx = TransactionService().getTransactionsForDay(date);
+      monthExpense += tx.fold(0.0, (sum, item) => sum + item.amount);
+    }
+
+    final pending = (allowed - monthExpense).clamp(0.0, allowed.toDouble());
+    return pending / allowed;
+  }
+
+  /// Returns comparison text between current and previous month.
+  String _getComparisonText() {
+    final currentScore = _monthScore(_focusedDate);
+    final previousMonthDate = DateTime(
+      _focusedDate.year,
+      _focusedDate.month - 1,
+      1,
+    );
+    final previousScore = _monthScore(previousMonthDate);
+
+    final currentMonthName = DateFormat('MMMM').format(_focusedDate);
+  final previousMonthName = DateFormat('MMMM').format(previousMonthDate);
+
+  return currentScore >= previousScore
+      ? "$currentMonthName was more greener than $previousMonthName"
+      : "$previousMonthName was more greener than $currentMonthName";
+  }
+
+  /// Groups all transactions in the focused month by category.
+  List<Map<String, dynamic>> _computeCategorySpends() {
+    final daysInMonth = _daysInMonth(_focusedDate);
+    final Map<String, double> totals = {};
+
+    for (int day = 1; day <= daysInMonth; day++) {
+      final date = DateTime(_focusedDate.year, _focusedDate.month, day);
+      final tx = TransactionService().getTransactionsForDay(date);
+      for (var item in tx) {
+        totals[item.category] = (totals[item.category] ?? 0.0) + item.amount;
+      }
+    }
+
+    var entries = totals.entries.where((e) => e.value > 0).toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+
+    List<Map<String, dynamic>> result = [];
+    for (int i = 0; i < entries.length; i++) {
+      result.add({
+        "name": entries[i].key,
+        "amount": entries[i].value,
+        "color": _greenPalette[i % _greenPalette.length],
+      });
+    }
+    return result;
+  }
+
+  /// Returns top 3 transactions in the focused month, sorted by amount desc.
+  List<Transaction> _computeTopExpenses() {
+    final daysInMonth = _daysInMonth(_focusedDate);
+    final List<Transaction> allTx = [];
+
+    for (int day = 1; day <= daysInMonth; day++) {
+      final date = DateTime(_focusedDate.year, _focusedDate.month, day);
+      allTx.addAll(TransactionService().getTransactionsForDay(date));
+    }
+
+    allTx.sort((a, b) => b.amount.compareTo(a.amount));
+    return allTx.take(3).toList();
   }
 
   // --- LOGIC ---
@@ -147,6 +421,18 @@ class _ForestScreenState extends State<ForestScreen> {
   Widget build(BuildContext context) {
     MediaQuery.platformBrightnessOf(context);
 
+    // NEW: compute everything for the focused month
+    final forestStats = _computeForestStats();
+    final monthlyExpense = _monthlyExpense();
+    final monthlyAllowed = _monthlyAllowedBudget();
+    final monthlyPercentage = _monthlyPercentage();
+    final forestStatus = getForestStatusForPercentage(monthlyPercentage);
+    final averageDaily = _averageDailyExpense();
+    final comparisonText = _getComparisonText();
+    _sortedCategories = _computeCategorySpends();
+    final topExpenses = _computeTopExpenses();
+    final monthName = DateFormat('MMMM').format(_focusedDate);
+
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: themeNotifier,
       builder: (context, currentTheme, child) {
@@ -171,12 +457,17 @@ class _ForestScreenState extends State<ForestScreen> {
                       const SizedBox(height: 24),
 
                       // 3. Forest Visualization & Tree List
-                      _buildForestSection(),
+                      _buildForestSection(
+                        monthName,
+                        forestStatus,
+                        forestStats,
+                        comparisonText,
+                      ),
                       const SizedBox(height: 32),
 
                       // 4. Monthly Summary
                       Text(
-                        "April's Summary",
+                        "$monthName's Summary",
                         style: GoogleFonts.poppins(
                           fontSize: 18,
                           fontWeight: FontWeight.w600,
@@ -185,14 +476,15 @@ class _ForestScreenState extends State<ForestScreen> {
                       ),
                       const SizedBox(height: 12),
                       _buildSummaryCard(
-                        "April's Expense",
-                        "Rs. 75,000",
+                        "$monthName's Expense",
+                        "Rs. ${NumberFormat('#,##0').format(monthlyExpense)}",
                         isExpense: true,
+                        forestStatus: forestStatus,
                       ),
                       const SizedBox(height: 12),
                       _buildSummaryCard(
                         "Average Daily Expense",
-                        "Rs. 3,500 / 5,000",
+                        "Rs. ${NumberFormat('#,##0').format(averageDaily)} / ${NumberFormat('#,##0').format(monthlyAllowed)}",
                       ),
 
                       const SizedBox(height: 32),
@@ -223,7 +515,7 @@ class _ForestScreenState extends State<ForestScreen> {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      _buildTopExpensesList(),
+                      _buildTopExpensesList(topExpenses),
 
                       const SizedBox(height: 48),
 
@@ -407,45 +699,74 @@ class _ForestScreenState extends State<ForestScreen> {
     );
   }
 
-  Widget _buildForestSection() {
+  // CHANGED: now fully dynamic — forest image/background/badge driven by monthlyPercentage,
+  // tree list and total trees grown driven by daily tree-state aggregation.
+  Widget _buildForestSection(
+    String monthName,
+    ForestStatus forestStatus,
+    Map<String, dynamic> forestStats,
+    String comparisonText,
+  ) {
+    final treeCounts = forestStats["treeCounts"] as List<Map<String, dynamic>>;
+    final totalTreesGrown = forestStats["totalTreesGrown"] as int;
+
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start, // Left Align Title
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          "April's Forest",
+          "$monthName's Forest",
           style: GoogleFonts.poppins(
             fontSize: 18,
             fontWeight: FontWeight.w600,
             color: AppColors.colblack,
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 10),
 
-        // Isometric Forest Image
-        Center(
-          child: Image.asset(
-            "assets/images/full_forest_iso.png",
-            height: 220,
-            fit: BoxFit.contain,
+        SizedBox(
+          height: 240,
+          child: Stack(
+            alignment: Alignment.bottomCenter,
+            children: [
+              Container(
+                height: 152,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  // CHANGED: dynamic background color based on forest status
+                  color: forestStatus.color,
+                  borderRadius: BorderRadius.circular(cardRadius),
+                ),
+              ),
+
+              // CHANGED: dynamic forest image based on forest status
+              Positioned(
+                bottom: 0,
+                child: Image.asset(
+                  "assets/images/forest/${forestStatus.image}",
+                  height: 220,
+                  fit: BoxFit.contain,
+                ),
+              ),
+            ],
           ),
         ),
 
-        const SizedBox(height: 20),
+        const SizedBox(height: 28),
 
-        // Green Badge Centered
+        // Badge — CHANGED: dynamic comparison text, color matches forest status
         Center(
           child: Container(
             padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 24),
             decoration: BoxDecoration(
-              color: AppColors.primaryGreen,
+              color: forestStatus.color,
               borderRadius: BorderRadius.circular(30),
             ),
             child: Text(
-              "April was greener than March",
+              comparisonText,
               style: GoogleFonts.montserrat(
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
-                color: AppColors.colblack,
+                color: AppColors.colwhite,
               ),
             ),
           ),
@@ -453,9 +774,9 @@ class _ForestScreenState extends State<ForestScreen> {
 
         const SizedBox(height: 28),
 
-        // Tree Stats
+        // Tree Stats — CHANGED: dynamic total
         Text(
-          "Total trees grown : 31",
+          "Total trees grown : $totalTreesGrown",
           style: GoogleFonts.poppins(
             fontSize: 18,
             fontWeight: FontWeight.w600,
@@ -464,15 +785,14 @@ class _ForestScreenState extends State<ForestScreen> {
         ),
         const SizedBox(height: 16),
 
-        // Tree List Loop
+        // Tree List Loop — CHANGED: counts now computed from monthly data
         Column(
-          children: _treeTypes
+          children: treeCounts
               .map(
                 (tree) => Padding(
                   padding: const EdgeInsets.only(bottom: 6),
                   child: Row(
                     children: [
-                      // Tree Icon
                       Image.asset(
                         "assets/images/forest/${tree['image']}",
                         width: 40,
@@ -481,7 +801,7 @@ class _ForestScreenState extends State<ForestScreen> {
                       const SizedBox(width: 16),
                       Expanded(
                         child: Text(
-                          tree['name']!,
+                          tree['name'] as String,
                           style: GoogleFonts.poppins(
                             fontSize: 16,
                             fontWeight: FontWeight.w500,
@@ -507,10 +827,12 @@ class _ForestScreenState extends State<ForestScreen> {
     );
   }
 
+  // CHANGED: badge now dynamic per ForestStatus
   Widget _buildSummaryCard(
     String title,
     String value, {
     bool isExpense = false,
+    ForestStatus? forestStatus,
   }) {
     return Container(
       width: double.infinity,
@@ -546,19 +868,20 @@ class _ForestScreenState extends State<ForestScreen> {
               ),
             ],
           ),
-          if (isExpense)
+          if (isExpense && forestStatus != null)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               decoration: BoxDecoration(
-                color: AppColors.primaryGreen,
+                color: forestStatus.color,
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.trending_up, color: AppColors.colblack, size: 14),
+                  Icon(forestStatus.icon, color: AppColors.colblack, size: 14),
                   const SizedBox(width: 4),
                   Text(
-                    "Great",
+                    forestStatus.label,
                     style: GoogleFonts.montserrat(
                       fontSize: 12,
                       color: AppColors.colblack,
@@ -574,15 +897,38 @@ class _ForestScreenState extends State<ForestScreen> {
   }
 
   Widget _buildMultiSegmentProgressBar() {
+    if (_sortedCategories.isEmpty) {
+      // Graceful empty state: render an empty bar with no segments
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          height: 24,
+          width: double.infinity,
+          decoration: BoxDecoration(color: AppColors.inputFill),
+        ),
+      );
+    }
+
     double total = _sortedCategories.fold(
       0,
-      (sum, item) => sum + (item['amount'] as int),
+      (sum, item) => sum + (item['amount'] as double),
     );
+    if (total <= 0) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          height: 24,
+          width: double.infinity,
+          decoration: BoxDecoration(color: AppColors.inputFill),
+        ),
+      );
+    }
+
     double cumulativeSum = 0;
     List<Widget> barLayers = [];
     for (int i = 0; i < _sortedCategories.length; i++) {
       var cat = _sortedCategories[i];
-      cumulativeSum += cat['amount'] as int;
+      cumulativeSum += cat['amount'] as double;
       double percentage = cumulativeSum / total;
 
       Widget barLayer = FractionallySizedBox(
@@ -603,14 +949,13 @@ class _ForestScreenState extends State<ForestScreen> {
       barLayers.insert(0, barLayer);
     }
 
-    // 5. Wrap the stack in ClipRRect for the main outer curve
     return ClipRRect(
-      borderRadius: BorderRadius.circular(20), // The main outer curve
+      borderRadius: BorderRadius.circular(20),
       child: Container(
-        height: 24, // Fixed height for the progress bar
+        height: 24,
         width: double.infinity,
         decoration: BoxDecoration(
-          color: AppColors.inputFill, // Background color in case total < 100%
+          color: AppColors.inputFill,
         ),
         child: Stack(children: barLayers),
       ),
@@ -618,6 +963,19 @@ class _ForestScreenState extends State<ForestScreen> {
   }
 
   Widget _buildCategoryList() {
+    if (_sortedCategories.isEmpty) {
+      return Center(
+        child: Text(
+          "No expenses recorded this month.",
+          style: GoogleFonts.poppins(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: AppColors.white500,
+          ),
+        ),
+      );
+    }
+
     return Column(
       children: _sortedCategories
           .map(
@@ -636,7 +994,7 @@ class _ForestScreenState extends State<ForestScreen> {
                   const SizedBox(width: 14),
                   Expanded(
                     child: Text(
-                      cat['name'],
+                      cat['name'] as String,
                       style: GoogleFonts.poppins(
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
@@ -660,24 +1018,25 @@ class _ForestScreenState extends State<ForestScreen> {
     );
   }
 
-  Widget _buildTopExpensesList() {
-    final expenses = [
-      {
-        "name": "Shell Petroleum",
-        "amount": "- Rs. 1500",
-        "icon": PhosphorIcons.gasCan,
-      },
-      {"name": "D-Mart", "amount": "- Rs. 2000", "icon": PhosphorIcons.tShirt},
-      {
-        "name": "Unknown Source",
-        "amount": "+ Rs. 2000",
-        "icon": PhosphorIcons.currencyInr,
-      },
-    ];
+  // CHANGED: now driven by real transactions
+  Widget _buildTopExpensesList(List<Transaction> topExpenses) {
+    if (topExpenses.isEmpty) {
+      return Center(
+        child: Text(
+          "No expenses recorded this month.",
+          style: GoogleFonts.poppins(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: AppColors.white500,
+          ),
+        ),
+      );
+    }
+
     return Column(
-      children: expenses
+      children: topExpenses
           .map(
-            (ex) => Container(
+            (tx) => Container(
               margin: const EdgeInsets.only(bottom: 15),
               width: double.infinity,
               height: boxHeight,
@@ -703,7 +1062,7 @@ class _ForestScreenState extends State<ForestScreen> {
                       ],
                     ),
                     child: Icon(
-                      ex['icon'] as IconData,
+                      tx.icon,
                       size: 28,
                       color: AppColors.colblack,
                     ),
@@ -715,7 +1074,9 @@ class _ForestScreenState extends State<ForestScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          ex['name'] as String,
+                          tx.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.montserrat(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
@@ -723,7 +1084,7 @@ class _ForestScreenState extends State<ForestScreen> {
                           ),
                         ),
                         Text(
-                          "Bank account",
+                          tx.isManual ? "Cash" : "Bank account",
                           style: GoogleFonts.montserrat(
                             fontSize: 12,
                             color: AppColors.white500,
@@ -738,7 +1099,7 @@ class _ForestScreenState extends State<ForestScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        ex['amount'] as String,
+                        "- Rs. ${NumberFormat('#,##0').format(tx.amount)}",
                         style: GoogleFonts.montserrat(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -746,7 +1107,7 @@ class _ForestScreenState extends State<ForestScreen> {
                         ),
                       ),
                       Text(
-                        "Fri, 11 April 2025",
+                        DateFormat('E, d MMMM yyyy').format(tx.date),
                         style: GoogleFonts.montserrat(
                           fontSize: 11,
                           color: AppColors.white500,

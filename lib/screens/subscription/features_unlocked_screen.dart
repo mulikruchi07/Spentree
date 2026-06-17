@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:spentree/core/app_style.dart';
 import '../dashboard/dashboard_screen.dart';
+import '../../core/system_ui_service.dart'; // FIX: opaque nav bar on this screen
 
 class FeaturesUnlockedScreen extends StatelessWidget {
   const FeaturesUnlockedScreen({super.key});
@@ -10,10 +11,12 @@ class FeaturesUnlockedScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     MediaQuery.platformBrightnessOf(context);
+    SystemUIService.applyNavBarStyle(context); // FIX: apply before ValueListenableBuilder
 
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: themeNotifier,
       builder: (context, currentTheme, child) {
+        SystemUIService.applyNavBarStyle(context); // re-apply after theme rebuild
         final animation =
             ModalRoute.of(context)?.animation ??
             const AlwaysStoppedAnimation(1.0);
@@ -71,7 +74,9 @@ class FeaturesUnlockedScreen extends StatelessWidget {
 
         return Scaffold(
           backgroundColor: AppColors.bgWhite,
-          body: Stack(
+          body: SafeArea(
+            top: false,
+            child: Stack(
             children: [
               // ==========================================
               // LAYER 1: BASE WHITE SCREEN & ORNAMENTS
@@ -458,6 +463,7 @@ class FeaturesUnlockedScreen extends StatelessWidget {
               ),
             ],
           ),
+          ), // SafeArea
         );
       },
     );

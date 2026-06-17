@@ -1,5 +1,6 @@
 package com.example.spentree
 
+import android.os.Build
 import android.os.Bundle
 import android.view.WindowManager
 import io.flutter.embedding.engine.FlutterEngineCache
@@ -14,10 +15,17 @@ class MainActivity : FlutterFragmentActivity() {
     private val WIDGET_CHANNEL = "spentree_widget_channel"
     private var pendingWidgetAction: String? = null
 
-    // ADDED: FLAG_SECURE prevents content appearing in recents / screenshots
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
+
+        // Disable Android's automatic nav bar contrast enforcement.
+        // Without this, Android 10+ forces a semi-transparent scrim over the
+        // nav area even when Flutter sets a solid color — causing the "see-through"
+        // effect on pushed routes. This single line is the fix for secondary screens.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            window.isNavigationBarContrastEnforced = false
+        }
     }
 
     override fun configureFlutterEngine(@NonNull flutterEngine: FlutterEngine) {

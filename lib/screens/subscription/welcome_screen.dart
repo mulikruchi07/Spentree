@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:spentree/core/app_style.dart';
 import 'features_unlocked_screen.dart';
+import '../../core/system_ui_service.dart'; // FIX: opaque nav bar on this screen
 
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
@@ -13,6 +14,12 @@ class WelcomeScreen extends StatefulWidget {
 class _WelcomeScreenState extends State<WelcomeScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _textSlideController;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    SystemUIService.applyNavBarStyle(context); // FIX: fires on first build & theme changes
+  }
 
   @override
   void initState() {
@@ -61,7 +68,9 @@ class _WelcomeScreenState extends State<WelcomeScreen>
 
         return Scaffold(
           backgroundColor: Colors.transparent,
-          body: Stack(
+          body: SafeArea(
+            top: false,
+            child: Stack(
             children: [
               // ==========================================
               // LAYER 1: IN-PLACE EXPANDING CIRCLE & FADING CHECKMARK
@@ -237,6 +246,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
               ),
             ],
           ),
+          ), // SafeArea
         );
       },
     );

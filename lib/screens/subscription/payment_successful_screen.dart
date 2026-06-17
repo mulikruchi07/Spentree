@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:spentree/core/app_style.dart';
 import 'welcome_screen.dart';
+import '../../core/system_ui_service.dart'; // FIX: opaque nav bar on this screen
 
 class PaymentSuccessfulScreen extends StatefulWidget {
   const PaymentSuccessfulScreen({super.key});
@@ -12,6 +13,12 @@ class PaymentSuccessfulScreen extends StatefulWidget {
 }
 
 class _PaymentSuccessfulScreenState extends State<PaymentSuccessfulScreen> {
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    SystemUIService.applyNavBarStyle(context); // FIX: fires on first build & theme changes
+  }
+
   @override
   void initState() {
     super.initState();
@@ -43,6 +50,7 @@ class _PaymentSuccessfulScreenState extends State<PaymentSuccessfulScreen> {
         return Scaffold(
           backgroundColor: AppColors.bgWhite,
           body: SafeArea(
+            top: false,
             child: Stack(
               children: [
                 // HIDDEN PRELOADER

@@ -7,6 +7,7 @@ import 'package:spentree/core/app_style.dart';
 import 'package:spentree/screens/profile/privacy_screen.dart';
 import 'package:spentree/screens/profile/terms_screen.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import '../../core/system_ui_service.dart';
 
 // --- DATA MODEL FOR DYNAMIC RENDERING & STATE ---
 class DealModel {
@@ -225,11 +226,17 @@ class _DealsScreenState extends State<DealsScreen>
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) {
+        // FIX: ensure nav bar stays opaque while the bottom sheet is open
+        SystemUIService.applyNavBarStyle(context);
+
         // Local state for the selectable plans inside the bottom sheet
         int selectedPlanIndex = 0; // 0 for Annual, 1 for Monthly
 
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setSheetState) {
+            // FIX: re-apply on every rebuild (e.g. plan selection tap)
+            SystemUIService.applyNavBarStyle(context);
+
             return Container(
               height: MediaQuery.of(context).size.height * 0.75,
               decoration: BoxDecoration(
@@ -288,7 +295,7 @@ class _DealsScreenState extends State<DealsScreen>
                                 "Spentree Pro",
                                 style: GoogleFonts.poppins(
                                   fontSize: 24,
-                                  fontWeight: FontWeight.w500, // Medium
+                                  fontWeight: FontWeight.w500,
                                   color: AppColors.colblack,
                                 ),
                               ),
@@ -299,9 +306,9 @@ class _DealsScreenState extends State<DealsScreen>
                             "Unlock smarter insights and grow your\nmoney with clarity.",
                             textAlign: TextAlign.center,
                             style: GoogleFonts.poppins(
-                              fontSize: 12, // Reduced size
-                              fontWeight: FontWeight.w400, // Regular
-                              color: const Color(0xFF808080), // Specific grey
+                              fontSize: 12,
+                              fontWeight: FontWeight.w400,
+                              color: const Color(0xFF808080),
                               height: 1.5,
                             ),
                           ),
@@ -319,7 +326,7 @@ class _DealsScreenState extends State<DealsScreen>
                                     color: AppColors.colblack,
                                   ),
                                 ),
-                              ), // SemiBold 14
+                              ),
                               SizedBox(
                                 width: 60,
                                 child: Center(
@@ -349,7 +356,6 @@ class _DealsScreenState extends State<DealsScreen>
                             ],
                           ),
 
-                          // Reduced gap and exact divider spec
                           const Padding(
                             padding: EdgeInsets.symmetric(vertical: 8.0),
                             child: Divider(
@@ -368,9 +374,7 @@ class _DealsScreenState extends State<DealsScreen>
                             "Member only deals",
                           ].map(
                             (feature) => Padding(
-                              padding: const EdgeInsets.only(
-                                bottom: 15.0,
-                              ), // Reduced gap between context elements
+                              padding: const EdgeInsets.only(bottom: 15.0),
                               child: Row(
                                 children: [
                                   Expanded(
@@ -381,7 +385,7 @@ class _DealsScreenState extends State<DealsScreen>
                                         color: const Color(0xFF4F4F4F),
                                         fontWeight: FontWeight.w500,
                                       ),
-                                    ), // Medium 12, 4f4f4f
+                                    ),
                                   ),
                                   SizedBox(
                                     width: 60,
@@ -391,7 +395,7 @@ class _DealsScreenState extends State<DealsScreen>
                                         color: const Color(0xFF717171),
                                         size: 20,
                                       ),
-                                    ), // 717171 Cross
+                                    ),
                                   ),
                                   const SizedBox(
                                     width: 50,
@@ -453,7 +457,7 @@ class _DealsScreenState extends State<DealsScreen>
                                           ? AppColors.primaryGreen
                                           : const Color(0xFFBABABA),
                                     ),
-                                  ), // SemiBold 16
+                                  ),
                                   const SizedBox(height: 4),
                                   Text(
                                     "30 days free - Then ₹1499/Year",
@@ -461,19 +465,17 @@ class _DealsScreenState extends State<DealsScreen>
                                       fontSize: 12,
                                       fontWeight: FontWeight.w400,
                                       color: selectedPlanIndex == 0
-                                          ? AppColors.primaryGreen.withOpacity(
-                                              0.8,
-                                            )
+                                          ? AppColors.primaryGreen
+                                              .withOpacity(0.8)
                                           : const Color(0xFF808080),
                                     ),
-                                  ), // Inter Regular 12
+                                  ),
                                 ],
                               ),
                             ),
                           ),
-                          const SizedBox(
-                            height: 10,
-                          ), // Decreased gap between buttons
+                          const SizedBox(height: 10),
+
                           // Monthly Plan Card (Selectable)
                           GestureDetector(
                             onTap: () {
@@ -526,9 +528,8 @@ class _DealsScreenState extends State<DealsScreen>
                                       fontSize: 12,
                                       fontWeight: FontWeight.w400,
                                       color: selectedPlanIndex == 1
-                                          ? AppColors.primaryGreen.withOpacity(
-                                              0.8,
-                                            )
+                                          ? AppColors.primaryGreen
+                                              .withOpacity(0.8)
                                           : const Color(0xFF808080),
                                     ),
                                   ),
@@ -541,13 +542,10 @@ class _DealsScreenState extends State<DealsScreen>
                           // Green CTA Button
                           GestureDetector(
                             onTap: () {
-                              // Handle subscription action here
                               debugPrint(
                                 "Started Trial for Plan: $selectedPlanIndex",
                               );
-                              Navigator.pop(
-                                context,
-                              ); // Optional: close sheet on start
+                              Navigator.pop(context);
                             },
                             child: Container(
                               height: 54,
@@ -571,7 +569,6 @@ class _DealsScreenState extends State<DealsScreen>
                           const SizedBox(height: 24),
 
                           // Clickable T&C Footer
-                          // Clickable T&C Footer
                           RichText(
                             textAlign: TextAlign.center,
                             text: TextSpan(
@@ -592,7 +589,6 @@ class _DealsScreenState extends State<DealsScreen>
                                   ),
                                   recognizer: TapGestureRecognizer()
                                     ..onTap = () {
-                                      // Open Terms Screen
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
@@ -610,7 +606,6 @@ class _DealsScreenState extends State<DealsScreen>
                                   ),
                                   recognizer: TapGestureRecognizer()
                                     ..onTap = () {
-                                      // Open Privacy Screen
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
@@ -640,107 +635,121 @@ class _DealsScreenState extends State<DealsScreen>
       },
     ).then((_) {
       _isBottomSheetOpen = false;
+      // FIX: bottom sheet dismissal resets Android overlay style; re-apply here
+      if (mounted) SystemUIService.applyNavBarStyle(context);
     });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    SystemUIService.applyNavBarStyle(context);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.bgWhite,
-      body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 70),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Great",
-                    style: GoogleFonts.montserrat(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.colblack,
-                    ),
-                  ),
-                  Text(
-                    "Deals",
-                    style: GoogleFonts.montserrat(
-                      fontSize: 36,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.colblack,
-                      height: 1.0,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 36),
-
-            _buildSectionHeader("Crowd Favourites", showStar: false),
-            const SizedBox(height: 24),
-            SizedBox(
-              height: 228,
-              child: ListView.builder(
+      // FIX: SafeArea with top: false mirrors helpdesk_screen — keeps nav bar
+      // area opaque while leaving the status bar area unpadded.
+      body: SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 70),
+              Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                scrollDirection: Axis.horizontal,
-                physics: const BouncingScrollPhysics(),
-                itemCount: _crowdFavourites.length,
-                itemBuilder: (context, index) {
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 15.0, bottom: 8),
-                    child: _buildSmallDealCard(_crowdFavourites[index]),
-                  );
-                },
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Great",
+                      style: GoogleFonts.montserrat(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.colblack,
+                      ),
+                    ),
+                    Text(
+                      "Deals",
+                      style: GoogleFonts.montserrat(
+                        fontSize: 36,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.colblack,
+                        height: 1.0,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(height: 34),
+              const SizedBox(height: 36),
 
-            _buildSectionHeader("Member only drops", showStar: true),
-            const SizedBox(height: 14),
-            SizedBox(
-              height: 228,
-              child: NotificationListener<ScrollUpdateNotification>(
-                onNotification: (notification) {
-                  if (notification.metrics.pixels >
-                      notification.metrics.maxScrollExtent + 40) {
-                    _showMembershipBottomSheet();
-                  }
-                  return false;
-                },
+              _buildSectionHeader("Crowd Favourites", showStar: false),
+              const SizedBox(height: 24),
+              SizedBox(
+                height: 228,
                 child: ListView.builder(
                   padding: const EdgeInsets.symmetric(horizontal: 24.0),
                   scrollDirection: Axis.horizontal,
                   physics: const BouncingScrollPhysics(),
-                  itemCount: _memberDrops.length,
+                  itemCount: _crowdFavourites.length,
                   itemBuilder: (context, index) {
                     return Padding(
-                      padding: const EdgeInsets.only(right: 15.0, bottom: 8.0),
-                      child: _buildSmallDealCard(_memberDrops[index]),
+                      padding: const EdgeInsets.only(right: 15.0, bottom: 8),
+                      child: _buildSmallDealCard(_crowdFavourites[index]),
                     );
                   },
                 ),
               ),
-            ),
-            const SizedBox(height: 43),
+              const SizedBox(height: 34),
 
-            _buildSectionHeader("Deal of the day", showStar: true),
-            const SizedBox(height: 14),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: _buildBigDealCard(_dealOfTheDay),
-            ),
-            const SizedBox(height: 70),
+              _buildSectionHeader("Member only drops", showStar: true),
+              const SizedBox(height: 14),
+              SizedBox(
+                height: 228,
+                child: NotificationListener<ScrollUpdateNotification>(
+                  onNotification: (notification) {
+                    if (notification.metrics.pixels >
+                        notification.metrics.maxScrollExtent + 40) {
+                      _showMembershipBottomSheet();
+                    }
+                    return false;
+                  },
+                  child: ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                    scrollDirection: Axis.horizontal,
+                    physics: const BouncingScrollPhysics(),
+                    itemCount: _memberDrops.length,
+                    itemBuilder: (context, index) {
+                      return Padding(
+                        padding:
+                            const EdgeInsets.only(right: 15.0, bottom: 8.0),
+                        child: _buildSmallDealCard(_memberDrops[index]),
+                      );
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(height: 43),
 
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: _buildFooter(),
-            ),
-            const SizedBox(height: 70),
-          ],
+              _buildSectionHeader("Deal of the day", showStar: true),
+              const SizedBox(height: 14),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                child: _buildBigDealCard(_dealOfTheDay),
+              ),
+              const SizedBox(height: 70),
+
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                child: _buildFooter(),
+              ),
+              const SizedBox(height: 70),
+            ],
+          ),
         ),
       ),
     );
@@ -927,7 +936,7 @@ class _DealsScreenState extends State<DealsScreen>
     if (deal.isLockedWithSeeds) {
       innerContent = Stack(
         children: [
-          innerContent, // The blurred card
+          innerContent,
           Align(
             alignment: Alignment.center,
             child: Column(
@@ -940,7 +949,7 @@ class _DealsScreenState extends State<DealsScreen>
                   textAlign: TextAlign.center,
                   style: GoogleFonts.poppins(
                     fontSize: 10.0,
-                    fontWeight: FontWeight.w500, // Medium
+                    fontWeight: FontWeight.w500,
                     color: AppColors.unlockst,
                   ),
                 ),
@@ -1046,9 +1055,8 @@ class _DealsScreenState extends State<DealsScreen>
                               ],
                             ),
                             Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6.0,
-                              ),
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 6.0),
                               child: SizedBox(
                                 width: 145,
                                 child: Text(
@@ -1232,60 +1240,70 @@ class _ExpandedDealOverlayState extends State<ExpandedDealOverlay> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    SystemUIService.applyNavBarStyle(context);
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.bgWhite,
-      body: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: () => Navigator.pop(context),
-        child: SizedBox(
-          width: double.infinity,
-          height: double.infinity,
-          child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            child: GestureDetector(
-              onTap: () {},
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 70),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "Great",
-                          style: GoogleFonts.montserrat(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w500,
-                            color: AppColors.colblack,
+      // FIX: SafeArea with top: false mirrors helpdesk_screen
+      body: SafeArea(
+        top: false,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () => Navigator.pop(context),
+          child: SizedBox(
+            width: double.infinity,
+            height: double.infinity,
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: GestureDetector(
+                onTap: () {},
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 70),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Great",
+                            style: GoogleFonts.montserrat(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.colblack,
+                            ),
                           ),
-                        ),
-                        Text(
-                          "Deals",
-                          style: GoogleFonts.montserrat(
-                            fontSize: 36,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.colblack,
-                            height: 1.0,
+                          Text(
+                            "Deals",
+                            style: GoogleFonts.montserrat(
+                              fontSize: 36,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.colblack,
+                              height: 1.0,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 30),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                    child: _buildExpandedCard(context),
-                  ),
-                  const SizedBox(height: 32),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 32.0),
-                    child: _buildDetailsSection(),
-                  ),
-                  const SizedBox(height: 50),
-                ],
+                    const SizedBox(height: 30),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                      child: _buildExpandedCard(context),
+                    ),
+                    const SizedBox(height: 32),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 32.0),
+                      child: _buildDetailsSection(),
+                    ),
+                    const SizedBox(height: 50),
+                  ],
+                ),
               ),
             ),
           ),
@@ -1428,7 +1446,8 @@ class _ExpandedDealOverlayState extends State<ExpandedDealOverlay> {
                                               style: GoogleFonts.montserrat(
                                                 fontSize: 12.0,
                                                 fontWeight: FontWeight.w500,
-                                                color: const Color(0xFF656565),
+                                                color:
+                                                    const Color(0xFF656565),
                                               ),
                                             ),
                                           ),
@@ -1445,7 +1464,8 @@ class _ExpandedDealOverlayState extends State<ExpandedDealOverlay> {
                                               style: GoogleFonts.montserrat(
                                                 fontSize: 12.0,
                                                 fontWeight: FontWeight.w500,
-                                                color: const Color(0xFF656565),
+                                                color:
+                                                    const Color(0xFF656565),
                                                 letterSpacing: 2.0,
                                               ),
                                             ),
@@ -1472,9 +1492,8 @@ class _ExpandedDealOverlayState extends State<ExpandedDealOverlay> {
                                       height: 50.0,
                                       decoration: BoxDecoration(
                                         color: AppColors.primaryGreen,
-                                        borderRadius: BorderRadius.circular(
-                                          12.0,
-                                        ),
+                                        borderRadius:
+                                            BorderRadius.circular(12.0),
                                       ),
                                       child: Center(
                                         child: Text(

@@ -548,7 +548,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                         child: Opacity(
                           opacity: val,
                           child: Image.asset(
-                            'assets/images/full_forest_iso.png',
+                            'assets/images/forest/forest_great.png',
                             fit: BoxFit.contain,
                           ),
                         ),
@@ -1511,7 +1511,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                                 children: [
                                   // 1. Full Forest Image exactly as provided
                                   Image.asset(
-                                    'assets/images/forest/fullgreen.png', // Uses your merged single image
+                                    'assets/images/forest/forest_great.png', // Uses your merged single image
                                     width: screenWidth * 0.85,
                                     fit: BoxFit.contain,
                                   ),

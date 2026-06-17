@@ -884,7 +884,7 @@ class _ForestScreenState extends State<ForestScreen> {
                     forestStatus.label,
                     style: GoogleFonts.montserrat(
                       fontSize: 12,
-                      color: AppColors.colblack,
+                      color: AppColors.colwhite,
                       fontWeight: FontWeight.w500,
                     ),
                   ),

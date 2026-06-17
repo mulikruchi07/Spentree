@@ -1,10 +1,25 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // --- 1. GLOBAL THEME NOTIFIER ---
 // This listens for theme changes and instantly rebuilds the app
 final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.system);
+
+/// Call this in main() BEFORE runApp to restore the user's saved theme.
+/// Defaults to ThemeMode.system on a fresh install — correct behavior.
+Future<void> loadSavedTheme() async {
+  final prefs = await SharedPreferences.getInstance();
+  final saved = prefs.getString('app_theme');
+  if (saved == 'Light mode') {
+    themeNotifier.value = ThemeMode.light;
+  } else if (saved == 'Dark mode') {
+    themeNotifier.value = ThemeMode.dark;
+  } else {
+    themeNotifier.value = ThemeMode.system; // null key → fresh install → System ✓
+  }
+}
 
 // Helper to check if the current active mode is dark
 bool get isDarkMode {

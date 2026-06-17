@@ -555,6 +555,7 @@ import 'package:home_widget/home_widget.dart';
 import 'package:spentree/screens/analytics/analytics_screen.dart';
 import 'package:spentree/screens/main_wrapper.dart';
 import 'app_lock.dart';
+import 'core/user_profile.dart';
 import 'core/app_style.dart';
 import 'core/transaction_service.dart';
 import 'dart:io' show Platform;
@@ -574,6 +575,9 @@ void main() async {
   // The notifier starts as AppLockState.locked (pessimistic). initialize()
   // reads SharedPreferences and flips to unlocked if lock is disabled.
   await AppLockController.initialize();
+  await loadSavedTheme();          // ← NEW: restore persisted theme before first frame
+  await userProfileNotifier.initialize(); // ← NEW: restore name + image before first frame
+
 
   // ONLY register widget code if we are NOT on the web
   if (!kIsWeb) {

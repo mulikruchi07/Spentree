@@ -9,6 +9,7 @@ import 'dart:math' as math;
 import 'dart:convert'; // Required for jsonEncode
 import 'package:flutter/material.dart'; // Required for DateUtils
 import 'package:spentree/core/user_data.dart';
+import 'package:spentree/core/user_profile.dart';
 
 class Transaction {
   String id;
@@ -282,6 +283,10 @@ class TransactionService extends ChangeNotifier {
       await HomeWidget.saveWidgetData<String>(
         'widget_limit_str',
         limit.toString(),
+      );
+      await HomeWidget.saveWidgetData<String>(
+        'widget_user_name',
+        userProfileNotifier.value.name,
       );
 
       // --- NEW: recent 4 transactions for the Expenses widget ---

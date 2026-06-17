@@ -1243,8 +1243,6 @@
 // }
 
 import 'dart:ui';
-import 'dart:convert';
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:home_widget/home_widget.dart';
@@ -1255,7 +1253,7 @@ import 'package:spentree/app_lock.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
-import '../../core/user_data.dart';
+import '../../core/user_profile.dart';
 import '../../core/biometric_service.dart';
 import '../auth/change_password_screen.dart';
 import '../../core/app_style.dart';
@@ -1264,11 +1262,7 @@ import '../forest/forest_screen.dart';
 class AccountScreen extends StatefulWidget {
   const AccountScreen({super.key});
 
-  // --- GLOBAL STATIC CACHE FOR ZERO-DELAY LOADING ---
-  static bool isDataPreloaded = false;
-  static bool cachedFaceId = false;
-  static String cachedTheme = "System";
-  static Uint8List? cachedProfileBytes;
+  // Sound effects cache — still useful for ForestScreen instant reads
   static bool cachedSoundEffects = true;
 
   @override
@@ -1276,7 +1270,7 @@ class AccountScreen extends StatefulWidget {
 }
 
 class _AccountScreenState extends State<AccountScreen> {
-  // FIX: Added loading state to prevent toggle switch flickering on load
+  // Loading state to prevent toggle switch flickering on load
   bool _isLoading = true;
 
   // Toggle States
@@ -1287,7 +1281,7 @@ class _AccountScreenState extends State<AccountScreen> {
   bool _soundEffects = true;
   String _selectedTheme = "System";
 
-  // --- Inline Editing States & Validation ---
+  // Inline Editing States & Validation
   bool _isEditingName = false;
   bool _isEditingPhone = false;
 
@@ -1303,15 +1297,15 @@ class _AccountScreenState extends State<AccountScreen> {
   final ScrollController _scrollController = ScrollController();
   final GlobalKey _editSectionKey = GlobalKey();
 
-  // Image Handling
-  Uint8List? _profileBytes;
+  // Local crop path only — image bytes live in userProfileNotifier
   String? _originalImagePath;
   final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
     super.initState();
-    _originalName = UserData.userName;
+    // Name sourced from the global notifier
+    _originalName = userProfileNotifier.value.name;
     _originalPhone = "0000000000";
 
     _nameController = TextEditingController(text: _originalName);
@@ -1329,23 +1323,17 @@ class _AccountScreenState extends State<AccountScreen> {
 
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
-
     setState(() {
       _isFaceIdEnabled = prefs.getBool('isFaceIdEnabled') ?? false;
-      _selectedTheme = prefs.getString('app_theme') ?? "System";
-      _soundEffects = prefs.getBool('sound_effects') ?? true;
-
-      final String? savedImageBase64 = prefs.getString('profile_image');
-      if (savedImageBase64 != null) {
-        _profileBytes = base64Decode(savedImageBase64);
-      }
-
-      _isLoading = false; // Data is loaded, safe to build UI!
+      _selectedTheme   = prefs.getString('app_theme') ?? "System";
+      _soundEffects    = prefs.getBool('sound_effects') ?? true;
+      // Profile image is loaded from userProfileNotifier — no local loading needed
+      _isLoading = false;
     });
   }
 
   void _handleBackNavigation() {
-    bool nameChanged = _nameController.text != _originalName;
+    bool nameChanged  = _nameController.text != _originalName;
     bool phoneChanged = _phoneController.text != _originalPhone;
 
     if ((_isEditingName && nameChanged) || (_isEditingPhone && phoneChanged)) {
@@ -1363,9 +1351,9 @@ class _AccountScreenState extends State<AccountScreen> {
       );
     } else {
       setState(() {
-        _isEditingName = false;
+        _isEditingName  = false;
         _isEditingPhone = false;
-        _nameController.text = _originalName;
+        _nameController.text  = _originalName;
         _phoneController.text = _originalPhone;
       });
       Navigator.of(context).pop();
@@ -1378,15 +1366,18 @@ class _AccountScreenState extends State<AccountScreen> {
         setState(() => _nameError = "Name cannot be empty");
         return;
       }
+      final newName = _nameController.text.trim();
+      // Write through the notifier — broadcasts instantly to every screen
+      userProfileNotifier.updateName(newName);
       setState(() {
-        _originalName = _nameController.text.trim();
-        _nameError = null;
+        _originalName  = newName;
+        _nameError     = null;
         _isEditingName = false;
       });
     } else {
       setState(() {
         _isEditingName = true;
-        _nameError = null;
+        _nameError     = null;
       });
     }
   }
@@ -1398,20 +1389,20 @@ class _AccountScreenState extends State<AccountScreen> {
         return;
       }
       setState(() {
-        _originalPhone = _phoneController.text;
-        _phoneError = null;
+        _originalPhone  = _phoneController.text;
+        _phoneError     = null;
         _isEditingPhone = false;
       });
     } else {
       setState(() {
         _isEditingPhone = true;
-        _phoneError = null;
+        _phoneError     = null;
       });
     }
   }
 
   Future<void> _handleEditIconTap() async {
-    if (_profileBytes != null) {
+    if (userProfileNotifier.value.imageBytes != null) {
       _showImageActionSheet();
     } else {
       _showImageSourceSelector(false);
@@ -1430,10 +1421,7 @@ class _AccountScreenState extends State<AccountScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: PhosphorIcon(
-                PhosphorIcons.image,
-                color: AppColors.colblack,
-              ),
+              leading: PhosphorIcon(PhosphorIcons.image, color: AppColors.colblack),
               title: Text(
                 "Change Profile Picture",
                 style: GoogleFonts.poppins(color: AppColors.colblack),
@@ -1445,10 +1433,7 @@ class _AccountScreenState extends State<AccountScreen> {
             ),
             if (_originalImagePath != null)
               ListTile(
-                leading: PhosphorIcon(
-                  PhosphorIcons.crop,
-                  color: AppColors.colblack,
-                ),
+                leading: PhosphorIcon(PhosphorIcons.crop, color: AppColors.colblack),
                 title: Text(
                   "Adjust Profile Picture",
                   style: GoogleFonts.poppins(color: AppColors.colblack),
@@ -1459,22 +1444,16 @@ class _AccountScreenState extends State<AccountScreen> {
                 },
               ),
             ListTile(
-              leading: PhosphorIcon(
-                PhosphorIcons.trash,
-                color: AppColors.destructiveRed,
-              ),
+              leading: PhosphorIcon(PhosphorIcons.trash, color: AppColors.destructiveRed),
               title: Text(
                 "Remove Profile Picture",
                 style: GoogleFonts.poppins(color: AppColors.destructiveRed),
               ),
               onTap: () async {
                 Navigator.pop(context);
-                final prefs = await SharedPreferences.getInstance();
-                await prefs.remove('profile_image');
-                setState(() {
-                  _profileBytes = null;
-                  _originalImagePath = null;
-                });
+                // Clears from notifier + SharedPreferences in one call
+                await userProfileNotifier.removeImage();
+                setState(() => _originalImagePath = null);
               },
             ),
           ],
@@ -1495,24 +1474,15 @@ class _AccountScreenState extends State<AccountScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: PhosphorIcon(
-                PhosphorIcons.camera,
-                color: AppColors.colblack,
-              ),
-              title: Text(
-                "Take Photo",
-                style: GoogleFonts.poppins(color: AppColors.colblack),
-              ),
+              leading: PhosphorIcon(PhosphorIcons.camera, color: AppColors.colblack),
+              title: Text("Take Photo", style: GoogleFonts.poppins(color: AppColors.colblack)),
               onTap: () {
                 Navigator.pop(context);
                 _pickImage(ImageSource.camera);
               },
             ),
             ListTile(
-              leading: PhosphorIcon(
-                PhosphorIcons.image,
-                color: AppColors.colblack,
-              ),
+              leading: PhosphorIcon(PhosphorIcons.image, color: AppColors.colblack),
               title: Text(
                 "Choose from Gallery",
                 style: GoogleFonts.poppins(color: AppColors.colblack),
@@ -1543,7 +1513,7 @@ class _AccountScreenState extends State<AccountScreen> {
               SnackBar(
                 content: Text(
                   "Image size must be less than 5MB",
-                  style: GoogleFonts.poppins(color: Colors.white),
+                  style: GoogleFonts.poppins(color: AppColors.colwhite),
                 ),
                 backgroundColor: AppColors.destructiveRed,
               ),
@@ -1551,7 +1521,6 @@ class _AccountScreenState extends State<AccountScreen> {
           }
           return;
         }
-
         _originalImagePath = pickedFile.path;
         _cropImage(pickedFile.path);
       }
@@ -1584,14 +1553,18 @@ class _AccountScreenState extends State<AccountScreen> {
 
       if (croppedFile != null) {
         final bytes = await croppedFile.readAsBytes();
-        final String base64Image = base64Encode(bytes);
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('profile_image', base64Image);
-        await HomeWidget.updateWidget(name: 'GreetingWidgetProvider', iOSName: 'GreetingWidgetProvider');
-
-        setState(() {
-          _profileBytes = bytes;
-        });
+        // Persists bytes to SharedPrefs + broadcasts to all listeners
+        await userProfileNotifier.updateImage(bytes);
+        // Sync the home widget
+        await HomeWidget.saveWidgetData<String>(
+          'widget_user_name',
+          userProfileNotifier.value.name,
+        );
+        await HomeWidget.updateWidget(
+          name: 'GreetingWidgetProvider',
+          iOSName: 'GreetingWidgetProvider',
+        );
+        if (mounted) setState(() {});
       }
     } catch (e) {
       debugPrint("Error cropping image: $e");
@@ -1599,7 +1572,8 @@ class _AccountScreenState extends State<AccountScreen> {
   }
 
   void _viewProfileImage() {
-    if (_profileBytes == null) return;
+    final bytes = userProfileNotifier.value.imageBytes;
+    if (bytes == null) return;
     Navigator.of(context).push(
       PageRouteBuilder(
         opaque: false,
@@ -1617,7 +1591,7 @@ class _AccountScreenState extends State<AccountScreen> {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     image: DecorationImage(
-                      image: MemoryImage(_profileBytes!),
+                      image: MemoryImage(bytes),
                       fit: BoxFit.cover,
                     ),
                   ),
@@ -1643,7 +1617,6 @@ class _AccountScreenState extends State<AccountScreen> {
 
   void _handleFaceIdToggle(bool val) async {
     if (val) {
-      // Authenticate first; only enable the lock if auth succeeds.
       final result = await BiometricService.authenticate();
       if (result == AuthResult.success) {
         await AppLockController.setLockEnabled(true);
@@ -1683,9 +1656,10 @@ class _AccountScreenState extends State<AccountScreen> {
     if (!await launchUrl(uri)) throw 'Could not launch $url';
   }
 
+  // ── Build ────────────────────────────────────────────────────────────────
+
   @override
   Widget build(BuildContext context) {
-    // If SharedPreferences is still loading, return a blank background to prevent switch flickering
     if (_isLoading) {
       return Scaffold(backgroundColor: AppColors.bgWhite);
     }
@@ -1815,13 +1789,8 @@ class _AccountScreenState extends State<AccountScreen> {
                       "Control Sound effects & Music",
                       _soundEffects,
                       (v) async {
-                        // 1. Update the UI instantly
                         setState(() => _soundEffects = v);
-
-                        // 2. Sync to the global cache (so ForestScreen can read it instantly)
                         AccountScreen.cachedSoundEffects = v;
-
-                        // 3. Save to device storage for the next time the app opens
                         final prefs = await SharedPreferences.getInstance();
                         await prefs.setBool('sound_effects', v);
                       },
@@ -1841,8 +1810,7 @@ class _AccountScreenState extends State<AccountScreen> {
                       "Temporarily disable account",
                       onPop: () => _showConfirmationDialog(
                         title: "Deactivate Account",
-                        message:
-                            "You can come back anytime by logging in again.",
+                        message: "You can come back anytime by logging in again.",
                         confirmText: "Yes, Deactivate",
                         icon: PhosphorIcons.lockKey,
                         onConfirm: () {},
@@ -1873,7 +1841,103 @@ class _AccountScreenState extends State<AccountScreen> {
       },
     );
   }
-  // --- UI Reusable Components ---
+
+  // ── UI Components ────────────────────────────────────────────────────────
+
+  Widget _buildProfileHeader() {
+    // Wraps in ValueListenableBuilder so name + image update instantly
+    // across the whole app without requiring any manual refresh
+    return ValueListenableBuilder<UserProfile>(
+      valueListenable: userProfileNotifier,
+      builder: (context, profile, _) {
+        return Center(
+          child: Column(
+            children: [
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  GestureDetector(
+                    onTap: profile.imageBytes != null ? _viewProfileImage : null,
+                    child: Hero(
+                      tag: 'profile_image_hero',
+                      child: Container(
+                        width: 120,
+                        height: 120,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: AppColors.inputFill,
+                        ),
+                        clipBehavior: Clip.antiAlias,
+                        child: profile.imageBytes != null
+                            ? Image.memory(profile.imageBytes!, fit: BoxFit.cover)
+                            : Image.asset(
+                                'assets/images/user_avatar.png',
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) => Icon(
+                                  Icons.person,
+                                  size: 60,
+                                  color: AppColors.colblack,
+                                ),
+                              ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    top: 0,
+                    right: 0,
+                    child: GestureDetector(
+                      onTap: _handleEditIconTap,
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppColors.bgWhite,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: AppColors.borderGrey.withOpacity(0.5),
+                            width: 1,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.15),
+                              blurRadius: 8,
+                              spreadRadius: 0,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: PhosphorIcon(
+                          PhosphorIcons.pencilSimple,
+                          size: 20,
+                          color: AppColors.colblack,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                profile.name, // ← live from notifier, updates instantly everywhere
+                style: GoogleFonts.poppins(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.colblack,
+                ),
+              ),
+              Text(
+                "Planting since January 2025",
+                style: GoogleFonts.montserrat(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.white500,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
   Widget _buildAppearanceSection() {
     return Padding(
@@ -1891,7 +1955,7 @@ class _AccountScreenState extends State<AccountScreen> {
 
   Widget _buildThemeOption(String title) {
     bool isSelected = _selectedTheme == title;
-    Color activeColor = const Color(0xFF6B6B6B);
+    Color activeColor   = const Color(0xFF6B6B6B);
     Color inactiveColor = const Color(0xFFC4C4C4);
 
     return GestureDetector(
@@ -1937,95 +2001,6 @@ class _AccountScreenState extends State<AccountScreen> {
     );
   }
 
-  Widget _buildProfileHeader() {
-    return Center(
-      child: Column(
-        children: [
-          Stack(
-            clipBehavior: Clip.none,
-            children: [
-              GestureDetector(
-                onTap: _viewProfileImage,
-                child: Hero(
-                  tag: 'profile_image_hero',
-                  child: Container(
-                    width: 120,
-                    height: 120,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: AppColors.inputFill,
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    child: _profileBytes != null
-                        ? Image.memory(_profileBytes!, fit: BoxFit.cover)
-                        : Image.asset(
-                            'assets/images/user_avatar.png',
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) => Icon(
-                              Icons.person,
-                              size: 60,
-                              color: AppColors.colblack,
-                            ),
-                          ),
-                  ),
-                ),
-              ),
-
-              Positioned(
-                top: 0,
-                right: 0,
-                child: GestureDetector(
-                  onTap: _handleEditIconTap,
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: AppColors.bgWhite,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: AppColors.borderGrey.withOpacity(0.5),
-                        width: 1,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.15),
-                          blurRadius: 8,
-                          spreadRadius: 0,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: PhosphorIcon(
-                      PhosphorIcons.pencilSimple,
-                      size: 20,
-                      color: AppColors.colblack,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            _originalName,
-            style: GoogleFonts.poppins(
-              fontSize: 22,
-              fontWeight: FontWeight.w600,
-              color: AppColors.colblack,
-            ),
-          ),
-          Text(
-            "Planting since January 2025",
-            style: GoogleFonts.montserrat(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: AppColors.white500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildInlineEditableField({
     required String label,
     required TextEditingController controller,
@@ -2062,9 +2037,8 @@ class _AccountScreenState extends State<AccountScreen> {
                     ? TextField(
                         controller: controller,
                         autofocus: true,
-                        keyboardType: isPhone
-                            ? TextInputType.number
-                            : TextInputType.text,
+                        keyboardType:
+                            isPhone ? TextInputType.number : TextInputType.text,
                         inputFormatters: isPhone
                             ? [
                                 FilteringTextInputFormatter.digitsOnly,
@@ -2080,13 +2054,14 @@ class _AccountScreenState extends State<AccountScreen> {
                           isDense: true,
                         ),
                         onChanged: (_) {
-                          if (errorMsg != null)
+                          if (errorMsg != null) {
                             setState(() {
                               if (isPhone)
                                 _phoneError = null;
                               else
                                 _nameError = null;
                             });
+                          }
                         },
                       )
                     : Text(
@@ -2331,10 +2306,7 @@ class _AccountScreenState extends State<AccountScreen> {
           onTap: () => _launchURL("https://linkedin.com/in/designer"),
           child: RichText(
             text: TextSpan(
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                color: AppColors.white500,
-              ),
+              style: GoogleFonts.poppins(fontSize: 14, color: AppColors.white500),
               children: [
                 TextSpan(
                   text: "Designed by ",
@@ -2360,10 +2332,7 @@ class _AccountScreenState extends State<AccountScreen> {
           onTap: () => _launchURL("https://linkedin.com/in/developer"),
           child: RichText(
             text: TextSpan(
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                color: AppColors.white500,
-              ),
+              style: GoogleFonts.poppins(fontSize: 14, color: AppColors.white500),
               children: [
                 TextSpan(
                   text: "Developed by ",

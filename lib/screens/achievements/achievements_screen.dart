@@ -6,6 +6,7 @@ import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import '../../core/app_style.dart';
 import '../../core/user_data.dart'; // Assumes you have this for UserData.userName / UserData.profileImageUrl
 import 'deals_screen.dart';
+import '../../core/user_profile.dart';
 
 class AchievementsScreen extends StatefulWidget {
   const AchievementsScreen({super.key});
@@ -75,90 +76,93 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
       valueListenable: themeNotifier,
       builder: (context, currentTheme, child) {
         return Scaffold(
-      backgroundColor: AppColors.bgWhite,
-      body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 70),
-
-              // 1. Header
-              _buildHeader(),
-              const SizedBox(height: 32),
-
-              // 2. Profile & Level Section
-              _buildProfileSection(screenWidth),
-
-              // Explicit gap of 18 from progress bar to Upcoming level text
-              const SizedBox(height: 22),
-
-              // 3. Upcoming Level Card
-              Text(
-                "Upcoming Level",
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.colblack,
-                ),
-              ),
-              const SizedBox(height: 18),
-              _buildUpcomingLevelCard(screenWidth),
-
-              // Explicit gap of 26 from upcoming card to milestone text
-              const SizedBox(height: 30),
-
-              // 4. Milestone Collection Header
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          backgroundColor: AppColors.bgWhite,
+          body: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  const SizedBox(height: 70),
+
+                  // 1. Header
+                  _buildHeader(),
+                  const SizedBox(height: 32),
+
+                  // 2. Profile & Level Section
+                  _buildProfileSection(screenWidth),
+
+                  // Explicit gap of 18 from progress bar to Upcoming level text
+                  const SizedBox(height: 22),
+
+                  // 3. Upcoming Level Card
                   Text(
-                    "Milestone Collection",
+                    "Upcoming Level",
                     style: GoogleFonts.poppins(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
                       color: AppColors.colblack,
                     ),
                   ),
-                  Text(
-                    "06/30",
-                    style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.colblack,
-                    ),
+                  const SizedBox(height: 18),
+                  _buildUpcomingLevelCard(screenWidth),
+
+                  // Explicit gap of 26 from upcoming card to milestone text
+                  const SizedBox(height: 30),
+
+                  // 4. Milestone Collection Header
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "Milestone Collection",
+                        style: GoogleFonts.poppins(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.colblack,
+                        ),
+                      ),
+                      Text(
+                        "06/30",
+                        style: GoogleFonts.poppins(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.colblack,
+                        ),
+                      ),
+                    ],
                   ),
+
+                  // Explicit gap of 16 from milestone header to first card
+                  const SizedBox(height: 18),
+
+                  // 5. Milestone List
+                  ListView.builder(
+                    shrinkWrap: true,
+                    padding: EdgeInsets.zero,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: _milestones.length,
+                    itemBuilder: (context, index) {
+                      return _buildMilestoneCard(
+                        _milestones[index],
+                        screenWidth,
+                      );
+                    },
+                  ),
+
+                  // Explicit gap of 26 from last card to footer
+                  const SizedBox(height: 16),
+
+                  // 6. Footer
+                  _buildFooter(context),
+                  const SizedBox(height: 120), // Bottom padding for navbar
                 ],
-              ),
-
-              // Explicit gap of 16 from milestone header to first card
-              const SizedBox(height: 18),
-
-              // 5. Milestone List
-              ListView.builder(
-                shrinkWrap: true,
-                padding: EdgeInsets.zero,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: _milestones.length,
-                itemBuilder: (context, index) {
-                  return _buildMilestoneCard(_milestones[index], screenWidth);
-                },
-              ),
-
-              // Explicit gap of 26 from last card to footer
-              const SizedBox(height: 16),
-
-              // 6. Footer
-              _buildFooter(context),
-              const SizedBox(height: 120), // Bottom padding for navbar
-            ],
               ),
             ),
           ),
         );
-      }
+      },
     );
   }
 
@@ -229,12 +233,6 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
     int maxScore = 150;
     double progress = currentScore / maxScore;
 
-    // Simulate fetching username, default to Ruchi if empty
-    String userName = UserData.userName.isNotEmpty
-        ? UserData.userName
-        : "Ruchi Mulik";
-    bool hasProfilePic = false; // Set to true when backend is connected
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -274,16 +272,18 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 color: AppColors.inputFill,
-                                image: hasProfilePic
-                                    ? const DecorationImage(
-                                        image: NetworkImage(
-                                          "YOUR_BACKEND_URL_HERE",
+                                image:
+                                    userProfileNotifier.value.imageBytes != null
+                                    ? DecorationImage(
+                                        image: MemoryImage(
+                                          userProfileNotifier.value.imageBytes!,
                                         ),
                                         fit: BoxFit.cover,
                                       )
                                     : null,
                               ),
-                              child: !hasProfilePic
+                              child:
+                                  userProfileNotifier.value.imageBytes == null
                                   ? Icon(
                                       PhosphorIcons.user,
                                       size: 40,
@@ -334,12 +334,15 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    userName,
-                    style: GoogleFonts.montserrat(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w600, // SemiBold
-                      color: AppColors.colblack,
+                  ValueListenableBuilder<UserProfile>(
+                    valueListenable: userProfileNotifier,
+                    builder: (context, profile, _) => Text(
+                      profile.name,
+                      style: GoogleFonts.montserrat(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.colblack,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 4), // Exact distance of 3
@@ -451,7 +454,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                 Opacity(
                   opacity: 0.3,
                   child: Image.asset(
-                    'assets/images/forest/fullgreen.png', // Fallback light image
+                    'assets/images/forest/forest_great.png', // Fallback light image
                     fit: BoxFit.cover,
                   ),
                 ),

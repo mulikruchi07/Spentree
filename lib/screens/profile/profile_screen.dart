@@ -9,9 +9,9 @@ import 'package:spentree/screens/auth/sign_in_screen.dart';
 import 'package:spentree/screens/profile/account_screen.dart';
 import 'about_screen.dart';
 import 'contact_screen.dart';
-import '../../core/user_data.dart';
 import 'data_privacy_screen.dart';
 import 'helpdesk_screen.dart';
+import '../../core/user_profile.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -26,7 +26,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.initState();
   }
 
-  // --- NEW FLOATING POPUP WITH BLUR ---
   Future<void> _showConfirmationDialog({
     required String title,
     required String message,
@@ -39,7 +38,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       barrierDismissible: true,
       builder: (context) {
         return BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10), // Background Blur
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: Dialog(
             backgroundColor: Colors.transparent,
             insetPadding: const EdgeInsets.symmetric(horizontal: 40),
@@ -47,25 +46,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
                 color: AppColors.bgWhite,
-                borderRadius: BorderRadius.circular(
-                  28,
-                ), // Floating rounded look
+                borderRadius: BorderRadius.circular(28),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Red Circular Icon at Top
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: const BoxDecoration(
-                      color: AppColors.destructiveRed, // Design Red
+                      color: AppColors.destructiveRed,
                       shape: BoxShape.circle,
                     ),
                     child: Icon(icon, color: AppColors.colwhite, size: 32),
                   ),
                   const SizedBox(height: 20),
-
-                  // Title
                   Text(
                     title,
                     style: GoogleFonts.poppins(
@@ -75,8 +69,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                   const SizedBox(height: 8),
-
-                  // Subtitle Message
                   Text(
                     message,
                     textAlign: TextAlign.center,
@@ -87,8 +79,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                   const SizedBox(height: 32),
-
-                  // Confirm Button (Red)
                   SizedBox(
                     width: double.infinity,
                     height: 54,
@@ -115,8 +105,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
-
-                  // Cancel Button (Grey)
                   SizedBox(
                     width: double.infinity,
                     height: 54,
@@ -134,8 +122,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         style: GoogleFonts.poppins(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color:
-                              AppColors.destructiveRed, // Red text for cancel
+                          color: AppColors.destructiveRed,
                         ),
                       ),
                     ),
@@ -153,13 +140,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     MediaQuery.platformBrightnessOf(context);
 
+    // ValueListenableBuilder<ThemeMode> ensures the entire screen rebuilds
+    // whenever the theme changes — this is what was missing before and caused
+    // the profile screen to stay stuck on the old theme.
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: themeNotifier,
       builder: (context, currentTheme, child) {
-        String initial = UserData.userName.isNotEmpty
-            ? UserData.userName[0].toUpperCase()
-            : "?";
-
         return Scaffold(
           backgroundColor: AppColors.bgWhite,
           body: SingleChildScrollView(
@@ -170,7 +156,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 70),
-                  // ... Header Code ...
+
+                  // ── Header ───────────────────────────────────────────────
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.end,
@@ -208,57 +195,83 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  // ... User Card ...
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(18),
-                    decoration: BoxDecoration(
-                      color: AppColors.inputFill,
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 35,
-                          backgroundColor: AppColors.primaryGreen,
-                          child: Text(
-                            initial,
-                            style: GoogleFonts.montserrat(
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.colblack,
-                            ),
-                          ),
+
+                  // ── User Card ────────────────────────────────────────────
+                  // ValueListenableBuilder<UserProfile> rebuilds just this
+                  // card when name or profile image changes in AccountScreen,
+                  // giving instant sync with zero restart required.
+                  ValueListenableBuilder<UserProfile>(
+                    valueListenable: userProfileNotifier,
+                    builder: (context, profile, _) {
+                      return Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(18),
+                        decoration: BoxDecoration(
+                          color: AppColors.inputFill,
+                          borderRadius: BorderRadius.circular(15),
                         ),
-                        const SizedBox(width: 20),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        child: Row(
                           children: [
-                            Text(
-                              UserData.userName,
-                              style: GoogleFonts.poppins(
-                                fontSize: 22,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.colblack,
+                            // Profile image if set, otherwise initial letter
+                            Container(
+                              width: 70,
+                              height: 70,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: profile.imageBytes != null
+                                    ? AppColors.inputFill
+                                    : AppColors.primaryGreen,
                               ),
+                              clipBehavior: Clip.antiAlias,
+                              child: profile.imageBytes != null
+                                  ? Image.memory(
+                                      profile.imageBytes!,
+                                      fit: BoxFit.cover,
+                                    )
+                                  : Center(
+                                      child: Text(
+                                        profile.name.isNotEmpty
+                                            ? profile.name[0].toUpperCase()
+                                            : "?",
+                                        style: GoogleFonts.montserrat(
+                                          fontSize: 28,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              "Planting since January 2025",
-                              style: GoogleFonts.montserrat(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.white500,
-                              ),
+                            const SizedBox(width: 20),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  profile.name,
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.colblack,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  "Planting since January 2025",
+                                  style: GoogleFonts.montserrat(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.white500,
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
-                      ],
-                    ),
+                      );
+                    },
                   ),
                   const SizedBox(height: 32),
 
-                  // Settings List
+                  // ── Settings List ────────────────────────────────────────
                   _buildSettingsItem(
                     PhosphorIcons.user,
                     "My Account",
@@ -272,7 +285,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       );
                     },
                   ),
-
                   _buildSettingsItem(
                     PhosphorIcons.shieldCheck,
                     "Data & Privacy",
@@ -286,19 +298,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       );
                     },
                   ),
-                  // Logout Item
                   _buildSettingsItem(
                     PhosphorIcons.signOut,
                     "Log out",
                     "Further secure your account for safety",
                     () {
-                      // SHOW CUSTOM LOGOUT DIALOG
                       _showConfirmationDialog(
                         title: "Logout",
                         message: "Are you sure you want to logout?",
                         confirmText: "Yes, Logout",
                         icon: PhosphorIcons.signOut,
-
                         onConfirm: () async {
                           final prefs = await SharedPreferences.getInstance();
                           await prefs.setBool('isLoggedIn', false);
@@ -355,18 +364,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     },
                   ),
 
-                  const SizedBox(
-                    height: 20,
-                  ), // "Reduce gap distance between tip and divide line"
+                  const SizedBox(height: 20),
                   Divider(color: AppColors.divider, thickness: 1),
-
                   const SizedBox(height: 20),
 
-                  // --- 7. Footer ---
+                  // ── Footer ───────────────────────────────────────────────
                   Center(
                     child: Text(
                       "Planted with love in Mumbai, India",
-                      // Poppins, Medium 13
                       style: GoogleFonts.poppins(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
@@ -390,55 +395,56 @@ class _ProfileScreenState extends State<ProfileScreen> {
     String t,
     String s,
     VoidCallback tap,
-  ) => Container(
-    margin: const EdgeInsets.only(bottom: 16),
-    decoration: BoxDecoration(
-      color: AppColors.inputFill,
-      borderRadius: BorderRadius.circular(16),
-    ),
-    child: InkWell(
-      onTap: tap,
-      borderRadius: BorderRadius.circular(16),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: AppColors.colIconBg,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, size: 24, color: AppColors.colblack),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    t,
-                    style: GoogleFonts.poppins(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.colblack,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    s,
-                    style: GoogleFonts.poppins(
-                      fontSize: 11,
-                      color: AppColors.desctext,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const Icon(Icons.chevron_right, color: AppColors.desctext),
-          ],
+  ) =>
+      Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        decoration: BoxDecoration(
+          color: AppColors.inputFill,
+          borderRadius: BorderRadius.circular(16),
         ),
-      ),
-    ),
-  );
+        child: InkWell(
+          onTap: tap,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.colIconBg,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(icon, size: 24, color: AppColors.colblack),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        t,
+                        style: GoogleFonts.poppins(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.colblack,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        s,
+                        style: GoogleFonts.poppins(
+                          fontSize: 11,
+                          color: AppColors.desctext,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.chevron_right, color: AppColors.desctext),
+              ],
+            ),
+          ),
+        ),
+      );
 }

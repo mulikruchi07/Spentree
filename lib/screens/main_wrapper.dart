@@ -94,8 +94,9 @@ class _MainWrapperState extends State<MainWrapper> with WidgetsBindingObserver {
       SystemUiOverlayStyle(
         systemNavigationBarColor: navColor,
         systemNavigationBarDividerColor: navColor,
-        systemNavigationBarIconBrightness:
-            isDark ? Brightness.light : Brightness.dark,
+        systemNavigationBarIconBrightness: isDark
+            ? Brightness.light
+            : Brightness.dark,
         systemNavigationBarContrastEnforced: false,
       ),
     );
@@ -104,12 +105,12 @@ class _MainWrapperState extends State<MainWrapper> with WidgetsBindingObserver {
   // ── Pages ────────────────────────────────────────────────────────────────
 
   List<Widget> get _pages => [
-        const DashboardScreen(),
-        AnalyticsScreen(startWithAddExpense: widget.openAddExpenseForm),
-        const ForestScreen(),
-        const AchievementsScreen(),
-        const ProfileScreen(),
-      ];
+    const DashboardScreen(),
+    AnalyticsScreen(startWithAddExpense: widget.openAddExpenseForm),
+    const ForestScreen(),
+    const AchievementsScreen(),
+    const ProfileScreen(),
+  ];
 
   // ── Build ────────────────────────────────────────────────────────────────
 
@@ -122,11 +123,11 @@ class _MainWrapperState extends State<MainWrapper> with WidgetsBindingObserver {
       builder: (context, _, __) {
         return Scaffold(
           backgroundColor: AppColors.bgWhite,
+          // In _MainWrapperState.build(), change the PageView:
           body: PageView(
             controller: _pageController,
-            // No lock-based physics override needed — AppLockWrapper's
-            // AbsorbPointer blocks all touches when locked.
-            physics: const BouncingScrollPhysics(),
+            physics:
+                const _ClampingPagePhysics(), // ← fixes overscroll; swiping disabled
             onPageChanged: (i) => setState(() => _selectedIndex = i),
             children: _pages,
           ),
@@ -171,9 +172,15 @@ class _MainWrapperState extends State<MainWrapper> with WidgetsBindingObserver {
         children: [
           _navItem(0, PhosphorIcons.house, PhosphorIcons.houseFill),
           _navItem(
-              1, PhosphorIcons.chartPieSlice, PhosphorIcons.chartPieSliceFill),
+            1,
+            PhosphorIcons.chartPieSlice,
+            PhosphorIcons.chartPieSliceFill,
+          ),
           _navItem(
-              2, PhosphorIcons.treeEvergreen, PhosphorIcons.treeEvergreenFill),
+            2,
+            PhosphorIcons.treeEvergreen,
+            PhosphorIcons.treeEvergreenFill,
+          ),
           _navItem(3, PhosphorIcons.trophy, PhosphorIcons.trophyFill),
           _navItem(4, PhosphorIcons.user, PhosphorIcons.userFill),
         ],
@@ -198,5 +205,14 @@ class _MainWrapperState extends State<MainWrapper> with WidgetsBindingObserver {
         ),
       ),
     );
+  }
+}
+
+class _ClampingPagePhysics extends PageScrollPhysics {
+  const _ClampingPagePhysics() : super(parent: const ClampingScrollPhysics());
+
+  @override
+  _ClampingPagePhysics applyTo(ScrollPhysics? ancestor) {
+    return const _ClampingPagePhysics();
   }
 }

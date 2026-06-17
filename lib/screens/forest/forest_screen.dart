@@ -345,8 +345,8 @@ class _ForestScreenState extends State<ForestScreen> {
     );
     final previousScore = _monthScore(previousMonthDate);
 
-    final currentMonthName = DateFormat('MMMM').format(_focusedDate);
-  final previousMonthName = DateFormat('MMMM').format(previousMonthDate);
+    final currentMonthName = DateFormat('MMM').format(_focusedDate);
+    final previousMonthName = DateFormat('MMM').format(previousMonthDate);
 
   return currentScore >= previousScore
       ? "$currentMonthName was more greener than $previousMonthName"

@@ -98,6 +98,10 @@ class _MainWrapperState extends State<MainWrapper> with WidgetsBindingObserver {
             ? Brightness.light
             : Brightness.dark,
         systemNavigationBarContrastEnforced: false,
+        // Status Bar (This fixes your visibility issue)
+      statusBarColor: Colors.transparent, // Keeps status bar background transparent
+      statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark, // Light icons for dark mode, dark icons for light mode
+      statusBarBrightness: isDark ? Brightness.dark : Brightness.light, // For iOS
       ),
     );
   }

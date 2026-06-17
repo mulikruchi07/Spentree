@@ -748,11 +748,67 @@ import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // Added for weekly limit check
+import 'package:spentree/core/user_profile.dart';
 import '../../core/app_style.dart';
 import '../../core/user_data.dart';
 
 import '../../core/transaction_service.dart';
 import 'package:spentree/screens/main_wrapper.dart';
+
+// ==========================================
+// NEW: Centralized Badge Status Helper
+// ==========================================
+class BadgeStatus {
+  final String label;
+  final IconData icon;
+  final Color color;
+
+  const BadgeStatus({
+    required this.label,
+    required this.icon,
+    required this.color,
+  });
+}
+
+BadgeStatus getBadgeStatusForPercentage(double percentage) {
+  if (percentage >= 0.83) {
+    return const BadgeStatus(
+      label: "Great",
+      icon: Icons.trending_up,
+      color: Color(0xFF34C759),
+    );
+  } else if (percentage >= 0.66) {
+    return const BadgeStatus(
+      label: "Good",
+      icon: Icons.trending_up,
+      color: Color(0xFF34C759),
+    );
+  } else if (percentage >= 0.50) {
+    return const BadgeStatus(
+      label: "Warning",
+      icon: Icons.warning_amber_rounded,
+      color: Color(0xFFFFCC00),
+    );
+  } else if (percentage >= 0.33) {
+    return const BadgeStatus(
+      label: "Careful",
+      icon: Icons.warning_amber_rounded,
+      color: Color(0xFFFFCC00),
+    );
+  } else if (percentage >= 0.16) {
+    return const BadgeStatus(
+      label: "Poor",
+      icon: Icons.trending_down,
+      color: Color(0xFFFF383C),
+    );
+  } else {
+    return const BadgeStatus(
+      label: "Empty",
+      icon: Icons.trending_down,
+      color: Color(0xFFFF383C),
+    );
+  }
+}
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -765,6 +821,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   late DateTime _focusedDate;
   late DateTime _today;
   bool _isPickerOpen = false;
+  bool _isExpensesExpanded = false; // NEW: tracks expand/collapse state
 
   int limit = 1000;
   double pendingLimit = 0.0;
@@ -890,6 +947,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
           limit.toDouble(),
         );
 
+        // NEW: Compute current badge status synced with tree state
+        double percentage = limit > 0
+            ? (pendingLimit / limit).clamp(0.0, 1.0)
+            : 0.0;
+        final BadgeStatus currentBadge = getBadgeStatusForPercentage(
+          percentage,
+        );
+
+        // NEW: Determine visible transactions based on expand state
+        final List<Transaction> visibleTx = _isExpensesExpanded
+            ? dailyTx
+            : dailyTx.take(4).toList();
+        final bool hasMoreThanFour = dailyTx.length > 4;
+
         return Scaffold(
           backgroundColor: AppColors.bgWhite,
           body: TransactionService().isLoading
@@ -955,9 +1026,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                       ),
                                     ],
                                   ),
-                                  selectedDayExpense <= limit
-                                      ? _buildGreenBadge("Great")
-                                      : _buildRedBadge("Over Limit"),
+                                  // CHANGED: Use synchronized 6-state badge
+                                  _buildStatusBadge(currentBadge),
                                 ],
                               ),
                             ),
@@ -1074,23 +1144,101 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 ),
                               )
                             else
+                              // CHANGED: Expandable transaction list with smooth animation
                               Column(
-                                children: dailyTx
-                                    .map((tx) => _buildTransactionCard(tx))
-                                    .toList(),
+                                children: [
+                                  // Always-visible first 4 transactions
+                                  Column(
+                                    children: dailyTx
+                                        .take(4)
+                                        .map((tx) => _buildTransactionCard(tx))
+                                        .toList(),
+                                  ),
+                                  // Animated reveal of remaining transactions
+                                  if (hasMoreThanFour)
+                                    ClipRect(
+                                      child: AnimatedSize(
+                                        duration: const Duration(
+                                          milliseconds: 350,
+                                        ),
+                                        curve: Curves.easeInOutCubic,
+                                        alignment: Alignment.topCenter,
+                                        child: AnimatedSwitcher(
+                                          duration: const Duration(
+                                            milliseconds: 300,
+                                          ),
+                                          transitionBuilder:
+                                              (child, animation) {
+                                                final slide =
+                                                    Tween<Offset>(
+                                                      begin: const Offset(
+                                                        0,
+                                                        -0.05,
+                                                      ),
+                                                      end: Offset.zero,
+                                                    ).animate(
+                                                      CurvedAnimation(
+                                                        parent: animation,
+                                                        curve: Curves.easeOut,
+                                                      ),
+                                                    );
+                                                return FadeTransition(
+                                                  opacity: animation,
+                                                  child: SlideTransition(
+                                                    position: slide,
+                                                    child: child,
+                                                  ),
+                                                );
+                                              },
+                                          child: _isExpensesExpanded
+                                              ? Column(
+                                                  key: const ValueKey(
+                                                    'expanded',
+                                                  ),
+                                                  children: dailyTx
+                                                      .skip(4)
+                                                      .map(
+                                                        (tx) =>
+                                                            _buildTransactionCard(
+                                                              tx,
+                                                            ),
+                                                      )
+                                                      .toList(),
+                                                )
+                                              : const SizedBox(
+                                                  key: ValueKey('collapsed'),
+                                                  width: double.infinity,
+                                                  height: 0,
+                                                ),
+                                        ),
+                                      ),
+                                    ),
+                                ],
                               ),
 
                             const SizedBox(height: 12),
-                            Center(
-                              child: Text(
-                                "See all expenses",
-                                style: GoogleFonts.poppins(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                  color: AppColors.white500,
+                            // CHANGED: "See all expenses" / "Show less" toggle
+                            if (hasMoreThanFour)
+                              Center(
+                                child: GestureDetector(
+                                  onTap: () {
+                                    setState(() {
+                                      _isExpensesExpanded =
+                                          !_isExpensesExpanded;
+                                    });
+                                  },
+                                  child: Text(
+                                    _isExpensesExpanded
+                                        ? "Show less"
+                                        : "See all expenses",
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                      color: AppColors.white500,
+                                    ),
+                                  ),
                                 ),
                               ),
-                            ),
 
                             const SizedBox(height: 32),
                             Text(
@@ -1152,13 +1300,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 color: AppColors.colblack,
               ),
             ),
-            Text(
-              "${UserData.userName},",
-              style: GoogleFonts.montserrat(
-                fontSize: 36,
-                fontWeight: FontWeight.w600,
-                color: AppColors.colblack,
-                height: 1.0,
+            ValueListenableBuilder<UserProfile>(
+              valueListenable: userProfileNotifier,
+              builder: (context, profile, _) => Text(
+                "${profile.name},",
+                style: GoogleFonts.montserrat(
+                  fontSize: 36,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.colblack,
+                  height: 1.0,
+                ),
               ),
             ),
           ],
@@ -1360,7 +1511,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     String imagePath;
     String message;
     Color badgeColor;
-    Color textColor = Colors.white;
+    Color textColor = AppColors.colwhite;
 
     if (percentage >= 0.83) {
       imagePath = "assets/images/dashboard/tree_1.png";
@@ -1374,12 +1525,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
       imagePath = "assets/images/dashboard/tree_3.png";
       message = "That impulse just cost you growth";
       badgeColor = const Color(0xFFFFCC00);
-      textColor = Colors.black;
+      textColor = AppColors.colwhite;
     } else if (percentage >= 0.33) {
       imagePath = "assets/images/dashboard/tree_4.png";
       message = "A small reset can bring this back";
       badgeColor = const Color(0xFFFFCC00);
-      textColor = Colors.black;
+      textColor = AppColors.colwhite;
     } else if (percentage >= 0.16) {
       imagePath = "assets/images/dashboard/tree_5.png";
       message = "Ahh, Better luck next time";
@@ -1469,49 +1620,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildGreenBadge(String text) {
+  // NEW: Generic synchronized badge builder (replaces _buildGreenBadge/_buildRedBadge usage in expense card)
+  Widget _buildStatusBadge(BadgeStatus status) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
       decoration: BoxDecoration(
-        color: AppColors.primaryGreen,
+        color: status.color,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.trending_up, color: AppColors.colwhite, size: 14),
+          Icon(status.icon, color: AppColors.colwhite, size: 14),
           const SizedBox(width: 4),
           Text(
-            text,
-            style: GoogleFonts.montserrat(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: AppColors.colwhite,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRedBadge(String text) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.redAccent,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.warning_amber_rounded,
-            color: AppColors.colwhite,
-            size: 14,
-          ),
-          const SizedBox(width: 4),
-          Text(
-            text,
+            status.label,
             style: GoogleFonts.montserrat(
               fontSize: 12,
               fontWeight: FontWeight.w500,

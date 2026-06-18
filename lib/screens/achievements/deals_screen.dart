@@ -174,6 +174,13 @@ class _DealsScreenState extends State<DealsScreen>
   bool _isBottomSheetOpen = false;
   late AnimationController _bottomSheetController;
 
+  // ADDED: apply opaque nav bar whenever this screen becomes active
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    SystemUIService.applyNavBarStyle(context);
+  }
+
   void _handleDealCopied(DealModel copiedDeal) {
     setState(() {
       copiedDeal.isCopied = true;
@@ -221,413 +228,426 @@ class _DealsScreenState extends State<DealsScreen>
     if (_isBottomSheetOpen) return;
     _isBottomSheetOpen = true;
 
+    // ADDED: lock nav bar color before Android draws the barrier + sheet
+    SystemUIService.applyNavBarStyle(context);
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
+      // ADDED: prevents Flutter adding its own SafeArea inside the sheet,
+      // which would fight with our manual bottom padding approach below.
+      useSafeArea: false,
       builder: (context) {
-        // FIX: ensure nav bar stays opaque while the bottom sheet is open
+        // ADDED: apply on the sheet's own context too
         SystemUIService.applyNavBarStyle(context);
 
-        // Local state for the selectable plans inside the bottom sheet
         int selectedPlanIndex = 0; // 0 for Annual, 1 for Monthly
 
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setSheetState) {
-            // FIX: re-apply on every rebuild (e.g. plan selection tap)
+            // ADDED: re-apply on every rebuild (plan selection, etc.)
             SystemUIService.applyNavBarStyle(context);
 
-            return Container(
-              height: MediaQuery.of(context).size.height * 0.75,
-              decoration: BoxDecoration(
-                color: AppColors.colwhite,
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(30),
-                ),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Colors.black12,
-                    blurRadius: 10,
-                    spreadRadius: 2,
-                  ),
-                ],
+            // CHANGED: wrap entire sheet in a Padding that accounts for the
+            // Android nav bar height manually. This keeps the sheet content
+            // above the nav keys while keeping our nav bar color locked.
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewPadding.bottom,
               ),
-              child: Column(
-                children: [
-                  const SizedBox(height: 12),
-                  // Drag Handle
-                  Container(
-                    width: 50,
-                    height: 5,
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade300,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
+              child: Container(
+                height: MediaQuery.of(context).size.height * 0.75,
+                decoration: BoxDecoration(
+                  color: AppColors.colwhite,
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(30),
                   ),
-                  const SizedBox(height: 24),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 10,
+                      spreadRadius: 2,
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 12),
+                    // Drag Handle
+                    Container(
+                      width: 50,
+                      height: 5,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
 
-                  // Scrollable Inner Content
-                  Expanded(
-                    child: SingleChildScrollView(
-                      physics: const BouncingScrollPhysics(),
-                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          // Header
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(4),
-                                decoration: const BoxDecoration(
-                                  color: AppColors.primaryGreen,
-                                  shape: BoxShape.circle,
+                    // Scrollable Inner Content
+                    Expanded(
+                      child: SingleChildScrollView(
+                        physics: const BouncingScrollPhysics(),
+                        padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            // Header
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: const BoxDecoration(
+                                    color: AppColors.primaryGreen,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.star,
+                                    color: Colors.white,
+                                    size: 20,
+                                  ),
                                 ),
-                                child: const Icon(
-                                  Icons.star,
-                                  color: Colors.white,
-                                  size: 20,
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              Text(
-                                "Spentree Pro",
-                                style: GoogleFonts.poppins(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.w500,
-                                  color: AppColors.colblack,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            "Unlock smarter insights and grow your\nmoney with clarity.",
-                            textAlign: TextAlign.center,
-                            style: GoogleFonts.poppins(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w400,
-                              color: const Color(0xFF808080),
-                              height: 1.5,
-                            ),
-                          ),
-                          const SizedBox(height: 32),
-
-                          // Table Header
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  "Feature",
+                                const SizedBox(width: 10),
+                                Text(
+                                  "Spentree Pro",
                                   style: GoogleFonts.poppins(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.w500,
                                     color: AppColors.colblack,
                                   ),
                                 ),
-                              ),
-                              SizedBox(
-                                width: 60,
-                                child: Center(
-                                  child: Text(
-                                    "Basic",
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      color: AppColors.colblack,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              SizedBox(
-                                width: 50,
-                                child: Center(
-                                  child: Text(
-                                    "Pro",
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      color: AppColors.colblack,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-
-                          const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 8.0),
-                            child: Divider(
-                              color: Color(0xFF808080),
-                              thickness: 0.5,
+                              ],
                             ),
-                          ),
-
-                          // Features Map
-                          ...[
-                            "Unlimited expense history",
-                            "Advanced analytics",
-                            "Forest health insights",
-                            "Time-based pattern",
-                            "Behavioural insights",
-                            "Member only deals",
-                          ].map(
-                            (feature) => Padding(
-                              padding: const EdgeInsets.only(bottom: 15.0),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      feature,
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 14,
-                                        color: const Color(0xFF4F4F4F),
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ),
-                                  SizedBox(
-                                    width: 60,
-                                    child: Center(
-                                      child: Icon(
-                                        Icons.close,
-                                        color: const Color(0xFF717171),
-                                        size: 20,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(
-                                    width: 50,
-                                    child: Center(
-                                      child: Icon(
-                                        Icons.check,
-                                        color: AppColors.primaryGreen,
-                                        size: 20,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-
-                          // Annual Plan Card (Selectable)
-                          GestureDetector(
-                            onTap: () {
-                              setSheetState(() => selectedPlanIndex = 0);
-                            },
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              width: double.infinity,
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 16,
-                                horizontal: 20,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.navbar,
-                                border: Border.all(
-                                  color: selectedPlanIndex == 0
-                                      ? AppColors.primaryGreen
-                                      : const Color(0xFFD7D8D6),
-                                  width: selectedPlanIndex == 0 ? 1.5 : 1.0,
-                                ),
-                                borderRadius: BorderRadius.circular(16),
-                                boxShadow: selectedPlanIndex == 0
-                                    ? [
-                                        BoxShadow(
-                                          color: AppColors.primaryGreen
-                                              .withOpacity(0.15),
-                                          blurRadius: 10,
-                                          offset: const Offset(0, 4),
-                                        ),
-                                      ]
-                                    : [],
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    "Annual Plan",
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                      color: selectedPlanIndex == 0
-                                          ? AppColors.primaryGreen
-                                          : const Color(0xFFBABABA),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    "30 days free - Then ₹1499/Year",
-                                    style: GoogleFonts.inter(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w400,
-                                      color: selectedPlanIndex == 0
-                                          ? AppColors.primaryGreen
-                                              .withOpacity(0.8)
-                                          : const Color(0xFF808080),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-
-                          // Monthly Plan Card (Selectable)
-                          GestureDetector(
-                            onTap: () {
-                              setSheetState(() => selectedPlanIndex = 1);
-                            },
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              width: double.infinity,
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 16,
-                                horizontal: 20,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                border: Border.all(
-                                  color: selectedPlanIndex == 1
-                                      ? AppColors.primaryGreen
-                                      : const Color(0xFFD7D8D6),
-                                  width: selectedPlanIndex == 1 ? 1.5 : 1.0,
-                                ),
-                                borderRadius: BorderRadius.circular(16),
-                                boxShadow: selectedPlanIndex == 1
-                                    ? [
-                                        BoxShadow(
-                                          color: AppColors.primaryGreen
-                                              .withOpacity(0.15),
-                                          blurRadius: 10,
-                                          offset: const Offset(0, 4),
-                                        ),
-                                      ]
-                                    : [],
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    "Monthly Plan",
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                      color: selectedPlanIndex == 1
-                                          ? AppColors.primaryGreen
-                                          : const Color(0xFFBABABA),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    "7 days free - Then ₹199/Month",
-                                    style: GoogleFonts.inter(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w400,
-                                      color: selectedPlanIndex == 1
-                                          ? AppColors.primaryGreen
-                                              .withOpacity(0.8)
-                                          : const Color(0xFF808080),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-
-                          // Green CTA Button
-                          GestureDetector(
-                            onTap: () {
-                              debugPrint(
-                                "Started Trial for Plan: $selectedPlanIndex",
-                              );
-                              Navigator.pop(context);
-                            },
-                            child: Container(
-                              height: 54,
-                              width: double.infinity,
-                              decoration: BoxDecoration(
-                                color: AppColors.primaryGreen,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  "Start 30 days free trial",
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-
-                          // Clickable T&C Footer
-                          RichText(
-                            textAlign: TextAlign.center,
-                            text: TextSpan(
+                            const SizedBox(height: 8),
+                            Text(
+                              "Unlock smarter insights and grow your\nmoney with clarity.",
+                              textAlign: TextAlign.center,
                               style: GoogleFonts.poppins(
-                                fontSize: 10,
-                                color: Colors.grey.shade500,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w400,
+                                color: const Color(0xFF808080),
                                 height: 1.5,
                               ),
+                            ),
+                            const SizedBox(height: 32),
+
+                            // Table Header
+                            Row(
                               children: [
-                                const TextSpan(
-                                  text:
-                                      "By placing this order, you agree to the ",
-                                ),
-                                TextSpan(
-                                  text: "Terms of Service",
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w600,
+                                Expanded(
+                                  child: Text(
+                                    "Feature",
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.colblack,
+                                    ),
                                   ),
-                                  recognizer: TapGestureRecognizer()
-                                    ..onTap = () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              const TermsScreen(),
-                                        ),
-                                      );
-                                    },
                                 ),
-                                const TextSpan(text: " and "),
-                                TextSpan(
-                                  text: "Privacy\nPolicy",
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w600,
+                                SizedBox(
+                                  width: 60,
+                                  child: Center(
+                                    child: Text(
+                                      "Basic",
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.colblack,
+                                      ),
+                                    ),
                                   ),
-                                  recognizer: TapGestureRecognizer()
-                                    ..onTap = () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              const PrivacyScreen(),
-                                        ),
-                                      );
-                                    },
                                 ),
-                                const TextSpan(
-                                  text:
-                                      ". Subscription automatically renews unless auto-renew is turned\noff at least 24-hours before the end of the current period.",
+                                SizedBox(
+                                  width: 50,
+                                  child: Center(
+                                    child: Text(
+                                      "Pro",
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.colblack,
+                                      ),
+                                    ),
+                                  ),
                                 ),
                               ],
                             ),
-                          ),
-                          const SizedBox(height: 32),
-                        ],
+
+                            const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 8.0),
+                              child: Divider(
+                                color: Color(0xFF808080),
+                                thickness: 0.5,
+                              ),
+                            ),
+
+                            // Features Map
+                            ...[
+                              "Unlimited expense history",
+                              "Advanced analytics",
+                              "Forest health insights",
+                              "Time-based pattern",
+                              "Behavioural insights",
+                              "Member only deals",
+                            ].map(
+                              (feature) => Padding(
+                                padding: const EdgeInsets.only(bottom: 15.0),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        feature,
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 14,
+                                          color: const Color(0xFF4F4F4F),
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                    SizedBox(
+                                      width: 60,
+                                      child: Center(
+                                        child: Icon(
+                                          Icons.close,
+                                          color: const Color(0xFF717171),
+                                          size: 20,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(
+                                      width: 50,
+                                      child: Center(
+                                        child: Icon(
+                                          Icons.check,
+                                          color: AppColors.primaryGreen,
+                                          size: 20,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+
+                            // Annual Plan Card (Selectable)
+                            GestureDetector(
+                              onTap: () {
+                                setSheetState(() => selectedPlanIndex = 0);
+                              },
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                width: double.infinity,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                  horizontal: 20,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.navbar,
+                                  border: Border.all(
+                                    color: selectedPlanIndex == 0
+                                        ? AppColors.primaryGreen
+                                        : const Color(0xFFD7D8D6),
+                                    width: selectedPlanIndex == 0 ? 1.5 : 1.0,
+                                  ),
+                                  borderRadius: BorderRadius.circular(16),
+                                  boxShadow: selectedPlanIndex == 0
+                                      ? [
+                                          BoxShadow(
+                                            color: AppColors.primaryGreen
+                                                .withOpacity(0.15),
+                                            blurRadius: 10,
+                                            offset: const Offset(0, 4),
+                                          ),
+                                        ]
+                                      : [],
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "Annual Plan",
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        color: selectedPlanIndex == 0
+                                            ? AppColors.primaryGreen
+                                            : const Color(0xFFBABABA),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      "30 days free - Then ₹1499/Year",
+                                      style: GoogleFonts.inter(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w400,
+                                        color: selectedPlanIndex == 0
+                                            ? AppColors.primaryGreen
+                                                .withOpacity(0.8)
+                                            : const Color(0xFF808080),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+
+                            // Monthly Plan Card (Selectable)
+                            GestureDetector(
+                              onTap: () {
+                                setSheetState(() => selectedPlanIndex = 1);
+                              },
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                width: double.infinity,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                  horizontal: 20,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  border: Border.all(
+                                    color: selectedPlanIndex == 1
+                                        ? AppColors.primaryGreen
+                                        : const Color(0xFFD7D8D6),
+                                    width: selectedPlanIndex == 1 ? 1.5 : 1.0,
+                                  ),
+                                  borderRadius: BorderRadius.circular(16),
+                                  boxShadow: selectedPlanIndex == 1
+                                      ? [
+                                          BoxShadow(
+                                            color: AppColors.primaryGreen
+                                                .withOpacity(0.15),
+                                            blurRadius: 10,
+                                            offset: const Offset(0, 4),
+                                          ),
+                                        ]
+                                      : [],
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "Monthly Plan",
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        color: selectedPlanIndex == 1
+                                            ? AppColors.primaryGreen
+                                            : const Color(0xFFBABABA),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      "7 days free - Then ₹199/Month",
+                                      style: GoogleFonts.inter(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w400,
+                                        color: selectedPlanIndex == 1
+                                            ? AppColors.primaryGreen
+                                                .withOpacity(0.8)
+                                            : const Color(0xFF808080),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+
+                            // Green CTA Button
+                            GestureDetector(
+                              onTap: () {
+                                debugPrint(
+                                  "Started Trial for Plan: $selectedPlanIndex",
+                                );
+                                Navigator.pop(context);
+                              },
+                              child: Container(
+                                height: 54,
+                                width: double.infinity,
+                                decoration: BoxDecoration(
+                                  color: AppColors.primaryGreen,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    "Start 30 days free trial",
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+
+                            // Clickable T&C Footer
+                            RichText(
+                              textAlign: TextAlign.center,
+                              text: TextSpan(
+                                style: GoogleFonts.poppins(
+                                  fontSize: 10,
+                                  color: Colors.grey.shade500,
+                                  height: 1.5,
+                                ),
+                                children: [
+                                  const TextSpan(
+                                    text:
+                                        "By placing this order, you agree to the ",
+                                  ),
+                                  TextSpan(
+                                    text: "Terms of Service",
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                    recognizer: TapGestureRecognizer()
+                                      ..onTap = () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                const TermsScreen(),
+                                          ),
+                                        );
+                                      },
+                                  ),
+                                  const TextSpan(text: " and "),
+                                  TextSpan(
+                                    text: "Privacy\nPolicy",
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                    recognizer: TapGestureRecognizer()
+                                      ..onTap = () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                const PrivacyScreen(),
+                                          ),
+                                        );
+                                      },
+                                  ),
+                                  const TextSpan(
+                                    text:
+                                        ". Subscription automatically renews unless auto-renew is turned\noff at least 24-hours before the end of the current period.",
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 32),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             );
           },
@@ -635,23 +655,15 @@ class _DealsScreenState extends State<DealsScreen>
       },
     ).then((_) {
       _isBottomSheetOpen = false;
-      // FIX: bottom sheet dismissal resets Android overlay style; re-apply here
+      // ADDED: sheet dismissal can reset Android overlay; restore it
       if (mounted) SystemUIService.applyNavBarStyle(context);
     });
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    SystemUIService.applyNavBarStyle(context);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.bgWhite,
-      // FIX: SafeArea with top: false mirrors helpdesk_screen — keeps nav bar
-      // area opaque while leaving the status bar area unpadded.
       body: SafeArea(
         top: false,
         child: SingleChildScrollView(
@@ -1055,8 +1067,9 @@ class _DealsScreenState extends State<DealsScreen>
                               ],
                             ),
                             Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 6.0),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6.0,
+                              ),
                               child: SizedBox(
                                 width: 145,
                                 child: Text(
@@ -1249,7 +1262,6 @@ class _ExpandedDealOverlayState extends State<ExpandedDealOverlay> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.bgWhite,
-      // FIX: SafeArea with top: false mirrors helpdesk_screen
       body: SafeArea(
         top: false,
         child: GestureDetector(

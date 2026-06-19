@@ -337,12 +337,14 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                   ValueListenableBuilder<UserProfile>(
                     valueListenable: userProfileNotifier,
                     builder: (context, profile, _) => Text(
-                      profile.name,
+                      profile.firstName,
                       style: GoogleFonts.montserrat(
                         fontSize: 22,
                         fontWeight: FontWeight.w600,
                         color: AppColors.colblack,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   const SizedBox(height: 4), // Exact distance of 3

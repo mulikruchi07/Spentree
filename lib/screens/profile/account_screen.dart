@@ -1325,15 +1325,15 @@ class _AccountScreenState extends State<AccountScreen> {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       _isFaceIdEnabled = prefs.getBool('isFaceIdEnabled') ?? false;
-      _selectedTheme   = prefs.getString('app_theme') ?? "System";
-      _soundEffects    = prefs.getBool('sound_effects') ?? true;
+      _selectedTheme = prefs.getString('app_theme') ?? "System";
+      _soundEffects = prefs.getBool('sound_effects') ?? true;
       // Profile image is loaded from userProfileNotifier — no local loading needed
       _isLoading = false;
     });
   }
 
   void _handleBackNavigation() {
-    bool nameChanged  = _nameController.text != _originalName;
+    bool nameChanged = _nameController.text != _originalName;
     bool phoneChanged = _phoneController.text != _originalPhone;
 
     if ((_isEditingName && nameChanged) || (_isEditingPhone && phoneChanged)) {
@@ -1351,9 +1351,9 @@ class _AccountScreenState extends State<AccountScreen> {
       );
     } else {
       setState(() {
-        _isEditingName  = false;
+        _isEditingName = false;
         _isEditingPhone = false;
-        _nameController.text  = _originalName;
+        _nameController.text = _originalName;
         _phoneController.text = _originalPhone;
       });
       Navigator.of(context).pop();
@@ -1370,14 +1370,14 @@ class _AccountScreenState extends State<AccountScreen> {
       // Write through the notifier — broadcasts instantly to every screen
       userProfileNotifier.updateName(newName);
       setState(() {
-        _originalName  = newName;
-        _nameError     = null;
+        _originalName = newName;
+        _nameError = null;
         _isEditingName = false;
       });
     } else {
       setState(() {
         _isEditingName = true;
-        _nameError     = null;
+        _nameError = null;
       });
     }
   }
@@ -1389,14 +1389,14 @@ class _AccountScreenState extends State<AccountScreen> {
         return;
       }
       setState(() {
-        _originalPhone  = _phoneController.text;
-        _phoneError     = null;
+        _originalPhone = _phoneController.text;
+        _phoneError = null;
         _isEditingPhone = false;
       });
     } else {
       setState(() {
         _isEditingPhone = true;
-        _phoneError     = null;
+        _phoneError = null;
       });
     }
   }
@@ -1421,7 +1421,10 @@ class _AccountScreenState extends State<AccountScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: PhosphorIcon(PhosphorIcons.image, color: AppColors.colblack),
+              leading: PhosphorIcon(
+                PhosphorIcons.image,
+                color: AppColors.colblack,
+              ),
               title: Text(
                 "Change Profile Picture",
                 style: GoogleFonts.poppins(color: AppColors.colblack),
@@ -1433,7 +1436,10 @@ class _AccountScreenState extends State<AccountScreen> {
             ),
             if (_originalImagePath != null)
               ListTile(
-                leading: PhosphorIcon(PhosphorIcons.crop, color: AppColors.colblack),
+                leading: PhosphorIcon(
+                  PhosphorIcons.crop,
+                  color: AppColors.colblack,
+                ),
                 title: Text(
                   "Adjust Profile Picture",
                   style: GoogleFonts.poppins(color: AppColors.colblack),
@@ -1444,7 +1450,10 @@ class _AccountScreenState extends State<AccountScreen> {
                 },
               ),
             ListTile(
-              leading: PhosphorIcon(PhosphorIcons.trash, color: AppColors.destructiveRed),
+              leading: PhosphorIcon(
+                PhosphorIcons.trash,
+                color: AppColors.destructiveRed,
+              ),
               title: Text(
                 "Remove Profile Picture",
                 style: GoogleFonts.poppins(color: AppColors.destructiveRed),
@@ -1474,15 +1483,24 @@ class _AccountScreenState extends State<AccountScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              leading: PhosphorIcon(PhosphorIcons.camera, color: AppColors.colblack),
-              title: Text("Take Photo", style: GoogleFonts.poppins(color: AppColors.colblack)),
+              leading: PhosphorIcon(
+                PhosphorIcons.camera,
+                color: AppColors.colblack,
+              ),
+              title: Text(
+                "Take Photo",
+                style: GoogleFonts.poppins(color: AppColors.colblack),
+              ),
               onTap: () {
                 Navigator.pop(context);
                 _pickImage(ImageSource.camera);
               },
             ),
             ListTile(
-              leading: PhosphorIcon(PhosphorIcons.image, color: AppColors.colblack),
+              leading: PhosphorIcon(
+                PhosphorIcons.image,
+                color: AppColors.colblack,
+              ),
               title: Text(
                 "Choose from Gallery",
                 style: GoogleFonts.poppins(color: AppColors.colblack),
@@ -1810,7 +1828,8 @@ class _AccountScreenState extends State<AccountScreen> {
                       "Temporarily disable account",
                       onPop: () => _showConfirmationDialog(
                         title: "Deactivate Account",
-                        message: "You can come back anytime by logging in again.",
+                        message:
+                            "You can come back anytime by logging in again.",
                         confirmText: "Yes, Deactivate",
                         icon: PhosphorIcons.lockKey,
                         onConfirm: () {},
@@ -1857,7 +1876,9 @@ class _AccountScreenState extends State<AccountScreen> {
                 clipBehavior: Clip.none,
                 children: [
                   GestureDetector(
-                    onTap: profile.imageBytes != null ? _viewProfileImage : null,
+                    onTap: profile.imageBytes != null
+                        ? _viewProfileImage
+                        : null,
                     child: Hero(
                       tag: 'profile_image_hero',
                       child: Container(
@@ -1869,15 +1890,19 @@ class _AccountScreenState extends State<AccountScreen> {
                         ),
                         clipBehavior: Clip.antiAlias,
                         child: profile.imageBytes != null
-                            ? Image.memory(profile.imageBytes!, fit: BoxFit.cover)
+                            ? Image.memory(
+                                profile.imageBytes!,
+                                fit: BoxFit.cover,
+                              )
                             : Image.asset(
                                 'assets/images/user_avatar.png',
                                 fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) => Icon(
-                                  Icons.person,
-                                  size: 60,
-                                  color: AppColors.colblack,
-                                ),
+                                errorBuilder: (context, error, stackTrace) =>
+                                    Icon(
+                                      Icons.person,
+                                      size: 60,
+                                      color: AppColors.colblack,
+                                    ),
                               ),
                       ),
                     ),
@@ -1917,12 +1942,14 @@ class _AccountScreenState extends State<AccountScreen> {
               ),
               const SizedBox(height: 16),
               Text(
-                profile.name, // ← live from notifier, updates instantly everywhere
+                profile.firstName,
                 style: GoogleFonts.poppins(
                   fontSize: 22,
                   fontWeight: FontWeight.w600,
                   color: AppColors.colblack,
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
               Text(
                 "Planting since January 2025",
@@ -1955,7 +1982,7 @@ class _AccountScreenState extends State<AccountScreen> {
 
   Widget _buildThemeOption(String title) {
     bool isSelected = _selectedTheme == title;
-    Color activeColor   = const Color(0xFF6B6B6B);
+    Color activeColor = const Color(0xFF6B6B6B);
     Color inactiveColor = const Color(0xFFC4C4C4);
 
     return GestureDetector(
@@ -2037,8 +2064,9 @@ class _AccountScreenState extends State<AccountScreen> {
                     ? TextField(
                         controller: controller,
                         autofocus: true,
-                        keyboardType:
-                            isPhone ? TextInputType.number : TextInputType.text,
+                        keyboardType: isPhone
+                            ? TextInputType.number
+                            : TextInputType.text,
                         inputFormatters: isPhone
                             ? [
                                 FilteringTextInputFormatter.digitsOnly,
@@ -2306,7 +2334,10 @@ class _AccountScreenState extends State<AccountScreen> {
           onTap: () => _launchURL("https://linkedin.com/in/designer"),
           child: RichText(
             text: TextSpan(
-              style: GoogleFonts.poppins(fontSize: 14, color: AppColors.white500),
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                color: AppColors.white500,
+              ),
               children: [
                 TextSpan(
                   text: "Designed by ",
@@ -2332,7 +2363,10 @@ class _AccountScreenState extends State<AccountScreen> {
           onTap: () => _launchURL("https://linkedin.com/in/developer"),
           child: RichText(
             text: TextSpan(
-              style: GoogleFonts.poppins(fontSize: 14, color: AppColors.white500),
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                color: AppColors.white500,
+              ),
               children: [
                 TextSpan(
                   text: "Developed by ",

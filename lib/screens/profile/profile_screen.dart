@@ -242,27 +242,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     ),
                             ),
                             const SizedBox(width: 20),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  profile.name,
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.colblack,
+                            Expanded(
+                              // CHANGED: Expanded on the Column itself,
+                              child: Column(
+                                // not Flexible on the Text inside it.
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    profile.firstName,
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.colblack,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  "Planting since January 2025",
-                                  style: GoogleFonts.montserrat(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.white500,
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    "Planting since January 2025",
+                                    style: GoogleFonts.montserrat(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.white500,
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ],
                         ),
@@ -395,56 +402,55 @@ class _ProfileScreenState extends State<ProfileScreen> {
     String t,
     String s,
     VoidCallback tap,
-  ) =>
-      Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        decoration: BoxDecoration(
-          color: AppColors.inputFill,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: InkWell(
-          onTap: tap,
-          borderRadius: BorderRadius.circular(16),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: AppColors.colIconBg,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(icon, size: 24, color: AppColors.colblack),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        t,
-                        style: GoogleFonts.poppins(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.colblack,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        s,
-                        style: GoogleFonts.poppins(
-                          fontSize: 11,
-                          color: AppColors.desctext,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const Icon(Icons.chevron_right, color: AppColors.desctext),
-              ],
+  ) => Container(
+    margin: const EdgeInsets.only(bottom: 16),
+    decoration: BoxDecoration(
+      color: AppColors.inputFill,
+      borderRadius: BorderRadius.circular(16),
+    ),
+    child: InkWell(
+      onTap: tap,
+      borderRadius: BorderRadius.circular(16),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AppColors.colIconBg,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, size: 24, color: AppColors.colblack),
             ),
-          ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    t,
+                    style: GoogleFonts.poppins(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.colblack,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    s,
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      color: AppColors.desctext,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, color: AppColors.desctext),
+          ],
         ),
-      );
+      ),
+    ),
+  );
 }

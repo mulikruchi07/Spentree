@@ -11,6 +11,7 @@ class UserProfile {
   final Uint8List? imageBytes;
 
   const UserProfile({required this.name, this.imageBytes});
+  String get firstName => name.split(' ').first;
 
   UserProfile copyWith({String? name, Uint8List? imageBytes, bool clearImage = false}) {
     return UserProfile(

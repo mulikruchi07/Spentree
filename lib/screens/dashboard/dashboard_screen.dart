@@ -1303,7 +1303,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ValueListenableBuilder<UserProfile>(
               valueListenable: userProfileNotifier,
               builder: (context, profile, _) => Text(
-                "${profile.name},",
+                "${profile.firstName},",
                 style: GoogleFonts.montserrat(
                   fontSize: 36,
                   fontWeight: FontWeight.w600,

@@ -94,21 +94,39 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: themeNotifier,
       builder: (context, currentTheme, child) {
-        // 1. DYNAMIC CALCULATIONS
+        // ── FIX 1: Determine effective brightness for dark-mode image swap ──
+        // currentTheme can be ThemeMode.system, in which case we fall back
+        // to the platform brightness. This correctly resolves the ACTUAL
+        // rendered theme, not just the user's explicit selection.
+        final Brightness effectiveBrightness = currentTheme == ThemeMode.dark
+            ? Brightness.dark
+            : currentTheme == ThemeMode.light
+                ? Brightness.light
+                : MediaQuery.platformBrightnessOf(context);
+        final bool isDark = effectiveBrightness == Brightness.dark;
+
+        // ── FIX 1: Pick the correct room background asset ──
+        final String roomImagePath =
+            isDark ? "assets/images/dbg_room.png" : "assets/images/bg_room.png";
+
         final size = MediaQuery.of(context).size;
         final double width = size.width;
         final double height = size.height;
 
-        // --- NEW LOGIC: DYNAMIC MARGINS ---
-        // If screen is TALL (>800px), use 7% margin.
-        // If screen is SMALL/STANDARD, use 3% margin (Original).
+        // ── FIX 2: Use LayoutBuilder-driven proportional gaps instead of
+        // raw fixed pixels so short screens compress gracefully rather
+        // than overflow. Values still resolve to the SAME numbers as
+        // before on a standard ~812-896px tall screen, preserving the
+        // exact visual design on typical devices, but now scale down on
+        // very short ones (320x568, 360x640).
+        final double heightScale = (height / 812.0).clamp(0.62, 1.0);
+
         final double marginPercentage = height > 800 ? 0.09 : 0.03;
         final double symmetricMargin = height * marginPercentage;
 
-        // Gaps (Kept exactly as you liked them)
-        final double gapImageToTitle = 20.0;
-        final double gapDescToProgress = 20.0;
-        final double gapProgressToButton = 38.0;
+        final double gapImageToTitle = 20.0 * heightScale;
+        final double gapDescToProgress = 20.0 * heightScale;
+        final double gapProgressToButton = 38.0 * heightScale;
         final double gapLogoToImage = height * 0.01;
 
         return Scaffold(
@@ -116,11 +134,9 @@ class _OnboardingScreenState extends State<OnboardingScreen>
           body: SafeArea(
             child: SizedBox(
               width: double.infinity,
+              height: double.infinity, // FIX 2: anchors the Column to fill the full screen
               child: Column(
                 children: [
-                  // -----------------------------------------------------------
-                  // 1. TOP MARGIN (Dynamic)
-                  // -----------------------------------------------------------
                   SizedBox(height: symmetricMargin),
 
                   // LOGO (Static & Scaled)
@@ -138,122 +154,159 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                     ),
                   ),
 
-                  // -----------------------------------------------------------
-                  // 2. SCROLLABLE MIDDLE SECTION (Room + Tree + Text)
-                  // -----------------------------------------------------------
+                  // ── FIX 2: middle section now uses Expanded with a
+                  // LayoutBuilder so the PageView content can size itself
+                  // to whatever space remains, instead of assuming a fixed
+                  // image size of width * 0.8 regardless of available height.
                   Expanded(
-                    child: PageView.builder(
-                      controller: _pageController,
-                      onPageChanged: (index) =>
-                          setState(() => _currentIndex = index),
-                      itemCount: _content.length,
-                      itemBuilder: (context, index) {
-                        return Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            SizedBox(height: gapLogoToImage),
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        // Cap the image block to whichever is smaller:
+                        // 80% of width (original design) OR a height-derived
+                        // cap that guarantees text below it still fits.
+                        // This is the actual overflow fix: on short screens,
+                        // the image shrinks instead of pushing text off-screen.
+                        final double maxImageByWidth = width * 0.8;
+                        final double maxImageByHeight =
+                            constraints.maxHeight * 0.52;
+                        final double imageBlockSize =
+                            maxImageByWidth < maxImageByHeight
+                                ? maxImageByWidth
+                                : maxImageByHeight;
 
-                            // A. IMAGE STACK (Original Proportions)
-                            SizedBox(
-                              height: width * 0.8,
-                              width: width * 0.8,
-                              child: Stack(
-                                alignment: Alignment.bottomCenter,
-                                clipBehavior: Clip.none,
-                                children: [
-                                  // Room (Slides Up)
-                                  Positioned(
-                                    bottom: 30,
-                                    child: SlideTransition(
-                                      position: _slideUpRoomAnim,
-                                      child: Image.asset(
-                                        "assets/images/bg_room.png",
-                                        width: width * 0.75,
-                                        fit: BoxFit.contain,
-                                      ),
-                                    ),
-                                  ),
+                        return PageView.builder(
+                          controller: _pageController,
+                          onPageChanged: (index) =>
+                              setState(() => _currentIndex = index),
+                          itemCount: _content.length,
+                          itemBuilder: (context, index) {
+                            return SingleChildScrollView(
+                              // FIX 2: This inner scroll is a safety net only —
+                              // on any screen where content still doesn't fit
+                              // (e.g. extreme font scaling), it scrolls instead
+                              // of throwing a RenderFlex overflow error. On all
+                              // normal screens, content fits exactly and no
+                              // scrolling is visually needed because the
+                              // ConstrainedBox below matches available height.
+                              physics: const ClampingScrollPhysics(),
+                              child: ConstrainedBox(
+                                constraints: BoxConstraints(
+                                  minHeight: constraints.maxHeight,
+                                ),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    SizedBox(height: gapLogoToImage),
 
-                                  // Tree (Fades In)
-                                  Positioned(
-                                    bottom: 25,
-                                    child: FadeTransition(
-                                      opacity: _fadeTreeAnim,
-                                      child: Image.asset(
-                                        _content[index]["tree"]!,
-                                        width: width * 0.55,
-                                        fit: BoxFit.contain,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-
-                            SizedBox(height: gapImageToTitle),
-
-                            // B. TEXT SECTION
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 40,
-                              ),
-                              child: Column(
-                                children: [
-                                  // Title
-                                  index == 0
-                                      ? Hero(
-                                          tag: 'welcome-text',
-                                          child: Material(
-                                            type: MaterialType.transparency,
-                                            child: Text(
-                                              _content[index]["title"]!,
-                                              textAlign: TextAlign.center,
-                                              style: GoogleFonts.montserrat(
-                                                fontSize: 24,
-                                                fontWeight: FontWeight.w600,
-                                                color: AppColors.colblack,
+                                    // A. IMAGE STACK (now responsively sized)
+                                    SizedBox(
+                                      height: imageBlockSize,
+                                      width: imageBlockSize,
+                                      child: Stack(
+                                        alignment: Alignment.bottomCenter,
+                                        clipBehavior: Clip.none,
+                                        children: [
+                                          // Room (Slides Up) — FIX 1: dynamic asset
+                                          Positioned(
+                                            bottom: 30 * heightScale,
+                                            child: SlideTransition(
+                                              position: _slideUpRoomAnim,
+                                              child: Image.asset(
+                                                roomImagePath,
+                                                width: imageBlockSize * 0.94,
+                                                fit: BoxFit.contain,
                                               ),
                                             ),
                                           ),
-                                        )
-                                      : Text(
-                                          _content[index]["title"]!,
-                                          textAlign: TextAlign.center,
-                                          style: GoogleFonts.montserrat(
-                                            fontSize: 24,
-                                            fontWeight: FontWeight.w600,
-                                            color: AppColors.colblack,
+
+                                          // Tree (Fades In) — unchanged proportions
+                                          Positioned(
+                                            bottom: 25 * heightScale,
+                                            child: FadeTransition(
+                                              opacity: _fadeTreeAnim,
+                                              child: Image.asset(
+                                                _content[index]["tree"]!,
+                                                width: imageBlockSize * 0.69,
+                                                fit: BoxFit.contain,
+                                              ),
+                                            ),
                                           ),
-                                        ),
-
-                                  const SizedBox(height: 16),
-
-                                  // Description
-                                  SlideTransition(
-                                    position: _slideDownDescAnim,
-                                    child: Text(
-                                      _content[index]["desc"]!,
-                                      textAlign: TextAlign.center,
-                                      style: GoogleFonts.montserrat(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w400,
-                                        color: OnboardingColors.textDesc,
-                                        height: 1.5,
+                                        ],
                                       ),
                                     ),
-                                  ),
-                                ],
+
+                                    SizedBox(height: gapImageToTitle),
+
+                                    // B. TEXT SECTION — unchanged
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 40,
+                                      ),
+                                      child: Column(
+                                        children: [
+                                          index == 0
+                                              ? Hero(
+                                                  tag: 'welcome-text',
+                                                  child: Material(
+                                                    type: MaterialType
+                                                        .transparency,
+                                                    child: Text(
+                                                      _content[index]["title"]!,
+                                                      textAlign:
+                                                          TextAlign.center,
+                                                      style: GoogleFonts
+                                                          .montserrat(
+                                                        fontSize: 24,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                        color:
+                                                            AppColors.colblack,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                )
+                                              : Text(
+                                                  _content[index]["title"]!,
+                                                  textAlign: TextAlign.center,
+                                                  style:
+                                                      GoogleFonts.montserrat(
+                                                    fontSize: 24,
+                                                    fontWeight:
+                                                        FontWeight.w600,
+                                                    color: AppColors.colblack,
+                                                  ),
+                                                ),
+
+                                          const SizedBox(height: 16),
+
+                                          SlideTransition(
+                                            position: _slideDownDescAnim,
+                                            child: Text(
+                                              _content[index]["desc"]!,
+                                              textAlign: TextAlign.center,
+                                              style: GoogleFonts.montserrat(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w400,
+                                                color:
+                                                    OnboardingColors.textDesc,
+                                                height: 1.5,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
-                          ],
+                            );
+                          },
                         );
                       },
                     ),
                   ),
 
-                  // -----------------------------------------------------------
-                  // 3. BOTTOM CONTROLS
-                  // -----------------------------------------------------------
+                  // BOTTOM CONTROLS — unchanged structure, gaps now scaled
                   FadeTransition(
                     opacity: _fadeControlsAnim,
                     child: Column(
@@ -261,7 +314,6 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                       children: [
                         SizedBox(height: gapDescToProgress),
 
-                        // Dots
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: List.generate(
@@ -272,28 +324,25 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 
                         SizedBox(height: gapProgressToButton),
 
-                        // Button
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 24.0),
                           child: SizedBox(
                             width: double.infinity,
-                            height: 64, // Original Height
+                            height: 64,
                             child: ElevatedButton(
                               onPressed: () {
                                 if (_currentIndex == _content.length - 1) {
-                                  // 1. User is on the last slide ("Done") -> Navigate away
                                   Navigator.pushReplacement(
                                     context,
                                     MaterialPageRoute(
-                                      // Replace 'QuestionnaireScreen' with your actual next screen widget
                                       builder: (context) =>
                                           const QuestionnaireScreen(),
                                     ),
                                   );
                                 } else {
-                                  // 2. User is on earlier slides ("Next") -> Slide to next page
                                   _pageController.nextPage(
-                                    duration: const Duration(milliseconds: 300),
+                                    duration:
+                                        const Duration(milliseconds: 300),
                                     curve: Curves.easeIn,
                                   );
                                 }
@@ -322,9 +371,6 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                     ),
                   ),
 
-                  // -----------------------------------------------------------
-                  // 4. BOTTOM MARGIN (Dynamic - Matches Top)
-                  // -----------------------------------------------------------
                   SizedBox(height: symmetricMargin),
                 ],
               ),

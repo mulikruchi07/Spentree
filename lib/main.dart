@@ -554,6 +554,7 @@ import 'package:flutter/services.dart';
 import 'package:home_widget/home_widget.dart';
 import 'package:spentree/screens/analytics/analytics_screen.dart';
 import 'package:spentree/screens/main_wrapper.dart';
+import 'package:spentree/screens/onboarding/splash_onboarding_screen.dart';
 import 'app_lock.dart';
 import 'core/user_profile.dart';
 import 'core/app_style.dart';
@@ -640,8 +641,8 @@ class MyApp extends StatelessWidget {
             useMaterial3: true,
             scaffoldBackgroundColor: const Color(0xFF121212),
           ),
-          home: MainWrapper(initialIndex: initialTab),
-
+          // home: MainWrapper(initialIndex: initialTab),
+          home: const SplashOnboardingScreen(),
           // ── Global lock overlay ─────────────────────────────────────────
           // The `builder` layer sits ABOVE the Navigator's entire route stack,
           // including every pushed route AND every showDialog / showModalBottomSheet.

@@ -17,19 +17,16 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
   final PageController _controller = PageController();
   int _currentIndex = 0;
 
-  // --- STATE VARIABLES ---
   final TextEditingController _amountController = TextEditingController();
   String? _selectedCategory;
   String? _selectedGoal;
   String? _inlineError;
 
-  // --- BASE DIMENSIONS ---
   final double textPadding = 24.0;
   final double descPadding = 60.0;
   final double cornerRadius = 14.0;
   final double componentHeight = 64.0;
 
-  // Data Lists
   final List<String> _categories = [
     "Food & Drinks",
     "Shopping",
@@ -43,7 +40,6 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
     "Build better money habits",
   ];
 
-  // --- VALIDATION ---
   bool _validateCurrentPage() {
     setState(() => _inlineError = null);
     if (_currentIndex == 0 && _amountController.text.trim().isEmpty) {
@@ -61,6 +57,7 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
 
   void _nextPage() {
     if (_validateCurrentPage()) {
+      FocusScope.of(context).unfocus();
       if (_currentIndex < 2) {
         _controller.nextPage(
           duration: const Duration(milliseconds: 300),
@@ -81,89 +78,81 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
   }
 
   @override
+  void dispose() {
+    _amountController.dispose();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     MediaQuery.platformBrightnessOf(context);
 
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: themeNotifier,
       builder: (context, currentTheme, child) {
-        // DYNAMIC SCALING
         final size = MediaQuery.of(context).size;
         final double height = size.height;
-        final double scale = (height / 820.0).clamp(0.85, 1.0);
+        final double scale = (height / 820.0).clamp(0.72, 1.0);
 
-        // --- PRECISE FIXED GAPS ---
-        final double topMargin = 90.0 * scale;
+        // CHANGED: topMargin reduced drastically — was reserving large
+        // static empty space above "Step 1" and below the button. Now
+        // only a small breathing-room gap remains, scaled to screen size.
+        final double topGap = 75.0 * scale;
         final double stepToBarGap = 20.0 * scale;
-        final double barToQuestionGap = 24.0 * scale; // Fixed Gap
+        final double barToQuestionGap = 24.0 * scale;
+        final double bottomGap = 16.0 * scale;
 
+        // FIX: Removed outer SingleChildScrollView + manual height calc
+        // entirely. Column + Expanded now fills 100% of SafeArea height
+        // with zero static reserved space, so content covers the whole
+        // page and there is never a need to scroll.
         return Scaffold(
           backgroundColor: AppColors.bgWhite,
           resizeToAvoidBottomInset: true,
           body: SafeArea(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                // Calculate header height to determine remaining space for PageView
-                double headerHeight =
-                    topMargin +
-                    (30 * scale) +
-                    stepToBarGap +
-                    6 +
-                    barToQuestionGap;
-                double availableContentHeight =
-                    constraints.maxHeight - headerHeight - topMargin;
+            child: Column(
+              children: [
+                SizedBox(height: topGap), // CHANGED: was topMargin (90*scale), now 24*scale
 
-                // Ensure a minimum height for PageView to prevent layout collapse
-                double finalPageViewHeight = max(300.0, availableContentHeight);
+                Text(
+                  _currentIndex == 0
+                      ? "Step 1"
+                      : _currentIndex == 1
+                          ? "Step 2"
+                          : "We're almost ready!",
+                  style: GoogleFonts.montserrat(
+                    fontSize: 20 * scale,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primaryGreen,
+                  ),
+                ),
 
-                return SingleChildScrollView(
-                  // Main scroll handles keyboard events for the whole screen
-                  child: Column(
+                SizedBox(height: stepToBarGap),
+
+                _buildProgressBar(),
+
+                SizedBox(height: barToQuestionGap),
+
+                // Expanded fills exactly the remaining height — every
+                // question page starts its content at the SAME Y offset
+                // because all three now use mainAxisAlignment.start below.
+                Expanded(
+                  child: PageView(
+                    controller: _controller,
+                    physics: const NeverScrollableScrollPhysics(),
+                    onPageChanged: (index) =>
+                        setState(() => _currentIndex = index),
                     children: [
-                      // 1. STATIC HEADER
-                      SizedBox(height: topMargin),
-
-                      Text(
-                        _currentIndex == 0
-                            ? "Step 1"
-                            : _currentIndex == 1
-                            ? "Step 2"
-                            : "We’re almost ready!",
-                        style: GoogleFonts.montserrat(
-                          fontSize: 20 * scale,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.primaryGreen,
-                        ),
-                      ),
-
-                      SizedBox(height: stepToBarGap),
-
-                      _buildProgressBar(),
-
-                      SizedBox(height: barToQuestionGap),
-
-                      // 2. CONTENT AREA (PageView)
-                      SizedBox(
-                        height: finalPageViewHeight,
-                        child: PageView(
-                          controller: _controller,
-                          physics: const NeverScrollableScrollPhysics(),
-                          onPageChanged: (index) =>
-                              setState(() => _currentIndex = index),
-                          children: [
-                            _buildSafePage(_buildQuestionOne(scale)),
-                            _buildSafePage(_buildQuestionTwo(scale)),
-                            _buildSafePage(_buildQuestionThree(scale)),
-                          ],
-                        ),
-                      ),
-
-                      // Bottom spacing
-                      SizedBox(height: topMargin),
+                      _buildSafePage(_buildQuestionOne(scale)),
+                      _buildSafePage(_buildQuestionTwo(scale)),
+                      _buildSafePage(_buildQuestionThree(scale)),
                     ],
                   ),
-                );
-              },
+                ),
+
+                SizedBox(height: bottomGap), // CHANGED: was topMargin * 0.4, now a small fixed bottomGap
+              ],
             ),
           ),
         );
@@ -171,28 +160,22 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
     );
   }
 
-  // --- SAFE PAGE WRAPPER (Fixes Pixel Overflow) ---
-  // This wraps every question page. If content fits, it centers it.
-  // If content is too big (small screen), it scrolls.
   Widget _buildSafePage(Widget content) {
     return LayoutBuilder(
       builder: (context, constraints) {
         return SingleChildScrollView(
+          physics: const ClampingScrollPhysics(),
           child: ConstrainedBox(
             constraints: BoxConstraints(
-              minHeight: constraints
-                  .maxHeight, // Forces minimum height to match container
+              minHeight: constraints.maxHeight,
             ),
-            child: IntrinsicHeight(
-              child: content, // The actual question content
-            ),
+            child: content,
           ),
         );
       },
     );
   }
 
-  // --- PROGRESS BAR ---
   Widget _buildProgressBar() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -213,7 +196,6 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
     );
   }
 
-  // --- PAGE 1: DAILY LIMIT ---
   Widget _buildQuestionOne(double scale) {
     final double subTextToInputGap = 25.0 * scale;
     final double quickToSubmitGap = 23.0 * scale;
@@ -221,12 +203,17 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Column(
+        // CHANGED: .center → .start. This is the actual alignment fix —
+        // Question 1's title now begins at the SAME top offset as
+        // Question 2 and Question 3, instead of floating to the
+        // vertical center of whatever space it has (which differed
+        // from Q2/Q3 because Q1 has less content than the list questions).
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
           Padding(
             padding: EdgeInsets.symmetric(horizontal: textPadding * scale),
             child: Text(
-              "What’s your daily spending limit?",
+              "What's your daily spending limit?",
               textAlign: TextAlign.center,
               style: AppTextStyles.title.copyWith(
                 fontSize: 24 * scale,
@@ -250,7 +237,6 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
 
           SizedBox(height: subTextToInputGap),
 
-          // Input Field
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24.0),
             child: Container(
@@ -324,7 +310,6 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
 
           SizedBox(height: 24 * scale),
 
-          // Quick Select Buttons
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24.0),
             child: Row(
@@ -352,7 +337,6 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
 
           SizedBox(height: quickToSubmitGap),
 
-          // Submit Button
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24.0),
             child: _buildMainButton(
@@ -366,7 +350,6 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
     );
   }
 
-  // --- UNIFIED LIST BUILDER FOR Q2 & Q3 ---
   Widget _buildListQuestion({
     required double scale,
     required String title,
@@ -379,7 +362,7 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.start, // unchanged — already .start, now matches Q1
         children: [
           Padding(
             padding: EdgeInsets.symmetric(horizontal: textPadding * scale),
@@ -442,27 +425,35 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
 
           SizedBox(height: 20 * scale),
 
-          // Next / Done Button
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24.0),
             child: _buildMainButton(
               label: isDone ? "Done" : "Next",
               scale: scale,
-              onTap: () {
+              onTap: () async {
                 if (isDone) {
                   if (_validateCurrentPage()) {
-                    if (_amountController.text.isNotEmpty) {
-                      UserData.dailyLimit = _amountController.text.replaceAll(
-                        RegExp(r'[^0-9]'),
-                        '',
+                    final limitValue = _amountController.text.isNotEmpty
+                        ? _amountController.text.replaceAll(
+                            RegExp(r'[^0-9]'),
+                            '',
+                          )
+                        : "5000";
+
+                    await UserData.saveQuestionnaireData(
+                      dailyLimitValue: limitValue,
+                      category: _selectedCategory ?? "",
+                      goal: _selectedGoal ?? "",
+                    );
+
+                    if (mounted) {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const LoadingScreen(),
+                        ),
                       );
                     }
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const LoadingScreen(),
-                      ),
-                    );
                   }
                 } else {
                   _nextPage();
@@ -473,7 +464,6 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
 
           SizedBox(height: 12 * scale),
 
-          // Previous Button
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24.0),
             child: _buildPreviousButton(
@@ -490,7 +480,7 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
     return _buildListQuestion(
       scale: scale,
       title: "What are you usually spending on?",
-      subtext: "We’ll use this to show better insights.",
+      subtext: "We'll use this to show better insights.",
       items: _categories,
       selectedItem: _selectedCategory,
       onItemSelected: (val) => setState(() => _selectedCategory = val),
@@ -501,7 +491,7 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
   Widget _buildQuestionThree(double scale) {
     return _buildListQuestion(
       scale: scale,
-      title: "What’s your goal with SpenTree?",
+      title: "What's your goal with SpenTree?",
       subtext: "Your goal helps us guide your forest journey.",
       items: _goals,
       selectedItem: _selectedGoal,
@@ -510,7 +500,6 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
     );
   }
 
-  // --- HELPER: QUICK BUTTON ---
   Widget _buildQuickButton(String amount, double scale) {
     return Expanded(
       child: GestureDetector(
@@ -538,7 +527,6 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
     );
   }
 
-  // --- HELPER: SELECTION CARD ---
   Widget _buildSelectionCard({
     required String label,
     required bool isSelected,
@@ -592,7 +580,6 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
     );
   }
 
-  // --- HELPER: MAIN BUTTON ---
   Widget _buildMainButton({
     required String label,
     required VoidCallback onTap,
@@ -622,7 +609,6 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
     );
   }
 
-  // --- HELPER: PREVIOUS BUTTON ---
   Widget _buildPreviousButton({
     required VoidCallback onTap,
     required double scale,

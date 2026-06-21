@@ -617,7 +617,8 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
         ),
         const SizedBox(height: 4),
         GestureDetector(
-          onTap: () => _launchURL("https://linkedin.com/in/designer"),
+          onTap: () =>
+              _launchURL("https://in.linkedin.com/in/pranav-phanse-8b4bbb318"),
           child: RichText(
             text: TextSpan(
               style: GoogleFonts.poppins(

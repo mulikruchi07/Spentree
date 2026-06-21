@@ -1284,36 +1284,48 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  // --- SUB WIDGETS ---
   Widget _buildHeader() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment
+          .center, // ADDED: keeps trophy icon vertically centered against the two-line text block
       children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              "Hello",
-              style: GoogleFonts.montserrat(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: AppColors.colblack,
-              ),
-            ),
-            ValueListenableBuilder<UserProfile>(
-              valueListenable: userProfileNotifier,
-              builder: (context, profile, _) => Text(
-                "${profile.firstName},",
+        Expanded(
+          // ADDED: constrains the Column's width to prevent horizontal overflow
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize
+                .min, // ADDED: Column only takes the height it needs
+            children: [
+              Text(
+                "Hello",
                 style: GoogleFonts.montserrat(
-                  fontSize: 36,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
                   color: AppColors.colblack,
-                  height: 1.0,
                 ),
               ),
-            ),
-          ],
+              ValueListenableBuilder<UserProfile>(
+                valueListenable: userProfileNotifier,
+                builder: (context, profile, _) => Text(
+                  "${profile.firstName},",
+                  style: GoogleFonts.montserrat(
+                    fontSize: 36,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.colblack,
+                    height: 1.0,
+                  ),
+                  maxLines: 1, // ADDED: prevents wrapping to a second line
+                  overflow: TextOverflow
+                      .ellipsis, // ADDED: truncates instead of overflowing
+                ),
+              ),
+            ],
+          ),
         ),
+        const SizedBox(
+          width: 12,
+        ), // ADDED: guarantees breathing room before the icon, even at max truncation width
         Icon(PhosphorIcons.trophy, size: 32, color: AppColors.colblack),
       ],
     );

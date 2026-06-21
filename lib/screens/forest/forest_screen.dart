@@ -878,7 +878,7 @@ class _ForestScreenState extends State<ForestScreen> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(forestStatus.icon, color: AppColors.colblack, size: 14),
+                  Icon(forestStatus.icon, color: AppColors.colwhite, size: 14),
                   const SizedBox(width: 4),
                   Text(
                     forestStatus.label,

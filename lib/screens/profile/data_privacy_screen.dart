@@ -62,7 +62,13 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
                       color: AppColors.destructiveRed, // Design Red
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(icon, color: isDarkMode ? AppColors.colwhite : AppColors.colwhite, size: 32),
+                    child: Icon(
+                      icon,
+                      color: isDarkMode
+                          ? AppColors.colwhite
+                          : AppColors.colwhite,
+                      size: 32,
+                    ),
                   ),
                   const SizedBox(height: 20),
 
@@ -451,7 +457,8 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
         const SizedBox(height: 4),
 
         GestureDetector(
-          onTap: () => _launchURL("https://linkedin.com/in/designer"),
+          onTap: () =>
+              _launchURL("https://in.linkedin.com/in/pranav-phanse-8b4bbb318"),
           child: RichText(
             text: TextSpan(
               style: GoogleFonts.poppins(
@@ -481,7 +488,7 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
         const SizedBox(height: 4),
 
         GestureDetector(
-          onTap: () => _launchURL("https://linkedin.com/in/developer"),
+          onTap: () => _launchURL("www.linkedin.com/in/ruchi-mulik-816a2b295"),
           child: RichText(
             text: TextSpan(
               style: GoogleFonts.poppins(
@@ -515,7 +522,11 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
   Widget _buildIconCircle(IconData icon, Color bg) => Container(
     padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
-    child: Icon(icon, color: isDarkMode ? AppColors.colwhite : AppColors.colwhite, size: 32),
+    child: Icon(
+      icon,
+      color: isDarkMode ? AppColors.colwhite : AppColors.colwhite,
+      size: 32,
+    ),
   );
 
   Widget _buildActionBtn(String text, Color bg, Color tx, VoidCallback? tap) =>

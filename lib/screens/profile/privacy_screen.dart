@@ -59,8 +59,8 @@ class PrivacyScreen extends StatelessWidget {
                 _buildSection("10. Contact", "If you have questions about privacy or data use, contact:"),
                 _buildBoldText("support@spentree.in"),
                 const SizedBox(height: 32),
-                _buildAgreeButton(context),
-                const SizedBox(height: 48),
+                // _buildAgreeButton(context),
+                // const SizedBox(height: 48),
                 _buildFooter(),
                 const SizedBox(height: 50),
               ],
@@ -89,21 +89,21 @@ class PrivacyScreen extends StatelessWidget {
   Widget _buildBodyText(String text) => Text(text, style: GoogleFonts.poppins(fontSize: 14, height: 1.5, color: AppColors.colblack));
   Widget _buildBoldText(String text) => Text(text, style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w500, height: 1.5, color: AppColors.colblack));
 
-  Widget _buildAgreeButton(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      height: 55,
-      child: ElevatedButton(
-        onPressed: () => Navigator.pop(context),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primaryGreen,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          elevation: 0,
-        ),
-        child: Text("I agree", style: GoogleFonts.montserrat(color: AppColors.colwhite, fontWeight: FontWeight.w600, fontSize: 16)),
-      ),
-    );
-  }
+  // Widget _buildAgreeButton(BuildContext context) {
+  //   return SizedBox(
+  //     width: double.infinity,
+  //     height: 55,
+  //     child: ElevatedButton(
+  //       onPressed: () => Navigator.pop(context),
+  //       style: ElevatedButton.styleFrom(
+  //         backgroundColor: AppColors.primaryGreen,
+  //         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+  //         elevation: 0,
+  //       ),
+  //       child: Text("I agree", style: GoogleFonts.montserrat(color: AppColors.colwhite, fontWeight: FontWeight.w600, fontSize: 16)),
+  //     ),
+  //   );
+  // }
 
   Widget _buildFooter() {
     return Column(

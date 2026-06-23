@@ -1105,7 +1105,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     style: GoogleFonts.poppins(
                                       fontSize: 15,
                                       fontWeight: FontWeight.w500,
-                                      color: AppColors.white500,
+                                      color: AppColors.primaryGreen,
                                     ),
                                   ),
                                 ),
@@ -1234,7 +1234,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                     style: GoogleFonts.poppins(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w500,
-                                      color: AppColors.white500,
+                                      color: AppColors.primaryGreen,
                                     ),
                                   ),
                                 ),
@@ -1611,7 +1611,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             style: GoogleFonts.poppins(
               fontSize: 15,
               fontWeight: FontWeight.w500,
-              color: AppColors.white500,
+              color: AppColors.primaryGreen,
             ),
           ),
         ),

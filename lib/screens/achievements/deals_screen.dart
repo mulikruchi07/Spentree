@@ -987,7 +987,7 @@ class _DealsScreenState extends State<DealsScreen>
             child: Container(
               width: cardWidth,
               height: cardHeight,
-              color: AppColors.navbar,
+              color: AppColors.specialcode,
               child: innerContent,
             ),
           ),
@@ -1161,7 +1161,7 @@ class _DealsScreenState extends State<DealsScreen>
             child: Container(
               width: MediaQuery.of(context).size.width - 48,
               height: cardHeight,
-              color: AppColors.navbar,
+              color: AppColors.specialcode,
               child: innerContent,
             ),
           ),
@@ -1344,7 +1344,8 @@ class _ExpandedDealOverlayState extends State<ExpandedDealOverlay> {
             child: Container(
               width: MediaQuery.of(context).size.width - 48,
               height: cardHeight,
-              color: AppColors.navbar,
+              // color: AppColors.navbar,
+              color: const Color(0xFF222222),
               child: Stack(
                 children: [
                   Positioned(
@@ -1438,7 +1439,7 @@ class _ExpandedDealOverlayState extends State<ExpandedDealOverlay> {
                                 horizontal: 20.0,
                               ),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFF1F1F1),
+                                color: AppColors.specialcode,
                                 borderRadius: BorderRadius.circular(16.0),
                               ),
                               child: Column(
@@ -1529,7 +1530,7 @@ class _ExpandedDealOverlayState extends State<ExpandedDealOverlay> {
                               style: GoogleFonts.montserrat(
                                 fontSize: 12.0,
                                 fontWeight: FontWeight.w500,
-                                color: const Color(0xFF858585),
+                                color: const Color(0xFF9E9E9E),
                               ),
                             ),
                           ],

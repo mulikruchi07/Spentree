@@ -155,7 +155,20 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                   const SizedBox(height: 16),
 
                   // 6. Footer
-                  _buildFooter(context),
+                  _buildTipSection(),
+                  const SizedBox(height: 20),
+                  Divider(color: AppColors.divider, thickness: 1),
+                  const SizedBox(height: 20),
+                  Center(
+                    child: Text(
+                      "Planted with love in Mumbai, India",
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.white500,
+                      ),
+                    ),
+                  ),
                   const SizedBox(height: 120), // Bottom padding for navbar
                 ],
               ),
@@ -603,67 +616,26 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
     );
   }
 
-  Widget _buildFooter(BuildContext context) {
+  Widget _buildTipSection() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          "Planted with love in Mumbai, India",
+          "Tip of the day",
           style: GoogleFonts.poppins(
-            fontSize: 14,
-            fontWeight: FontWeight.w400,
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+            color: AppColors.colblack,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          "Cooking one meal at home can save enough to grow 3 new leaves.",
+          style: GoogleFonts.poppins(
+            fontSize: 21,
+            fontWeight: FontWeight.w500,
             color: AppColors.white500,
-          ),
-        ),
-        const SizedBox(height: 4),
-        GestureDetector(
-          onTap: () =>
-              _launchURL("https://in.linkedin.com/in/pranav-phanse-8b4bbb318"),
-          child: RichText(
-            text: TextSpan(
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                color: AppColors.white500,
-              ),
-              children: [
-                const TextSpan(
-                  text: "Designed by ",
-                  style: TextStyle(fontWeight: FontWeight.w400),
-                ),
-                TextSpan(
-                  text: "Designer",
-                  style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w200,
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 4),
-        GestureDetector(
-          onTap: () => _launchURL("www.linkedin.com/in/ruchi-mulik-816a2b295"),
-          child: RichText(
-            text: TextSpan(
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                color: AppColors.white500,
-              ),
-              children: [
-                const TextSpan(
-                  text: "Developed by ",
-                  style: TextStyle(fontWeight: FontWeight.w400),
-                ),
-                TextSpan(
-                  text: "Developer",
-                  style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w200,
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
-              ],
-            ),
+            height: 1.3,
           ),
         ),
       ],

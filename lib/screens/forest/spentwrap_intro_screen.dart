@@ -4,6 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:intl/intl.dart';
+import 'package:spentree/core/monthly_insights_service.dart';
+import 'package:spentree/core/transaction_service.dart';
+import 'package:spentree/screens/forest/forest_screen.dart';
 import '../../core/app_style.dart';
 import 'package:spentree/screens/main_wrapper.dart';
 
@@ -18,7 +21,14 @@ enum WrapPhase {
 }
 
 class SpentWrapScreen extends StatefulWidget {
-  const SpentWrapScreen({super.key});
+  final DateTime targetMonth;
+  final int dailyLimit;
+
+  const SpentWrapScreen({
+    super.key,
+    required this.targetMonth,
+    required this.dailyLimit,
+  });
 
   @override
   State<SpentWrapScreen> createState() => _SpentWrapScreenState();
@@ -74,38 +84,52 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
     WrapPhase.summary,
   ];
 
-  // Tree Data for Layer 6
-  final List<Map<String, String>> _treeTypes = [
-    {"name": "Dense Forest", "image": "dense_forest.png", "count": "02"},
-    {"name": "Grand Forest", "image": "grand_forest.png", "count": "05"},
-    {"name": "Forest", "image": "forest.png", "count": "08"},
-    {"name": "String Tree", "image": "string_tree.png", "count": "10"},
-    {"name": "Drying Tree", "image": "drying_tree.png", "count": "04"},
-    {"name": "Dry Tree", "image": "dry_tree.png", "count": "02"},
-  ];
+  // // Tree Data for Layer 6
+  // final List<Map<String, String>> _treeTypes = [
+  //   {"name": "Dense Forest", "image": "dense_forest.png", "count": "02"},
+  //   {"name": "Grand Forest", "image": "grand_forest.png", "count": "05"},
+  //   {"name": "Forest", "image": "forest.png", "count": "08"},
+  //   {"name": "String Tree", "image": "string_tree.png", "count": "10"},
+  //   {"name": "Drying Tree", "image": "drying_tree.png", "count": "04"},
+  //   {"name": "Dry Tree", "image": "dry_tree.png", "count": "02"},
+  // ];
 
+  // late List<Map<String, dynamic>> _sortedCategories;
+  // final List<Map<String, dynamic>> _rawCategoryData = [
+  //   {"name": "Food & Beverages", "amount": 30000},
+  //   {"name": "Shopping", "amount": 15000},
+  //   {"name": "To People", "amount": 15000},
+  //   {"name": "Fuel", "amount": 7000},
+  //   {"name": "Recharge", "amount": 6000},
+  //   {"name": "Other", "amount": 2000},
+  // ];
+  // final List<Color> _greenPalette = [
+  //   const Color(0xFF005A32),
+  //   const Color(0xFF238B45),
+  //   const Color(0xFF41AB5D),
+  //   const Color(0xFF74C476),
+  //   const Color(0xFFA1D99B),
+  //   const Color(0xFFC7E9C0),
+  // ];
+
+  final MonthlyInsightsService _insights = MonthlyInsightsService();
+
+  // DYNAMIC DATA
+  late String _monthName;
+  late Map<String, dynamic> _forestStats;
+  late ForestStatus _forestStatus;
+  late List<Map<String, dynamic>> _allCategories;
+  late List<Map<String, dynamic>> _topCategories;
+  late List<Transaction> _topTransactions;
+  late Map<String, dynamic> _strongestDayData;
+  late Map<String, dynamic> _categoryAssets;
+  late double _totalExpense;
   late List<Map<String, dynamic>> _sortedCategories;
-  final List<Map<String, dynamic>> _rawCategoryData = [
-    {"name": "Food & Beverages", "amount": 30000},
-    {"name": "Shopping", "amount": 15000},
-    {"name": "To People", "amount": 15000},
-    {"name": "Fuel", "amount": 7000},
-    {"name": "Recharge", "amount": 6000},
-    {"name": "Other", "amount": 2000},
-  ];
-  final List<Color> _greenPalette = [
-    const Color(0xFF005A32),
-    const Color(0xFF238B45),
-    const Color(0xFF41AB5D),
-    const Color(0xFF74C476),
-    const Color(0xFFA1D99B),
-    const Color(0xFFC7E9C0),
-  ];
 
   @override
   void initState() {
     super.initState();
-    _processCategoryData();
+    _loadDynamicData();
 
     // 1. Intro Entry Animation (1.4s)
     _introCtrl = AnimationController(
@@ -210,14 +234,89 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
     });
   }
 
-  void _processCategoryData() {
-    _sortedCategories = List.from(_rawCategoryData);
-    _sortedCategories.sort(
-      (a, b) => (b['amount'] as int).compareTo(a['amount'] as int),
+  // void _processCategoryData() {
+  //   _sortedCategories = List.from(_rawCategoryData);
+  //   _sortedCategories.sort(
+  //     (a, b) => (b['amount'] as int).compareTo(a['amount'] as int),
+  //   );
+  //   for (int i = 0; i < _sortedCategories.length; i++) {
+  //     _sortedCategories[i]['color'] = _greenPalette[i % _greenPalette.length];
+  //   }
+  // }
+
+  void _loadDynamicData() {
+    _monthName = DateFormat('MMMM').format(widget.targetMonth);
+
+    // Total & Status
+    _totalExpense = _insights.getTotalMonthlyExpense(widget.targetMonth);
+    int monthlyBudget =
+        widget.dailyLimit * _insights.daysInMonth(widget.targetMonth);
+    double pct = monthlyBudget > 0
+        ? ((monthlyBudget - _totalExpense).clamp(0, monthlyBudget) /
+              monthlyBudget)
+        : 0;
+    _forestStatus = getForestStatusForPercentage(pct);
+
+    // Forest / Trees
+    _forestStats = _insights.computeForestStats(
+      widget.targetMonth,
+      widget.dailyLimit,
     );
-    for (int i = 0; i < _sortedCategories.length; i++) {
-      _sortedCategories[i]['color'] = _greenPalette[i % _greenPalette.length];
+
+    // Categories
+    _allCategories = _insights.computeCategorySpends(
+      widget.targetMonth,
+      forceAll: true,
+    );
+    _topCategories = _insights.computeCategorySpends(
+      widget.targetMonth,
+    ); // Excludes 0 amounts
+
+    _sortedCategories = _allCategories;
+
+    // Assets based on #1 category
+    String topCatName = _topCategories.isNotEmpty
+        ? _topCategories.first['name']
+        : "Other";
+    _categoryAssets = _insights.getCategoryAssets(topCatName);
+
+    // Top 3 TX
+    final daysInMonth = _insights.daysInMonth(widget.targetMonth);
+    final List<Transaction> allTx = [];
+    for (int day = 1; day <= daysInMonth; day++) {
+      allTx.addAll(
+        TransactionService().getTransactionsForDay(
+          DateTime(widget.targetMonth.year, widget.targetMonth.month, day),
+        ),
+      );
     }
+    allTx.sort((a, b) => b.amount.compareTo(a.amount));
+    _topTransactions = allTx.take(3).toList();
+
+    // Strongest Day
+    _strongestDayData =
+        _insights.getStrongestDay(widget.targetMonth, widget.dailyLimit) ??
+        {
+          "day": 1,
+          "date": widget.targetMonth,
+          "expense": 0.0,
+          "percentage": 100,
+          "treeStatus": "Dense Forest",
+        };
+  }
+
+  // --- DYNAMIC TEXT TIP GENERATOR ---
+  String _getCategoryTip(String categoryName) {
+    String lower = categoryName.toLowerCase();
+    if (lower.contains("food") || lower.contains("beverage"))
+      return "Maybe you should join\ncooking classes";
+    if (lower.contains("shop")) return "Window shopping?\nNever heard of it";
+    if (lower.contains("people")) return "You made someone’s\nday this month.";
+    if (lower.contains("fuel") || lower.contains("transport"))
+      return "Your vehicle eats petrol\nfor breakfast.";
+    if (lower.contains("bill") || lower.contains("recharge"))
+      return "Subscriptions survived\nanother month.";
+    return "Mysterious spending\ndetected.";
   }
 
   @override
@@ -385,7 +484,8 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
     if (_isTransitioning) return;
     _isTransitioning = true;
     _progressCtrl.stop();
-    _finalExitCtrl.forward().then((_) {
+    _finalExitCtrl.forward().then((_) async {
+      await _insights.markWrapAsViewed(widget.targetMonth); // MARK AS READ!
       _triggerStandardNavigation();
     });
   }
@@ -532,7 +632,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                         child: Opacity(
                           opacity: val,
                           child: Image.asset(
-                            'assets/images/tree_1.png',
+                            'assets/images/forest/spentwrap/${_forestStats["dominantTreeImage"]}',
                             fit: BoxFit.contain,
                           ),
                         ),
@@ -548,7 +648,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                         child: Opacity(
                           opacity: val,
                           child: Image.asset(
-                            'assets/images/forest/forest_great.png',
+                            'assets/images/forest/${_forestStatus.image}',
                             fit: BoxFit.contain,
                           ),
                         ),
@@ -604,7 +704,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                                         ),
                                         SizedBox(height: screenHeight * 0.02),
                                         Text(
-                                          "September Spentwrap",
+                                          "$_monthName Spentwrap",
                                           textAlign: TextAlign.center,
                                           style: GoogleFonts.montserrat(
                                             fontSize: screenWidth * 0.055,
@@ -808,7 +908,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                           children: [
                             SizedBox(height: screenHeight * 0.05),
                             Text(
-                              "April Spentwrap",
+                              "$_monthName Spentwrap",
                               style: GoogleFonts.montserrat(
                                 fontSize: screenWidth * 0.045,
                                 fontWeight: FontWeight.w600,
@@ -896,7 +996,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                         child: Transform.rotate(
                           angle: lerpDouble(0, 14 * math.pi / 180, linearVal)!,
                           child: Image.asset(
-                            'assets/images/forest/spentwrap/food1.png',
+                            'assets/images/forest/spentwrap/${_categoryAssets["img1"]}', // Use img2 for the second one
                             width: screenWidth * 0.35,
                           ),
                         ),
@@ -911,7 +1011,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                         child: Transform.rotate(
                           angle: lerpDouble(0, -14 * math.pi / 180, linearVal)!,
                           child: Image.asset(
-                            'assets/images/forest/spentwrap/food2.png',
+                            'assets/images/forest/spentwrap/${_categoryAssets["img2"]}', // Use img2 for the second one
                             width: screenWidth * 0.35,
                           ),
                         ),
@@ -994,7 +1094,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                                           linearVal,
                                         )!,
                                         child: _buildGreenIconBox(
-                                          PhosphorIcons.bowlSteam,
+                                          _categoryAssets["icon1"], // Use icon2 for the second one
                                           screenWidth,
                                         ),
                                       ),
@@ -1021,7 +1121,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                                           linearVal,
                                         )!,
                                         child: _buildGreenIconBox(
-                                          PhosphorIconsRegular.wine,
+                                          _categoryAssets["icon2"], // Use icon2 for the second one
                                           screenWidth,
                                         ),
                                       ),
@@ -1069,21 +1169,30 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                                                   BorderRadius.circular(19),
                                             ),
                                             child: Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              crossAxisAlignment: CrossAxisAlignment.center, // Ensures center alignment
                                               children: [
-                                                Text(
-                                                  "Food - ₹8,200",
-                                                  style: GoogleFonts.montserrat(
-                                                    fontSize:
-                                                        screenWidth * 0.06,
-                                                    fontWeight: FontWeight.w600,
-                                                    color: AppColors.colblack,
+                                                // FIXED: Wrapped in FittedBox to guarantee single-line fit
+                                                FittedBox(
+                                                  fit: BoxFit.scaleDown,
+                                                  alignment: Alignment.center,
+                                                  child: Text(
+                                                    "${_topCategories.isNotEmpty ? _topCategories.first['name'] : 'Other'} - ₹${NumberFormat('#,##0').format(_topCategories.isNotEmpty ? _topCategories.first['amount'] : 0)}",
+                                                    textAlign: TextAlign.center,
+                                                    maxLines: 1, // Prevents wrapping to the next line
+                                                    style: GoogleFonts.montserrat(
+                                                      fontSize: screenWidth * 0.06, 
+                                                      fontWeight: FontWeight.w600,
+                                                      color: AppColors.colblack,
+                                                    ),
                                                   ),
                                                 ),
                                                 SizedBox(
                                                   height: screenHeight * 0.015,
                                                 ),
                                                 Text(
-                                                  "That's 33% of your total\nspending.",
+                                                  "That's ${_totalExpense > 0 && _topCategories.isNotEmpty ? ((_topCategories.first['amount'] / _totalExpense) * 100).toInt() : 0}% of your total\nspending.",
                                                   textAlign: TextAlign.center,
                                                   style: GoogleFonts.montserrat(
                                                     fontSize:
@@ -1117,7 +1226,11 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                                   bottom: screenHeight * 0.1,
                                 ),
                                 child: Text(
-                                  "Maybe you should join\ncooking classes",
+                                  _getCategoryTip(
+                                    _topCategories.isNotEmpty
+                                        ? _topCategories.first['name']
+                                        : 'Other',
+                                  ),
                                   textAlign: TextAlign.center,
                                   style: GoogleFonts.montserrat(
                                     fontSize: screenWidth * 0.035,
@@ -1232,36 +1345,40 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                                 child: Container(
                                   width: screenWidth * 0.85,
                                   child: Column(
-                                    children: [
-                                      _buildTransactionCard(
-                                        "Shell Petroleum",
-                                        "Bank account",
-                                        "- Rs. 1500",
-                                        "Fri, 11 April 2025",
-                                        PhosphorIcons.gasPump,
-                                        screenWidth,
-                                        screenHeight,
-                                      ),
-                                      _buildTransactionCard(
-                                        "D-Mart",
-                                        "Bank account",
-                                        "- Rs. 2000",
-                                        "Fri, 11 April 2025",
-                                        PhosphorIcons.shoppingCart,
-                                        screenWidth,
-                                        screenHeight,
-                                      ),
-                                      _buildTransactionCard(
-                                        "Unknown Source",
-                                        "Bank account",
-                                        "- Rs. 2000",
-                                        "Fri, 11 April 2025",
-                                        PhosphorIcons.currencyInr,
-                                        screenWidth,
-                                        screenHeight,
-                                        isIncome: true,
-                                      ),
-                                    ],
+                                    children: _topTransactions.isEmpty
+                                        ? [
+                                            Padding(
+                                              padding: EdgeInsets.symmetric(
+                                                vertical: screenHeight * 0.05,
+                                              ),
+                                              child: Text(
+                                                "No transactions recorded for this month.",
+                                                textAlign: TextAlign.center,
+                                                style: GoogleFonts.montserrat(
+                                                  color: AppColors.subtext,
+                                                  fontSize: screenWidth * 0.04,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                            ),
+                                          ]
+                                        : _topTransactions
+                                              .map(
+                                                (tx) => _buildTransactionCard(
+                                                  tx.title,
+                                                  tx.isManual
+                                                      ? "Cash"
+                                                      : "Bank account",
+                                                  "- Rs. ${NumberFormat('#,##0').format(tx.amount)}",
+                                                  DateFormat(
+                                                    'E, d MMMM yyyy',
+                                                  ).format(tx.date),
+                                                  tx.icon,
+                                                  screenWidth,
+                                                  screenHeight,
+                                                ),
+                                              )
+                                              .toList(),
                                   ),
                                 ),
                               ),
@@ -1412,9 +1529,9 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                                 ),
                                 child: _buildCalendarCard(
                                   screenWidth: screenWidth,
-                                  year: 2025, // Set year dynamically here
-                                  month: 4, // Set month dynamically here
-                                  activeDay: 4,
+                                  year: widget.targetMonth.year,
+                                  month: widget.targetMonth.month,
+                                  activeDay: _strongestDayData["day"],
                                 ),
                               ),
                             ),
@@ -1432,7 +1549,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                                   bottom: screenHeight * 0.1,
                                 ),
                                 child: Text(
-                                  "You spent only 20% of your\ndaily limit.",
+                                  "You spent only ${_strongestDayData["percentage"]}% of your\ndaily limit.",
                                   textAlign: TextAlign.center,
                                   style: GoogleFonts.montserrat(
                                     fontSize: screenWidth * 0.035,
@@ -1485,7 +1602,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                                 lerpDouble(0, -screenHeight * 0.6, exit)!,
                           ),
                           child: Text(
-                            "You planted ‘31 Trees’",
+                            "You planted '${_forestStats["totalTreesGrown"]} Trees'",
                             style: GoogleFonts.montserrat(
                               fontSize: screenWidth * 0.06,
                               fontWeight: FontWeight.w600,
@@ -1500,6 +1617,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                         Expanded(
                           child: FittedBox(
                             fit: BoxFit.scaleDown,
+                            alignment: Alignment.topCenter, // <--- ADD THIS LINE HERE
                             child: Transform.translate(
                               offset: Offset(
                                 0,
@@ -1510,10 +1628,40 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   // 1. Full Forest Image exactly as provided
-                                  Image.asset(
-                                    'assets/images/forest/forest_great.png', // Uses your merged single image
+                                  // 1. Full Forest Image with 60% Bottom Background Box
+                                  SizedBox(
                                     width: screenWidth * 0.85,
-                                    fit: BoxFit.contain,
+                                    height:
+                                        screenHeight *
+                                        0.26, // Gives the stack a constrained height
+                                    child: Stack(
+                                      alignment: Alignment.bottomCenter,
+                                      clipBehavior: Clip.none,
+                                      children: [
+                                        // Background Box: Anchored to bottom, exactly 60% height
+                                        FractionallySizedBox(
+                                          heightFactor: 0.60,
+                                          alignment: Alignment.bottomCenter,
+                                          child: Container(
+                                            width: double.infinity,
+                                            decoration: BoxDecoration(
+                                              color: _forestStatus.color,
+                                              borderRadius:
+                                                  BorderRadius.circular(15.0),
+                                            ),
+                                          ),
+                                        ),
+                                        // Tree Image: Anchored to bottom, pokes out top of the box
+                                        Image.asset(
+                                          'assets/images/forest/${_forestStatus.image}',
+                                          height:
+                                              screenHeight *
+                                              0.28, // Taller than the box
+                                          fit: BoxFit.contain,
+                                          alignment: Alignment.bottomCenter,
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                   SizedBox(height: screenHeight * 0.02),
 
@@ -1538,54 +1686,69 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                                     ),
                                     child: Column(
                                       mainAxisSize: MainAxisSize.min,
-                                      children: _treeTypes.asMap().entries.map((
-                                        entry,
-                                      ) {
-                                        int idx = entry.key;
-                                        var tree = entry.value;
-                                        bool isLast =
-                                            idx == _treeTypes.length - 1;
+                                      children: (_forestStats["treeCounts"] as List)
+                                          .asMap()
+                                          .entries
+                                          .map((entry) {
+                                            int idx = entry.key;
+                                            var tree = entry.value;
+                                            bool isLast =
+                                                idx ==
+                                                (_forestStats["treeCounts"]
+                                                            as List)
+                                                        .length -
+                                                    1;
 
-                                        return Padding(
-                                          // Tightened spacing to match the UI image
-                                          padding: EdgeInsets.only(
-                                            bottom: isLast
-                                                ? 0
-                                                : screenHeight * 0.015,
-                                          ),
-                                          child: Row(
-                                            children: [
-                                              Image.asset(
-                                                "assets/images/forest/${tree['image']}",
-                                                width: screenWidth * 0.08,
-                                                height: screenWidth * 0.08,
+                                            return Padding(
+                                              // Tightened spacing to match the UI image
+                                              padding: EdgeInsets.only(
+                                                bottom: isLast
+                                                    ? 0
+                                                    : screenHeight * 0.015,
                                               ),
-                                              SizedBox(
-                                                width: screenWidth * 0.03,
-                                              ),
-                                              Expanded(
-                                                child: Text(
-                                                  tree['name']!,
-                                                  style: GoogleFonts.montserrat(
-                                                    fontSize:
-                                                        screenWidth * 0.035,
-                                                    fontWeight: FontWeight.w600,
-                                                    color: AppColors.colblack,
+                                              child: Row(
+                                                children: [
+                                                  Image.asset(
+                                                    "assets/images/forest/${tree['image']}",
+                                                    width: screenWidth * 0.08,
+                                                    height: screenWidth * 0.08,
                                                   ),
-                                                ),
+                                                  SizedBox(
+                                                    width: screenWidth * 0.03,
+                                                  ),
+                                                  Expanded(
+                                                    child: Text(
+                                                      tree['name']!,
+                                                      style:
+                                                          GoogleFonts.montserrat(
+                                                            fontSize:
+                                                                screenWidth *
+                                                                0.035,
+                                                            fontWeight:
+                                                                FontWeight.w600,
+                                                            color: AppColors
+                                                                .colblack,
+                                                          ),
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    "- ${tree['count']}",
+                                                    style:
+                                                        GoogleFonts.montserrat(
+                                                          fontSize:
+                                                              screenWidth *
+                                                              0.035,
+                                                          fontWeight:
+                                                              FontWeight.w500,
+                                                          color: AppColors
+                                                              .colblack,
+                                                        ),
+                                                  ),
+                                                ],
                                               ),
-                                              Text(
-                                                "- ${tree['count']}",
-                                                style: GoogleFonts.montserrat(
-                                                  fontSize: screenWidth * 0.035,
-                                                  fontWeight: FontWeight.w500,
-                                                  color: AppColors.colblack,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        );
-                                      }).toList(),
+                                            );
+                                          })
+                                          .toList(),
                                     ),
                                   ),
                                 ],
@@ -1633,7 +1796,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                                   lerpDouble(0, -screenHeight * 0.6, exit)!,
                             ),
                             child: Text(
-                              "April's Summary",
+                              "$_monthName's Summary",
                               style: GoogleFonts.montserrat(
                                 fontSize:
                                     screenWidth *
@@ -1669,16 +1832,17 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                                         CrossAxisAlignment.start,
                                     children: [
                                       _buildSummaryCard(
-                                        "April's Expense",
-                                        "Rs. 75,000",
+                                        "$_monthName's Expense",
+                                        "Rs. ${NumberFormat('#,##0').format(_totalExpense)}",
                                         screenWidth,
                                         screenHeight,
                                         isExpense: true,
+                                        forestStatus: _forestStatus,
                                       ),
                                       SizedBox(height: screenHeight * 0.015),
                                       _buildSummaryCard(
                                         "Average Daily Expense",
-                                        "Rs. 3,500 / 5,000",
+                                        "Rs. ${NumberFormat('#,##0').format(_totalExpense / _insights.daysInMonth(widget.targetMonth))} / ${NumberFormat('#,##0').format(widget.dailyLimit)}",
                                         screenWidth,
                                         screenHeight,
                                       ),
@@ -1751,7 +1915,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
         children: [
           SizedBox(height: screenHeight * 0.05),
           Text(
-            "April Spentwrap",
+            "$_monthName Spentwrap",
             style: GoogleFonts.montserrat(
               fontSize: screenWidth * 0.045,
               fontWeight: FontWeight.w600,
@@ -2051,6 +2215,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
     double screenWidth,
     double screenHeight, {
     bool isExpense = false,
+    ForestStatus? forestStatus,
   }) {
     return Container(
       width: double.infinity,
@@ -2089,26 +2254,26 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
               ),
             ],
           ),
-          if (isExpense)
+          if (isExpense && forestStatus != null)
             Container(
               padding: EdgeInsets.symmetric(
                 horizontal: screenWidth * 0.03,
                 vertical: screenHeight * 0.005,
               ),
               decoration: BoxDecoration(
-                color: AppColors.primaryGreen,
+                color: forestStatus.color,
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Row(
                 children: [
                   Icon(
-                    Icons.trending_up,
+                    forestStatus.icon,
                     color: AppColors.colwhite,
                     size: screenWidth * 0.035,
                   ),
                   SizedBox(width: screenWidth * 0.01),
                   Text(
-                    "Great",
+                    forestStatus.label,
                     style: GoogleFonts.montserrat(
                       fontSize: screenWidth * 0.03,
                       color: AppColors.colwhite,
@@ -2124,17 +2289,24 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
   }
 
   Widget _buildMultiSegmentProgressBar(double screenWidth) {
+    // FIXED: Safely parsing the amount as a double instead of an int, 
+    // and initializing the fold sum to 0.0 instead of 0
     double total = _sortedCategories.fold(
-      0,
-      (sum, item) => sum + (item['amount'] as int),
+      0.0,
+      (sum, item) => sum + (item['amount'] as num).toDouble(),
     );
-    double cumulativeSum = 0;
+    
+    double cumulativeSum = 0.0;
     List<Widget> barLayers = [];
 
     for (int i = 0; i < _sortedCategories.length; i++) {
       var cat = _sortedCategories[i];
-      cumulativeSum += cat['amount'] as int;
-      double percentage = cumulativeSum / total;
+      
+      // FIXED: Safely parse as double here as well
+      cumulativeSum += (cat['amount'] as num).toDouble();
+      
+      // Prevent division by zero if total expenses are 0
+      double percentage = total > 0 ? (cumulativeSum / total) : 0.0;
 
       barLayers.insert(
         0,

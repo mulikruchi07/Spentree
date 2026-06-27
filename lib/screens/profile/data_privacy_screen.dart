@@ -5,6 +5,7 @@ import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:spentree/screens/profile/hide_transactions_screen.dart';
 import 'delete_transactions_screen.dart';
 import 'privacy_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -389,8 +390,32 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
                   ),
                   _buildTile(
                     PhosphorIcons.trash,
-                    "Delete Transactions",
+                    "Hide Transactions",
                     "Manage your transactions",
+                    () {
+                      // SHOW CUSTOM LOGOUT DIALOG
+                      _showConfirmationDialog(
+                        title: "Hide Transactions",
+                        message:
+                            "Are you sure you want to hide all transactions?",
+                        confirmText: "Yes, Hide",
+                        icon: PhosphorIcons.trash,
+                        onConfirm: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  const HideTransactionsScreen(),
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                  _buildTile(
+                    PhosphorIcons.trash,
+                    "Delete Transactions",
+                    "Remove your transactions",
                     () {
                       // SHOW CUSTOM LOGOUT DIALOG
                       _showConfirmationDialog(

@@ -3,12 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:home_widget/home_widget.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:math' as math;
 import 'dart:convert';
 import 'package:flutter/material.dart' show DateUtils;
 import 'package:spentree/core/user_data.dart';
+// Using built-in Material icons instead of PhosphorIcons
 
 class Transaction {
   String id;
@@ -19,6 +19,7 @@ class Transaction {
   TimeOfDay time;
   IconData icon;
   bool isManual;
+  bool isHidden;
 
   Transaction({
     required this.id,
@@ -29,7 +30,38 @@ class Transaction {
     required this.time,
     required this.icon,
     this.isManual = false,
+    this.isHidden = false,
   });
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'title': title,
+    'category': category,
+    'amount': amount,
+    'date': date.toIso8601String(),
+    'hour': time.hour,
+    'minute': time.minute,
+    'isManual': isManual,
+    'isHidden': isHidden,
+  };
+
+  factory Transaction.fromJson(
+    Map<String, dynamic> json,
+    IconData Function(String) getIcon,
+  ) {
+    final parsedDate = DateTime.parse(json['date']);
+    return Transaction(
+      id: json['id'],
+      title: json['title'],
+      category: json['category'],
+      amount: (json['amount'] as num).toDouble(),
+      date: parsedDate,
+      time: TimeOfDay(hour: json['hour'], minute: json['minute']),
+      icon: getIcon(json['category']),
+      isManual: json['isManual'] ?? false,
+      isHidden: json['isHidden'] ?? false,
+    );
+  }
 }
 
 class TransactionService extends ChangeNotifier {
@@ -43,6 +75,8 @@ class TransactionService extends ChangeNotifier {
   // JSON string: Map<txId, {title, category}>
   // Persists user edits (title/category) through app restarts.
   static const String _overrideKey = 'tx_overrides';
+  static const String _manualKey = 'tx_manual';
+  static const String _deletedKey = 'tx_deleted_ids';
 
   List<Transaction> _allTransactions = [];
   bool isLoading = true;
@@ -64,6 +98,32 @@ class TransactionService extends ChangeNotifier {
     await _fetchAndParseSms();
   }
 
+  // Add this method to permanently block a transaction ID
+  Future<void> deleteTransaction(String id) async {
+    final prefs = await SharedPreferences.getInstance();
+    List<String> deletedIds = prefs.getStringList(_deletedKey) ?? [];
+    if (!deletedIds.contains(id)) {
+      deletedIds.add(id);
+      await prefs.setStringList(_deletedKey, deletedIds);
+    }
+
+    // Remove from local memory so it disappears immediately
+    // Remove from local memory so it disappears immediately
+    _allTransactions.removeWhere((tx) => tx.id == id);
+
+    // Also purge from manual storage so it never reloads on restart
+    final manualList = await _loadManualTransactions();
+    final filtered = manualList.where((tx) => tx.id != id).toList();
+    final prefsManual = await SharedPreferences.getInstance();
+    await prefsManual.setString(
+      _manualKey,
+      jsonEncode(filtered.map((e) => e.toJson()).toList()),
+    );
+
+    notifyListeners();
+    syncWidget();
+  }
+
   // ── SMS parse ─────────────────────────────────────────────────────────────
 
   Future<void> _fetchAndParseSms() async {
@@ -78,15 +138,20 @@ class TransactionService extends ChangeNotifier {
         int timestamp = sms['date'] ?? 0;
 
         bool isDebit = body.contains('debited') || body.contains('sent to');
-        bool hasAmount = body.contains('rs') || body.contains('inr') || body.contains('₹');
+        bool hasAmount =
+            body.contains('rs') || body.contains('inr') || body.contains('₹');
 
         if (!isDebit || !hasAmount) continue;
 
-        RegExp amountRegex = RegExp(r'(?:rs\.?|inr|₹)\s*([\d,]+\.?\d*)', caseSensitive: false);
+        RegExp amountRegex = RegExp(
+          r'(?:rs\.?|inr|₹)\s*([\d,]+\.?\d*)',
+          caseSensitive: false,
+        );
         var amountMatch = amountRegex.firstMatch(originalBody);
         double amount = 0.0;
         if (amountMatch != null && amountMatch.group(1) != null) {
-          amount = double.tryParse(amountMatch.group(1)!.replaceAll(',', '')) ?? 0.0;
+          amount =
+              double.tryParse(amountMatch.group(1)!.replaceAll(',', '')) ?? 0.0;
         }
 
         String merchant = address;
@@ -122,6 +187,19 @@ class TransactionService extends ChangeNotifier {
         );
       }
 
+      // Restore and merge manually created items
+      // Load permanently deleted IDs and strip them from parsed SMS list
+      final prefs2 = await SharedPreferences.getInstance();
+      final deletedIds = Set<String>.from(
+        prefs2.getStringList(_deletedKey) ?? [],
+      );
+      parsedList.removeWhere((tx) => deletedIds.contains(tx.id));
+
+      // Restore and merge manually created items (also filter deleted)
+      List<Transaction> manualTx = await _loadManualTransactions();
+      manualTx.removeWhere((tx) => deletedIds.contains(tx.id));
+      parsedList.addAll(manualTx);
+
       _allTransactions = parsedList;
 
       // ── Re-apply persisted overrides ─────────────────────────────────────
@@ -137,6 +215,30 @@ class TransactionService extends ChangeNotifier {
       notifyListeners();
       debugPrint("Error processing SMS: $e");
     }
+  }
+
+  // ── Manual Transaction Persistence Fix ───────────────────────────────────
+
+  Future<List<Transaction>> _loadManualTransactions() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_manualKey);
+    if (raw == null) return [];
+    try {
+      final List<dynamic> decoded = jsonDecode(raw);
+      return decoded
+          .map((item) => Transaction.fromJson(item, _getIconForCategory))
+          .toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<void> _saveManualTransaction(Transaction tx) async {
+    final manualList = await _loadManualTransactions();
+    manualList.add(tx);
+    final prefs = await SharedPreferences.getInstance();
+    final encoded = jsonEncode(manualList.map((e) => e.toJson()).toList());
+    await prefs.setString(_manualKey, encoded);
   }
 
   // ── Override persistence ──────────────────────────────────────────────────
@@ -161,10 +263,14 @@ class TransactionService extends ChangeNotifier {
       if (entry != null) {
         final title = entry['title'] as String?;
         final category = entry['category'] as String?;
+        final isHidden = entry['isHidden'] as bool?;
         if (title != null && title.isNotEmpty) tx.title = title;
         if (category != null && category.isNotEmpty) {
           tx.category = category;
           tx.icon = _getIconForCategory(category);
+        }
+        if (isHidden != null) {
+          tx.isHidden = isHidden;
         }
       }
     }
@@ -173,7 +279,12 @@ class TransactionService extends ChangeNotifier {
   /// Persist a title/category override for a transaction id.
   Future<void> _saveOverride(String id, String title, String category) async {
     final overrides = await _loadOverrides();
-    overrides[id] = {'title': title, 'category': category};
+    // Merge with existing data so we don't overwrite the isHidden flag
+    final existing = overrides[id] ?? {};
+
+    existing['title'] = title;
+    existing['category'] = category;
+    overrides[id] = existing;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_overrideKey, jsonEncode(overrides));
   }
@@ -190,28 +301,47 @@ class TransactionService extends ChangeNotifier {
     String lowerBody = body.toLowerCase();
     String lowerMerchant = merchant.toLowerCase();
 
-    if (lowerBody.contains('zomato') || lowerBody.contains('swiggy') ||
-        lowerBody.contains('mcdonald') || lowerBody.contains('domino') ||
-        lowerMerchant.contains('restaurant')) return "Food & Beverages";
-    if (lowerBody.contains('amazon') || lowerBody.contains('flipkart') ||
-        lowerBody.contains('myntra') || lowerMerchant.contains('mart')) return "Shopping";
-    if (lowerBody.contains('petrol') || lowerBody.contains('fuel') ||
-        lowerBody.contains('indian oil')) return "Fuel";
-    if (lowerBody.contains('jio') || lowerBody.contains('airtel') ||
-        lowerBody.contains('recharge') || lowerBody.contains('bill')) return "Bills & Subscriptions";
-    if (lowerBody.contains('upi') || lowerBody.contains('vpa') ||
-        lowerBody.contains('sent to')) return "To People";
+    if (lowerBody.contains('zomato') ||
+        lowerBody.contains('swiggy') ||
+        lowerBody.contains('mcdonald') ||
+        lowerBody.contains('domino') ||
+        lowerMerchant.contains('restaurant'))
+      return "Food & Beverages";
+    if (lowerBody.contains('amazon') ||
+        lowerBody.contains('flipkart') ||
+        lowerBody.contains('myntra') ||
+        lowerMerchant.contains('mart'))
+      return "Shopping";
+    if (lowerBody.contains('petrol') ||
+        lowerBody.contains('fuel') ||
+        lowerBody.contains('indian oil'))
+      return "Fuel";
+    if (lowerBody.contains('jio') ||
+        lowerBody.contains('airtel') ||
+        lowerBody.contains('recharge') ||
+        lowerBody.contains('bill'))
+      return "Bills & Subscriptions";
+    if (lowerBody.contains('upi') ||
+        lowerBody.contains('vpa') ||
+        lowerBody.contains('sent to'))
+      return "To People";
     return "Other";
   }
 
   IconData _getIconForCategory(String cat) {
     switch (cat) {
-      case "Food & Beverages": return PhosphorIcons.bowlSteam;
-      case "Shopping": return PhosphorIcons.tShirt;
-      case "Fuel": return PhosphorIcons.gasCan;
-      case "Bills & Subscriptions": return PhosphorIcons.simCard;
-      case "To People": return PhosphorIcons.user;
-      default: return PhosphorIcons.currencyInr;
+      case "Food & Beverages":
+        return PhosphorIcons.bowlSteam;
+      case "Shopping":
+        return PhosphorIcons.tShirt;
+      case "Fuel":
+        return PhosphorIcons.gasCan;
+      case "Bills & Subscriptions":
+        return PhosphorIcons.simCard;
+      case "To People":
+        return PhosphorIcons.user;
+      default:
+        return PhosphorIcons.currencyInr;
     }
   }
 
@@ -223,23 +353,63 @@ class TransactionService extends ChangeNotifier {
     String category,
     DateTime date,
     TimeOfDay time,
-  ) {
-    final id = DateTime.now().millisecondsSinceEpoch.toString() +
+  ) async {
+    final id =
+        DateTime.now().millisecondsSinceEpoch.toString() +
         math.Random().nextInt(1000).toString();
-    _allTransactions.insert(
-      0,
-      Transaction(
-        id: id,
-        title: title,
-        category: category,
-        amount: amount,
-        date: DateTime(date.year, date.month, date.day, time.hour, time.minute),
-        time: time,
-        icon: _getIconForCategory(category),
-        isManual: true,
-      ),
+
+    final newTx = Transaction(
+      id: id,
+      title: title,
+      category: category,
+      amount: amount,
+      date: DateTime(date.year, date.month, date.day, time.hour, time.minute),
+      time: time,
+      icon: _getIconForCategory(category),
+      isManual: true,
     );
+
+    _allTransactions.insert(0, newTx);
+    await _saveManualTransaction(newTx);
+
     _sortTransactions();
+    notifyListeners();
+    syncWidget();
+  }
+
+  // ── Hide / Unhide ─────────────────────────────────────────────────────────
+
+  void toggleTransactionVisibility(String id, bool hide) async {
+    int index = _allTransactions.indexWhere((tx) => tx.id == id);
+    if (index == -1) return;
+
+    _allTransactions[index].isHidden = hide;
+
+    if (_allTransactions[index].isManual) {
+      // Save manual list to SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      final manualItems = _allTransactions
+          .where((element) => element.isManual)
+          .toList();
+      await prefs.setString(
+        _manualKey,
+        jsonEncode(manualItems.map((e) => e.toJson()).toList()),
+      );
+    } else {
+      // Save SMS override to SharedPreferences
+      final overrides = await _loadOverrides();
+      final existing = overrides[id] ?? {};
+      existing['isHidden'] = hide;
+      // Preserve current title/category in case they weren't overridden yet
+      existing['title'] = existing['title'] ?? _allTransactions[index].title;
+      existing['category'] =
+          existing['category'] ?? _allTransactions[index].category;
+
+      overrides[id] = existing;
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_overrideKey, jsonEncode(overrides));
+    }
+
     notifyListeners();
     syncWidget();
   }
@@ -259,17 +429,15 @@ class TransactionService extends ChangeNotifier {
     double amount,
     String category,
     TimeOfDay time,
-  ) {
+  ) async {
     int index = _allTransactions.indexWhere((tx) => tx.id == id);
     if (index == -1) return;
 
-    // Always persist title + category (for both manual and auto-fetched)
     _allTransactions[index].title = title;
     _allTransactions[index].category = category;
     _allTransactions[index].icon = _getIconForCategory(category);
 
     if (_allTransactions[index].isManual) {
-      // Amount and time only editable for manual transactions
       _allTransactions[index].amount = amount;
       _allTransactions[index].time = time;
 
@@ -281,10 +449,19 @@ class TransactionService extends ChangeNotifier {
         time.hour,
         time.minute,
       );
+
+      // Re-save entire manual transaction list to preserve edits to manual items
+      final prefs = await SharedPreferences.getInstance();
+      final manualItems = _allTransactions
+          .where((element) => element.isManual)
+          .toList();
+      await prefs.setString(
+        _manualKey,
+        jsonEncode(manualItems.map((e) => e.toJson()).toList()),
+      );
     }
 
-    // Persist override so it survives SMS re-parse and app restarts
-    _saveOverride(id, title, category);
+    await _saveOverride(id, title, category);
 
     _sortTransactions();
     notifyListeners();
@@ -297,12 +474,17 @@ class TransactionService extends ChangeNotifier {
     return _allTransactions
         .where(
           (tx) =>
+              !tx.isHidden && // Transactions marked hidden will NOT be returned
               tx.date.year == date.year &&
               tx.date.month == date.month &&
               tx.date.day == date.day,
         )
         .toList();
   }
+
+  /// Visible transactions only — use this everywhere on Dashboard, Forest, Analytics.
+  List<Transaction> get visibleTransactions =>
+      _allTransactions.where((tx) => !tx.isHidden).toList();
 
   // ── Widget sync ───────────────────────────────────────────────────────────
 
@@ -320,9 +502,18 @@ class TransactionService extends ChangeNotifier {
       final todaysTx = getTransactionsForDay(now);
       double todayTotal = todaysTx.fold(0, (sum, item) => sum + item.amount);
 
-      await HomeWidget.saveWidgetData<String>('widget_expense_str', todayTotal.toString());
-      await HomeWidget.saveWidgetData<String>('widget_limit_str', limit.toString());
-      await HomeWidget.saveWidgetData<String>('widget_user_name', UserData.userName);
+      await HomeWidget.saveWidgetData<String>(
+        'widget_expense_str',
+        todayTotal.toString(),
+      );
+      await HomeWidget.saveWidgetData<String>(
+        'widget_limit_str',
+        limit.toString(),
+      );
+      await HomeWidget.saveWidgetData<String>(
+        'widget_user_name',
+        UserData.userName,
+      );
 
       final recentList = todaysTx.take(4).map((tx) {
         final hour = tx.time.hourOfPeriod == 0 ? 12 : tx.time.hourOfPeriod;
@@ -337,7 +528,10 @@ class TransactionService extends ChangeNotifier {
         };
       }).toList();
 
-      await HomeWidget.saveWidgetData<String>('today_transactions_json', jsonEncode(recentList));
+      await HomeWidget.saveWidgetData<String>(
+        'today_transactions_json',
+        jsonEncode(recentList),
+      );
 
       final daysInMonth = DateUtils.getDaysInMonth(now.year, now.month);
       Map<String, Map<String, dynamic>> monthMap = {};
@@ -345,20 +539,40 @@ class TransactionService extends ChangeNotifier {
       for (int i = 1; i <= daysInMonth; i++) {
         final date = DateTime(now.year, now.month, i);
         if (date.isBefore(now) ||
-            (date.year == now.year && date.month == now.month && date.day == now.day)) {
+            (date.year == now.year &&
+                date.month == now.month &&
+                date.day == now.day)) {
           final dailyTx = getTransactionsForDay(date);
           double total = dailyTx.fold(0, (sum, item) => sum + item.amount);
           monthMap[i.toString()] = {"amount": total};
         }
       }
 
-      await HomeWidget.saveWidgetData<String>('transactions_json', jsonEncode(monthMap));
+      await HomeWidget.saveWidgetData<String>(
+        'transactions_json',
+        jsonEncode(monthMap),
+      );
 
-      await HomeWidget.updateWidget(name: 'CalendarWidgetProvider', androidName: 'CalendarWidgetProvider');
-      await HomeWidget.updateWidget(name: 'MiniTreeWidgetProvider', androidName: 'MiniTreeWidgetProvider');
-      await HomeWidget.updateWidget(name: 'GreetingWidgetProvider', androidName: 'GreetingWidgetProvider');
-      await HomeWidget.updateWidget(name: 'TreeWidgetProvider', androidName: 'TreeWidgetProvider');
-      await HomeWidget.updateWidget(name: 'ExpensesWidgetProvider', androidName: 'ExpensesWidgetProvider');
+      await HomeWidget.updateWidget(
+        name: 'CalendarWidgetProvider',
+        androidName: 'CalendarWidgetProvider',
+      );
+      await HomeWidget.updateWidget(
+        name: 'MiniTreeWidgetProvider',
+        androidName: 'MiniTreeWidgetProvider',
+      );
+      await HomeWidget.updateWidget(
+        name: 'GreetingWidgetProvider',
+        androidName: 'GreetingWidgetProvider',
+      );
+      await HomeWidget.updateWidget(
+        name: 'TreeWidgetProvider',
+        androidName: 'TreeWidgetProvider',
+      );
+      await HomeWidget.updateWidget(
+        name: 'ExpensesWidgetProvider',
+        androidName: 'ExpensesWidgetProvider',
+      );
     } catch (e) {
       debugPrint("Failed to sync widget: $e");
     }

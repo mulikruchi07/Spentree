@@ -4,19 +4,17 @@ import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:spentree/core/app_style.dart';
-import 'package:spentree/core/transaction_service.dart';
-import 'package:spentree/core/user_data.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../core/transaction_service.dart';
 
-class DeleteTransactionsScreen extends StatefulWidget {
-  const DeleteTransactionsScreen({super.key});
+class HideTransactionsScreen extends StatefulWidget {
+  const HideTransactionsScreen({super.key});
 
   @override
-  State<DeleteTransactionsScreen> createState() =>
-      _DeleteTransactionsScreenState();
+  State<HideTransactionsScreen> createState() => _HideTransactionsScreenState();
 }
 
-class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
+class _HideTransactionsScreenState extends State<HideTransactionsScreen> {
   final ScrollController _scrollController = ScrollController();
   final GlobalKey _dockKey = GlobalKey();
   bool _isPinned = false;
@@ -24,24 +22,44 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
   DateTime _focusedDate = DateTime.now();
   final DateTime _today = DateTime.now();
 
-  // Selected transaction IDs (not indices — IDs are stable)
-  final Set<String> _selectedIds = {};
+  bool _viewingHidden = false;
+
+  final Set<int> _selectedIndices = {};
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_updateButtonPosition);
+    TransactionService().addListener(_onDataChanged);
   }
 
   @override
   void dispose() {
     _scrollController.removeListener(_updateButtonPosition);
     _scrollController.dispose();
+    TransactionService().removeListener(_onDataChanged);
     super.dispose();
   }
 
+  void _onDataChanged() {
+    if (mounted) setState(() {});
+  }
+
+  List<Transaction> get _displayedTransactions {
+    final dailyTx = TransactionService().getTransactionsForDay(_focusedDate);
+    return dailyTx.where((tx) => tx.isHidden == _viewingHidden).toList();
+  }
+
+  Future<void> _launchURL(String url) async {
+    final Uri uri = Uri.parse(url);
+    if (!await launchUrl(uri)) throw 'Could not launch $url';
+  }
+
   void _moveWeek(int days) {
-    setState(() => _focusedDate = _focusedDate.add(Duration(days: days)));
+    setState(() {
+      _focusedDate = _focusedDate.add(Duration(days: days));
+      _selectedIndices.clear();
+    });
   }
 
   List<DateTime> _getWeekDays() {
@@ -59,34 +77,38 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
       int maxDays = DateTime(year, newMonthIndex + 2, 0).day;
       if (day > maxDays) day = maxDays;
       _focusedDate = DateTime(year, newMonthIndex + 1, day);
+      _selectedIndices.clear();
     });
   }
 
   void _onYearChanged(int newYear) {
     setState(() {
       _focusedDate = DateTime(newYear, _focusedDate.month, _focusedDate.day);
+      _selectedIndices.clear();
     });
   }
 
   void _updateButtonPosition() {
-    if (_selectedIds.isEmpty) return;
+    if (_selectedIndices.isEmpty) return;
+
     final RenderBox? renderBox =
         _dockKey.currentContext?.findRenderObject() as RenderBox?;
     if (renderBox != null) {
       final position = renderBox.localToGlobal(Offset.zero).dy;
       final screenHeight = MediaQuery.of(context).size.height;
+
       setState(() {
         _isPinned = position < (screenHeight - 80);
       });
     }
   }
 
-  void _toggleSelection(String id) {
+  void _toggleSelection(int index) {
     setState(() {
-      if (_selectedIds.contains(id)) {
-        _selectedIds.remove(id);
+      if (_selectedIndices.contains(index)) {
+        _selectedIndices.remove(index);
       } else {
-        _selectedIds.add(id);
+        _selectedIndices.add(index);
       }
     });
     WidgetsBinding.instance.addPostFrameCallback(
@@ -94,29 +116,21 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
     );
   }
 
-  /// Permanently deletes all selected transactions via TransactionService.
-  /// Each call persists the ID to _deletedKey so it is never fetched again.
-  Future<void> _deleteSelected() async {
-    final service = TransactionService();
-    final ids = Set<String>.from(_selectedIds); // snapshot before clear
+  void _processSelected() {
+    final list = _displayedTransactions;
+
+    // Toggle the hidden status of all selected transactions persistently
+    for (int index in _selectedIndices) {
+      final tx = list[index];
+      // This calls the service which automatically saves to SharedPreferences
+      // and triggers UI/Widget sync
+      TransactionService().toggleTransactionVisibility(tx.id, !_viewingHidden);
+    }
+
     setState(() {
-      _selectedIds.clear();
+      _selectedIndices.clear();
       _isPinned = false;
     });
-    for (final id in ids) {
-      await service.deleteTransaction(id);
-    }
-  }
-
-  Future<void> _launchURL(String url) async {
-    final Uri uri = Uri.parse(url);
-    if (!await launchUrl(uri)) throw 'Could not launch $url';
-  }
-
-  /// Transactions for the focused date, excluding hidden ones.
-  List<Transaction> _txForFocusedDate(TransactionService service) {
-    // getTransactionsForDay already filters hidden after Patch 4
-    return service.getTransactionsForDay(_focusedDate);
   }
 
   @override
@@ -126,28 +140,28 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: themeNotifier,
       builder: (context, currentTheme, child) {
-        final service = TransactionService();
-        return ListenableBuilder(
-          listenable: service,
-          builder: (context, _) {
-            final dayTx = _txForFocusedDate(service);
+        final currentTransactions = _displayedTransactions;
 
-            return Scaffold(
-              backgroundColor: AppColors.bgWhite,
-              body: Stack(
-                children: [
-                  const SizedBox(height: 70),
-                  SafeArea(
-                    child: SingleChildScrollView(
-                      controller: _scrollController,
-                      physics: const BouncingScrollPhysics(),
-                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                      child: Column(
+        return Scaffold(
+          backgroundColor: AppColors.bgWhite,
+          body: Stack(
+            children: [
+              const SizedBox(height: 70),
+              SafeArea(
+                child: SingleChildScrollView(
+                  controller: _scrollController,
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 40),
+                      // --- Fixed Header ---
+                      Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const SizedBox(height: 40),
                           Text(
-                            "Delete",
+                            "Hide",
                             style: GoogleFonts.montserrat(
                               fontSize: 16,
                               color: AppColors.colblack,
@@ -163,129 +177,182 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
                               height: 1.1,
                             ),
                           ),
+                        ],
+                      ),
 
-                          const SizedBox(height: 20),
-                          _buildCalendarBox(),
+                      const SizedBox(height: 20),
+                      _buildCalendarBox(),
 
-                          const SizedBox(height: 28),
-                          Text(
-                            "Select Expense to Delete",
-                            style: GoogleFonts.poppins(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.colblack,
-                            ),
-                          ),
-                          Text(
-                            "Tap on the expense you want to permanently delete",
-                            style: GoogleFonts.poppins(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w400,
-                              color: AppColors.white500,
-                            ),
-                          ),
+                      const SizedBox(height: 28),
 
-                          const SizedBox(height: 14),
-
-                          if (service.isLoading)
-                            const Center(child: CircularProgressIndicator())
-                          else if (dayTx.isEmpty)
-                            Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 24),
-                              child: Center(
-                                child: Text(
-                                  "No transactions for this day.",
+                      // --- Selection Header & Toggle Button ---
+                      // REPLACE the Row in your build method with this responsive version:
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment:
+                            CrossAxisAlignment.center, // Vertically centered
+                        children: [
+                          Flexible(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _viewingHidden
+                                      ? "Select Expense to Unhide"
+                                      : "Select Expense to Hide",
                                   style: GoogleFonts.poppins(
-                                    fontSize: 14,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.colblack,
+                                  ),
+                                ),
+                                Text(
+                                  _viewingHidden
+                                      ? "Tap to remove from hidden"
+                                      : "Tap to hide",
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w400,
                                     color: AppColors.white500,
                                   ),
                                 ),
-                              ),
-                            )
-                          else
-                            ListView.builder(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemCount: dayTx.length,
-                              itemBuilder: (context, index) =>
-                                  _buildTransactionCard(dayTx[index]),
+                              ],
                             ),
-
-                          SizedBox(key: _dockKey, height: 10),
-
-                          if (_isPinned && _selectedIds.isNotEmpty)
-                            Padding(
-                              padding: const EdgeInsets.only(
-                                top: 8,
-                                bottom: 12,
+                          ),
+                          const SizedBox(width: 12),
+                          GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _viewingHidden = !_viewingHidden;
+                                _selectedIndices.clear();
+                                _isPinned = false;
+                              });
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: AppColors.inputFill,
+                                shape: BoxShape.circle,
                               ),
-                              child: _buildDeleteButton(),
-                            ),
-
-                          const SizedBox(height: 8),
-                          Center(
-                            child: Text(
-                              "That's it for today.",
-                              style: GoogleFonts.poppins(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                                color: AppColors.white500,
+                              child: Icon(
+                                _viewingHidden
+                                    ? Icons.visibility_off
+                                    : Icons.visibility,
+                                color: AppColors.primaryGreen,
+                                size: 24,
                               ),
                             ),
                           ),
-                          const SizedBox(height: 32),
-
-                          _buildTipSection(),
-                          const SizedBox(height: 20),
-                          Divider(color: AppColors.divider, thickness: 1),
-                          const SizedBox(height: 20),
-
-                          Center(
-                            child: Text(
-                              "Planted with love in Mumbai, India",
-                              style: GoogleFonts.poppins(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                                color: AppColors.white500,
-                              ),
-                            ),
-                          ),
-
-                          const SizedBox(height: 120),
                         ],
                       ),
-                    ),
-                  ),
 
-                  if (!_isPinned && _selectedIds.isNotEmpty)
-                    AnimatedPositioned(
-                      duration: const Duration(milliseconds: 500),
-                      curve: Curves.easeOutCubic,
-                      bottom: 30 + MediaQuery.of(context).padding.bottom,
-                      left: 24,
-                      right: 24,
-                      child: _buildDeleteButton(),
-                    ),
-                ],
+                      const SizedBox(height: 14),
+
+                      if (currentTransactions.isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 40.0),
+                          child: Center(
+                            child: Text(
+                              _viewingHidden
+                                  ? "No hidden transactions."
+                                  : "No transactions found.",
+                              style: GoogleFonts.poppins(
+                                fontSize: 14,
+                                color: AppColors.white500,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        )
+                      else
+                        ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: currentTransactions.length,
+                          itemBuilder: (context, index) =>
+                              _buildTransactionCard(
+                                index,
+                                currentTransactions[index],
+                              ),
+                        ),
+
+                      SizedBox(key: _dockKey, height: 10),
+
+                      if (_isPinned && _selectedIndices.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8, bottom: 12),
+                          child: _buildActionButton(),
+                        ),
+
+                      const SizedBox(height: 8),
+                      Center(
+                        child: Text(
+                          "That's it for today.",
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.white500,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+
+                      _buildTipSection(),
+                      const SizedBox(height: 20),
+                      Divider(color: AppColors.divider, thickness: 1),
+
+                      const SizedBox(height: 20),
+
+                      Center(
+                        child: Text(
+                          "Planted with love in Mumbai, India",
+                          style: GoogleFonts.poppins(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.white500,
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 120),
+                    ],
+                  ),
+                ),
               ),
-            );
-          },
+
+              if (!_isPinned && _selectedIndices.isNotEmpty)
+                AnimatedPositioned(
+                  duration: const Duration(milliseconds: 500),
+                  curve: Curves.easeOutCubic,
+                  bottom: 30 + MediaQuery.of(context).padding.bottom,
+                  left: 24,
+                  right: 24,
+                  child: _buildActionButton(),
+                ),
+            ],
+          ),
         );
       },
     );
   }
 
-  Widget _buildDeleteButton() {
+  Widget _buildActionButton() {
+    final int count = _selectedIndices.length;
+    final String actionText = _viewingHidden ? "Unhide" : "Hide";
+    final Color btnColor = _viewingHidden
+        ? AppColors.primaryGreen
+        : AppColors.destructiveRed;
+
     return GestureDetector(
-      onTap: _deleteSelected,
+      onTap: _processSelected,
       child: Container(
         height: 56,
         decoration: BoxDecoration(
-          color: AppColors.destructiveRed,
+          color: btnColor,
           borderRadius: BorderRadius.circular(15),
           boxShadow: [
             BoxShadow(
-              color: AppColors.destructiveRed.withOpacity(0.2),
+              color: btnColor.withOpacity(0.2),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -293,7 +360,7 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
         ),
         child: Center(
           child: Text(
-            "Delete ${_selectedIds.length} Transaction${_selectedIds.length > 1 ? 's' : ''}",
+            "$actionText $count Transaction${count > 1 ? 's' : ''}",
             style: GoogleFonts.poppins(
               color: AppColors.colwhite,
               fontWeight: FontWeight.w600,
@@ -305,15 +372,11 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
     );
   }
 
-  Widget _buildTransactionCard(Transaction tx) {
-    final bool isSelected = _selectedIds.contains(tx.id);
-    final hour = tx.time.hourOfPeriod == 0 ? 12 : tx.time.hourOfPeriod;
-    final minute = tx.time.minute.toString().padLeft(2, '0');
-    final period = tx.time.period == DayPeriod.am ? "AM" : "PM";
-    final timeStr = "$hour:$minute $period";
+  Widget _buildTransactionCard(int index, Transaction tx) {
+    bool isSelected = _selectedIndices.contains(index);
 
     return GestureDetector(
-      onTap: () => _toggleSelection(tx.id),
+      onTap: () => _toggleSelection(index),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         margin: const EdgeInsets.only(bottom: 15),
@@ -324,7 +387,11 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
           color: AppColors.inputFill,
           borderRadius: BorderRadius.circular(15),
           border: Border.all(
-            color: isSelected ? AppColors.destructiveRed : Colors.transparent,
+            color: isSelected
+                ? (_viewingHidden
+                      ? AppColors.primaryGreen
+                      : AppColors.destructiveRed)
+                : Colors.transparent,
             width: 1.0,
           ),
         ),
@@ -354,6 +421,8 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
                 children: [
                   Text(
                     tx.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.montserrat(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -361,7 +430,7 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
                     ),
                   ),
                   Text(
-                    tx.isManual ? "Manual entry" : "Bank account",
+                    tx.isManual ? "Cash" : "Bank account",
                     style: GoogleFonts.montserrat(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
@@ -376,7 +445,7 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  "- Rs. ${tx.amount.toStringAsFixed(0)}",
+                  "- Rs. ${NumberFormat('#,##0').format(tx.amount)}",
                   style: GoogleFonts.montserrat(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -385,7 +454,7 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  timeStr,
+                  tx.time.format(context),
                   style: GoogleFonts.montserrat(
                     fontSize: 11,
                     fontWeight: FontWeight.w500,
@@ -486,7 +555,12 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
             date.year == _today.year;
 
         return GestureDetector(
-          onTap: () => setState(() => _focusedDate = date),
+          onTap: () {
+            setState(() {
+              _focusedDate = date;
+              _selectedIndices.clear();
+            });
+          },
           child: Column(
             children: [
               Text(

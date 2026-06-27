@@ -198,17 +198,17 @@
 //   IconData _getIconForCategory(String cat) {
 //     switch (cat) {
 //       case "Food & Beverages":
-//         return PhosphorIcons.bowlSteam();
+//         return PhosphorIconsRegular.bowlSteam();
 //       case "Shopping":
-//         return PhosphorIcons.tShirt();
+//         return PhosphorIconsRegular.tShirt();
 //       case "Fuel":
-//         return PhosphorIcons.gasCan();
+//         return PhosphorIconsRegular.gasCan();
 //       case "Bills & Subscriptions":
-//         return PhosphorIcons.simCard();
+//         return PhosphorIconsRegular.simCard();
 //       case "To People":
-//         return PhosphorIcons.user();
+//         return PhosphorIconsRegular.user();
 //       default:
-//         return PhosphorIcons.currencyInr();
+//         return PhosphorIconsRegular.currencyInr();
 //     }
 //   }
 
@@ -663,7 +663,7 @@
 //             ),
 //           ],
 //         ),
-//         Icon(PhosphorIcons.trophy(), size: 32, color: AppColors.colblack),
+//         Icon(PhosphorIconsRegular.trophy(), size: 32, color: AppColors.colblack),
 //       ],
 //     );
 //   }
@@ -1071,18 +1071,18 @@
 //         _titleCtrl.text.isEmpty &&
 //         _amountCtrl.text.isEmpty) {
 //       // NOTE: Depending on your exact phosphor_flutter version,
-//       // if .questionMark() gives an error, use PhosphorIcons.question() instead.
-//       if (_titleCtrl.text.isEmpty) return PhosphorIcons.questionMark();
+//       // if .questionMark() gives an error, use PhosphorIconsRegular.question() instead.
+//       if (_titleCtrl.text.isEmpty) return PhosphorIconsRegular.questionMark();
 //     }
 
-//     if (cat == "Food & Beverages") return PhosphorIcons.bowlSteam();
-//     if (cat == "Shopping") return PhosphorIcons.tShirt();
-//     if (cat == "Fuel") return PhosphorIcons.gasCan();
-//     if (cat == "Bills & Subscriptions") return PhosphorIcons.simCard();
-//     if (cat == "To People") return PhosphorIcons.user();
+//     if (cat == "Food & Beverages") return PhosphorIconsRegular.bowlSteam();
+//     if (cat == "Shopping") return PhosphorIconsRegular.tShirt();
+//     if (cat == "Fuel") return PhosphorIconsRegular.gasCan();
+//     if (cat == "Bills & Subscriptions") return PhosphorIconsRegular.simCard();
+//     if (cat == "To People") return PhosphorIconsRegular.user();
 
 //     // Default fallback icon
-//     return PhosphorIcons.currencyInr();
+//     return PhosphorIconsRegular.currencyInr();
 //   }
 
 //   void _trySave() {
@@ -2152,7 +2152,11 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
             ),
           ],
         ),
-        Icon(PhosphorIcons.trophy, size: 32, color: AppColors.colblack),
+        Icon(
+          PhosphorIconsRegular.trophy,
+          size: 32,
+          color: AppColors.colblack,
+        ),
       ],
     );
   }
@@ -2649,14 +2653,14 @@ class _ExpenseFormState extends State<ExpenseForm> {
     if (!widget.isEditing &&
         _titleCtrl.text.isEmpty &&
         _amountCtrl.text.isEmpty) {
-      if (_titleCtrl.text.isEmpty) return PhosphorIcons.question;
+      if (_titleCtrl.text.isEmpty) return PhosphorIconsRegular.question;
     }
-    if (cat == "Food & Beverages") return PhosphorIcons.bowlSteam;
-    if (cat == "Shopping") return PhosphorIcons.tShirt;
-    if (cat == "Fuel") return PhosphorIcons.gasCan;
-    if (cat == "Bills & Subscriptions") return PhosphorIcons.simCard;
-    if (cat == "To People") return PhosphorIcons.user;
-    return PhosphorIcons.currencyInr;
+    if (cat == "Food & Beverages") return PhosphorIconsRegular.bowlSteam;
+    if (cat == "Shopping") return PhosphorIconsRegular.tShirt;
+    if (cat == "Fuel") return PhosphorIconsRegular.gasCan;
+    if (cat == "Bills & Subscriptions") return PhosphorIconsRegular.simCard;
+    if (cat == "To People") return PhosphorIconsRegular.user;
+    return PhosphorIconsRegular.currencyInr;
   }
 
   void _trySave() {

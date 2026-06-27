@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
-
 import 'package:spentree/screens/forest/forest_screen.dart';
 import '../core/app_style.dart';
 import 'analytics/analytics_screen.dart';
@@ -99,9 +98,15 @@ class _MainWrapperState extends State<MainWrapper> with WidgetsBindingObserver {
             : Brightness.dark,
         systemNavigationBarContrastEnforced: false,
         // Status Bar (This fixes your visibility issue)
-      statusBarColor: Colors.transparent, // Keeps status bar background transparent
-      statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark, // Light icons for dark mode, dark icons for light mode
-      statusBarBrightness: isDark ? Brightness.dark : Brightness.light, // For iOS
+        statusBarColor:
+            Colors.transparent, // Keeps status bar background transparent
+        statusBarIconBrightness: isDark
+            ? Brightness.light
+            : Brightness
+                  .dark, // Light icons for dark mode, dark icons for light mode
+        statusBarBrightness: isDark
+            ? Brightness.dark
+            : Brightness.light, // For iOS
       ),
     );
   }
@@ -174,19 +179,31 @@ class _MainWrapperState extends State<MainWrapper> with WidgetsBindingObserver {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _navItem(0, PhosphorIcons.house, PhosphorIcons.houseFill),
+          _navItem(
+            0,
+            PhosphorIconsRegular.house,
+            PhosphorIconsFill.house,
+          ),
           _navItem(
             1,
-            PhosphorIcons.chartPieSlice,
-            PhosphorIcons.chartPieSliceFill,
+            PhosphorIconsRegular.chartPieSlice,
+            PhosphorIconsFill.chartPieSlice,
           ),
           _navItem(
             2,
-            PhosphorIcons.treeEvergreen,
-            PhosphorIcons.treeEvergreenFill,
+            PhosphorIconsRegular.treeEvergreen,
+            PhosphorIconsFill.treeEvergreen,
           ),
-          _navItem(3, PhosphorIcons.trophy, PhosphorIcons.trophyFill),
-          _navItem(4, PhosphorIcons.user, PhosphorIcons.userFill),
+          _navItem(
+            3,
+            PhosphorIconsRegular.trophy,
+            PhosphorIconsFill.trophy,
+          ),
+          _navItem(
+            4,
+            PhosphorIconsRegular.user,
+            PhosphorIconsFill.user,
+          ),
         ],
       ),
     );

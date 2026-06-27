@@ -105,7 +105,7 @@
 //           children: [
 //             // Updated to Phosphor Icon for consistency
 //             PhosphorIcon(
-//               PhosphorIcons.lockKey(),
+//               PhosphorIconsRegular.lockKey(),
 //               size: 64,
 //               color: AppColors.primaryGreen,
 //             ),
@@ -297,7 +297,7 @@
 //         amount: 450,
 //         date: DateTime.now(),
 //         time: const TimeOfDay(hour: 12, minute: 30),
-//         icon: PhosphorIcons.bowlSteam(),
+//         icon: PhosphorIconsRegular.bowlSteam(),
 //         isManual: false,
 //       ),
 //       Transaction(
@@ -307,7 +307,7 @@
 //         amount: 220,
 //         date: DateTime.now(),
 //         time: const TimeOfDay(hour: 14, minute: 15),
-//         icon: PhosphorIcons.car(),
+//         icon: PhosphorIconsRegular.car(),
 //         isManual: true,
 //       ),
 //       Transaction(
@@ -317,7 +317,7 @@
 //         amount: 1299,
 //         date: DateTime.now(),
 //         time: const TimeOfDay(hour: 16, minute: 45),
-//         icon: PhosphorIcons.tShirt(),
+//         icon: PhosphorIconsRegular.tShirt(),
 //         isManual: false,
 //       ),
 //       Transaction(
@@ -327,7 +327,7 @@
 //         amount: 299,
 //         date: DateTime.now(),
 //         time: const TimeOfDay(hour: 18, minute: 20),
-//         icon: PhosphorIcons.simCard(),
+//         icon: PhosphorIconsRegular.simCard(),
 //         isManual: false,
 //       ),
 //     ];
@@ -480,7 +480,6 @@
 //   }
 // }
 
-
 // void main() async {
 //   HomeWidget.registerInteractivityCallback(backgroundCallback);
 //   WidgetsFlutterBinding.ensureInitialized();
@@ -561,6 +560,9 @@ import 'core/app_style.dart';
 import 'core/transaction_service.dart';
 import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/material.dart';
+// import 'package:flutter_dotenv/flutter_dotenv.dart';
+// import 'package:supabase_flutter/supabase_flutter.dart';
 
 @pragma('vm:entry-point')
 Future<void> backgroundCallback(Uri? uri) async {
@@ -572,13 +574,22 @@ Future<void> backgroundCallback(Uri? uri) async {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // // 1. Load Environment Variables
+  // await dotenv.load(fileName: ".env");
+
+  // // 2. Initialize Supabase
+  // await Supabase.initialize(
+  //   url: dotenv.env['SUPABASE_URL']!,
+  //   anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
+  // );
+
   // ── Initialise lock BEFORE runApp so the overlay is ready on frame 1 ──
   // The notifier starts as AppLockState.locked (pessimistic). initialize()
   // reads SharedPreferences and flips to unlocked if lock is disabled.
   await AppLockController.initialize();
-  await loadSavedTheme();          // ← NEW: restore persisted theme before first frame
-  await userProfileNotifier.initialize(); // ← NEW: restore name + image before first frame
-
+  await loadSavedTheme(); // ← NEW: restore persisted theme before first frame
+  await userProfileNotifier
+      .initialize(); // ← NEW: restore name + image before first frame
 
   // ONLY register widget code if we are NOT on the web
   if (!kIsWeb) {
@@ -641,8 +652,8 @@ class MyApp extends StatelessWidget {
             useMaterial3: true,
             scaffoldBackgroundColor: const Color(0xFF121212),
           ),
-          // home: MainWrapper(initialIndex: initialTab),
-          home: const SplashOnboardingScreen(),
+          home: MainWrapper(initialIndex: initialTab),
+          // home: const SplashOnboardingScreen(),
           // ── Global lock overlay ─────────────────────────────────────────
           // The `builder` layer sits ABOVE the Navigator's entire route stack,
           // including every pushed route AND every showDialog / showModalBottomSheet.

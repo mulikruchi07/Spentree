@@ -187,7 +187,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       Padding(
                         padding: const EdgeInsets.only(bottom: 8.0),
                         child: Icon(
-                          PhosphorIcons.trophy,
+                          PhosphorIconsRegular.trophy,
                           size: 32,
                           color: AppColors.colblack,
                         ),
@@ -237,8 +237,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     )
                                   : Center(
                                       child: Icon(
-                                        PhosphorIcons
-                                            .user, // Unfilled icon as requested
+                                        PhosphorIconsRegular.user, // Unfilled icon as requested
                                         size: 35,
                                         color: AppColors.grey600,
                                       ),
@@ -283,7 +282,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                   // ── Settings List ────────────────────────────────────────
                   _buildSettingsItem(
-                    PhosphorIcons.user,
+                    PhosphorIconsRegular.user,
                     "My Account",
                     "Make changes to your account",
                     () {
@@ -296,7 +295,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     },
                   ),
                   _buildSettingsItem(
-                    PhosphorIcons.shieldCheck,
+                    PhosphorIconsRegular.shieldCheck,
                     "Data & Privacy",
                     "Manage your data & privacy",
                     () {
@@ -309,7 +308,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     },
                   ),
                   _buildSettingsItem(
-                    PhosphorIcons.signOut,
+                    PhosphorIconsRegular.signOut,
                     "Log out",
                     "Further secure your account for safety",
                     () {
@@ -317,7 +316,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         title: "Logout",
                         message: "Are you sure you want to logout?",
                         confirmText: "Yes, Logout",
-                        icon: PhosphorIcons.signOut,
+                        icon: PhosphorIconsRegular.signOut,
                         onConfirm: () async {
                           final prefs = await SharedPreferences.getInstance();
                           await prefs.setBool('isLoggedIn', false);
@@ -335,7 +334,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     },
                   ),
                   _buildSettingsItem(
-                    PhosphorIcons.question,
+                    PhosphorIconsRegular.question,
                     "Helpdesk & FAQ",
                     "Further secure your account for safety",
                     () {
@@ -348,7 +347,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     },
                   ),
                   _buildSettingsItem(
-                    PhosphorIcons.info,
+                    PhosphorIconsRegular.info,
                     "About Us",
                     "Further secure your account for safety",
                     () {
@@ -361,7 +360,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     },
                   ),
                   _buildSettingsItem(
-                    PhosphorIcons.envelopeSimple,
+                    PhosphorIconsRegular.envelopeSimple,
                     "Contact Us",
                     "Further secure your account for safety",
                     () {

@@ -14,7 +14,8 @@ class DynamicCalendarCard extends StatefulWidget {
   const DynamicCalendarCard({
     super.key,
     required this.dailyLimit,
-    required this.onSwapTap, required Uint8List treeBytes,
+    required this.onSwapTap,
+    required Uint8List treeBytes,
   });
 
   @override
@@ -118,7 +119,7 @@ class _DynamicCalendarCardState extends State<DynamicCalendarCard> {
                 shape: BoxShape.circle,
               ),
               child: Icon(
-                PhosphorIcons.arrowsLeftRight,
+                PhosphorIconsRegular.arrowsLeftRight,
                 size: 16,
                 color: AppColors.colblack,
               ),

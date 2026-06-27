@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+// import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 // import 'package:flutter_svg/flutter_svg.dart'; // Required for SVG rendering
 import '../../core/app_style.dart';
@@ -218,7 +219,11 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
             clipBehavior: Clip
                 .none, // Allows the dot to sit slightly outside the icon bounds
             children: [
-              Icon(PhosphorIcons.gift, size: 36, color: AppColors.colblack),
+              Icon(
+                PhosphorIconsRegular.gift,
+                size: 36,
+                color: AppColors.colblack,
+              ),
               Positioned(
                 top: 0,
                 right: 0,
@@ -298,7 +303,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                               child:
                                   userProfileNotifier.value.imageBytes == null
                                   ? Icon(
-                                      PhosphorIcons.user,
+                                      PhosphorIconsRegular.user,
                                       size: 40,
                                       color: AppColors.grey600,
                                     )
@@ -364,7 +369,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                   Row(
                     children: [
                       Icon(
-                        PhosphorIcons.plant,
+                        PhosphorIconsRegular.plant,
                         size: 16,
                         color: AppColors.primaryGreen,
                       ),
@@ -475,7 +480,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                 ),
                 // Lock Icon on top
                 Icon(
-                  PhosphorIcons.lockKey,
+                  PhosphorIconsRegular.lockKey,
                   size: 30,
                   color: AppColors.colblack,
                 ),

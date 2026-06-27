@@ -60,7 +60,7 @@ class TodaysExpensesCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
-                      PhosphorIcons.leaf,
+                      PhosphorIconsRegular.leaf,
                       color: AppColors.white500,
                       size: 28,
                     ),
@@ -80,7 +80,7 @@ class TodaysExpensesCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
-                      PhosphorIcons.leaf,
+                      PhosphorIconsRegular.leaf,
                       color: AppColors.white500,
                       size: 40,
                     ),
@@ -133,7 +133,7 @@ class TodaysExpensesCard extends StatelessWidget {
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
-                    PhosphorIcons.arrowsLeftRight,
+                    PhosphorIconsRegular.arrowsLeftRight,
                     size: 16,
                     color: AppColors.colblack,
                   ),

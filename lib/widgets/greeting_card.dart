@@ -144,7 +144,7 @@ class GreetingCard extends StatelessWidget {
                     ),
                   ),
                   child: Icon(
-                    PhosphorIcons.arrowUpRight,
+                    PhosphorIconsRegular.arrowUpRight,
                     color: AppColors.divider,
                     size: 42,
                   ),

@@ -300,7 +300,7 @@
 //           ],
 //         ),
 //         // Trophy Icon - No Circle
-//         Icon(PhosphorIcons.trophy(), size: 32, color: AppColors.colblack),
+//         Icon(PhosphorIconsRegular.trophy(), size: 32, color: AppColors.colblack),
 //       ],
 //     );
 //   }
@@ -628,22 +628,22 @@
 //     // Icons mapped to Figma visual
 //     final transactions = [
 //       {
-//         "icon": PhosphorIcons.bowlSteam(),
+//         "icon": PhosphorIconsRegular.bowlSteam(),
 //         "name": "McDonald's Ltd.",
 //         "amount": "- Rs. 159",
 //       }, // Burger
 //       {
-//         "icon": PhosphorIcons.tShirt(),
+//         "icon": PhosphorIconsRegular.tShirt(),
 //         "name": "Zudio",
 //         "amount": "- Rs. 899",
 //       }, // Shirt
 //       {
-//         "icon": PhosphorIcons.simCard(),
+//         "icon": PhosphorIconsRegular.simCard(),
 //         "name": "Jio",
 //         "amount": "- Rs. 349",
 //       }, // Mobile
 //       {
-//         "icon": PhosphorIcons.bowlSteam(),
+//         "icon": PhosphorIconsRegular.bowlSteam(),
 //         "name": "Dominos Ltd.",
 //         "amount": "- Rs. 458",
 //       }, // Pizza
@@ -1128,7 +1128,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 child: Column(
                                   children: [
                                     Icon(
-                                      PhosphorIcons.leaf,
+                                      PhosphorIconsRegular.leaf,
                                       color: AppColors.white500,
                                       size: 40,
                                     ),
@@ -1326,7 +1326,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
         const SizedBox(
           width: 12,
         ), // ADDED: guarantees breathing room before the icon, even at max truncation width
-        Icon(PhosphorIcons.trophy, size: 32, color: AppColors.colblack),
+        Icon(
+          PhosphorIconsRegular.trophy,
+          size: 32,
+          color: AppColors.colblack,
+        ),
       ],
     );
   }

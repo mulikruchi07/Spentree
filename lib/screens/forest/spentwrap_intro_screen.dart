@@ -697,7 +697,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                                             shape: BoxShape.circle,
                                           ),
                                           child: Icon(
-                                            PhosphorIcons.presentationChart,
+                                            PhosphorIconsRegular.presentationChart,
                                             color: AppColors.colwhite,
                                             size: screenWidth * 0.1,
                                           ),
@@ -1170,8 +1170,10 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                                             ),
                                             child: Column(
                                               mainAxisSize: MainAxisSize.min,
-                                              mainAxisAlignment: MainAxisAlignment.center,
-                                              crossAxisAlignment: CrossAxisAlignment.center, // Ensures center alignment
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              crossAxisAlignment: CrossAxisAlignment
+                                                  .center, // Ensures center alignment
                                               children: [
                                                 // FIXED: Wrapped in FittedBox to guarantee single-line fit
                                                 FittedBox(
@@ -1180,12 +1182,18 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                                                   child: Text(
                                                     "${_topCategories.isNotEmpty ? _topCategories.first['name'] : 'Other'} - ₹${NumberFormat('#,##0').format(_topCategories.isNotEmpty ? _topCategories.first['amount'] : 0)}",
                                                     textAlign: TextAlign.center,
-                                                    maxLines: 1, // Prevents wrapping to the next line
-                                                    style: GoogleFonts.montserrat(
-                                                      fontSize: screenWidth * 0.06, 
-                                                      fontWeight: FontWeight.w600,
-                                                      color: AppColors.colblack,
-                                                    ),
+                                                    maxLines:
+                                                        1, // Prevents wrapping to the next line
+                                                    style:
+                                                        GoogleFonts.montserrat(
+                                                          fontSize:
+                                                              screenWidth *
+                                                              0.06,
+                                                          fontWeight:
+                                                              FontWeight.w600,
+                                                          color: AppColors
+                                                              .colblack,
+                                                        ),
                                                   ),
                                                 ),
                                                 SizedBox(
@@ -1617,7 +1625,8 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                         Expanded(
                           child: FittedBox(
                             fit: BoxFit.scaleDown,
-                            alignment: Alignment.topCenter, // <--- ADD THIS LINE HERE
+                            alignment:
+                                Alignment.topCenter, // <--- ADD THIS LINE HERE
                             child: Transform.translate(
                               offset: Offset(
                                 0,
@@ -2289,22 +2298,22 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
   }
 
   Widget _buildMultiSegmentProgressBar(double screenWidth) {
-    // FIXED: Safely parsing the amount as a double instead of an int, 
+    // FIXED: Safely parsing the amount as a double instead of an int,
     // and initializing the fold sum to 0.0 instead of 0
     double total = _sortedCategories.fold(
       0.0,
       (sum, item) => sum + (item['amount'] as num).toDouble(),
     );
-    
+
     double cumulativeSum = 0.0;
     List<Widget> barLayers = [];
 
     for (int i = 0; i < _sortedCategories.length; i++) {
       var cat = _sortedCategories[i];
-      
+
       // FIXED: Safely parse as double here as well
       cumulativeSum += (cat['amount'] as num).toDouble();
-      
+
       // Prevent division by zero if total expenses are 0
       double percentage = total > 0 ? (cumulativeSum / total) : 0.0;
 

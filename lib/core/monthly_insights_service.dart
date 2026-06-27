@@ -1,5 +1,6 @@
 // lib/core/monthly_insights_service.dart
 import 'package:flutter/material.dart';
+// import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
@@ -12,11 +13,16 @@ class WrapStatus {
   final DateTime? targetMonth;
   final bool showDot;
 
-  WrapStatus({required this.isAvailable, this.targetMonth, required this.showDot});
+  WrapStatus({
+    required this.isAvailable,
+    this.targetMonth,
+    required this.showDot,
+  });
 }
 
 class MonthlyInsightsService {
-  static final MonthlyInsightsService _instance = MonthlyInsightsService._internal();
+  static final MonthlyInsightsService _instance =
+      MonthlyInsightsService._internal();
   factory MonthlyInsightsService() => _instance;
   MonthlyInsightsService._internal();
 
@@ -30,7 +36,12 @@ class MonthlyInsightsService {
   ];
 
   final List<String> allCategories = [
-    "Food & Beverages", "Shopping", "To People", "Fuel", "Recharge", "Other"
+    "Food & Beverages",
+    "Shopping",
+    "To People",
+    "Fuel",
+    "Recharge",
+    "Other",
   ];
 
   // ==========================================
@@ -117,22 +128,54 @@ class MonthlyInsightsService {
       totalTrees += status.treesGrown;
 
       switch (status.label) {
-        case "Dense Forest": dense++; break;
-        case "Grand Forest": grand++; break;
-        case "Forest": forest++; break;
-        case "String Tree": string++; break;
-        case "Drying Tree": drying++; break;
-        case "Dry Tree": dry++; break;
+        case "Dense Forest":
+          dense++;
+          break;
+        case "Grand Forest":
+          grand++;
+          break;
+        case "Forest":
+          forest++;
+          break;
+        case "String Tree":
+          string++;
+          break;
+        case "Drying Tree":
+          drying++;
+          break;
+        case "Dry Tree":
+          dry++;
+          break;
       }
     });
 
     // Dominant Tree Calculation for Layer 1
     final treeCounts = [
-      {"name": "Dense Forest", "image": "dense_forest.png", "count": dense, "weight": 6},
-      {"name": "Grand Forest", "image": "grand_forest.png", "count": grand, "weight": 5},
+      {
+        "name": "Dense Forest",
+        "image": "dense_forest.png",
+        "count": dense,
+        "weight": 6,
+      },
+      {
+        "name": "Grand Forest",
+        "image": "grand_forest.png",
+        "count": grand,
+        "weight": 5,
+      },
       {"name": "Forest", "image": "forest.png", "count": forest, "weight": 4},
-      {"name": "String Tree", "image": "string_tree.png", "count": string, "weight": 3},
-      {"name": "Drying Tree", "image": "drying_tree.png", "count": drying, "weight": 2},
+      {
+        "name": "String Tree",
+        "image": "string_tree.png",
+        "count": string,
+        "weight": 3,
+      },
+      {
+        "name": "Drying Tree",
+        "image": "drying_tree.png",
+        "count": drying,
+        "weight": 2,
+      },
       {"name": "Dry Tree", "image": "dry_tree.png", "count": dry, "weight": 1},
     ];
 
@@ -145,26 +188,55 @@ class MonthlyInsightsService {
     return {
       "totalTreesGrown": totalTrees,
       "treeCounts": [
-        {"name": "Dense Forest", "image": "dense_forest.png", "count": dense.toString().padLeft(2, '0')},
-        {"name": "Grand Forest", "image": "grand_forest.png", "count": grand.toString().padLeft(2, '0')},
-        {"name": "Forest", "image": "forest.png", "count": forest.toString().padLeft(2, '0')},
-        {"name": "String Tree", "image": "string_tree.png", "count": string.toString().padLeft(2, '0')},
-        {"name": "Drying Tree", "image": "drying_tree.png", "count": drying.toString().padLeft(2, '0')},
-        {"name": "Dry Tree", "image": "dry_tree.png", "count": dry.toString().padLeft(2, '0')},
+        {
+          "name": "Dense Forest",
+          "image": "dense_forest.png",
+          "count": dense.toString().padLeft(2, '0'),
+        },
+        {
+          "name": "Grand Forest",
+          "image": "grand_forest.png",
+          "count": grand.toString().padLeft(2, '0'),
+        },
+        {
+          "name": "Forest",
+          "image": "forest.png",
+          "count": forest.toString().padLeft(2, '0'),
+        },
+        {
+          "name": "String Tree",
+          "image": "string_tree.png",
+          "count": string.toString().padLeft(2, '0'),
+        },
+        {
+          "name": "Drying Tree",
+          "image": "drying_tree.png",
+          "count": drying.toString().padLeft(2, '0'),
+        },
+        {
+          "name": "Dry Tree",
+          "image": "dry_tree.png",
+          "count": dry.toString().padLeft(2, '0'),
+        },
       ],
       "dominantTreeImage": treeCounts.first['image'],
     };
   }
 
   // Category Breakdown
-  List<Map<String, dynamic>> computeCategorySpends(DateTime month, {bool forceAll = false}) {
+  List<Map<String, dynamic>> computeCategorySpends(
+    DateTime month, {
+    bool forceAll = false,
+  }) {
     final totals = getDailyTotals(month);
-    final Map<String, double> catTotals = forceAll 
-        ? {for (var cat in allCategories) cat: 0.0} 
+    final Map<String, double> catTotals = forceAll
+        ? {for (var cat in allCategories) cat: 0.0}
         : {};
 
     for (int day = 1; day <= daysInMonth(month); day++) {
-      final txs = TransactionService().getTransactionsForDay(DateTime(month.year, month.month, day));
+      final txs = TransactionService().getTransactionsForDay(
+        DateTime(month.year, month.month, day),
+      );
       for (var tx in txs) {
         catTotals[tx.category] = (catTotals[tx.category] ?? 0.0) + tx.amount;
       }
@@ -218,34 +290,46 @@ class MonthlyInsightsService {
       case "food & drinks":
       case "food & beverages":
         return {
-          "img1": "food_1.png", "img2": "food_2.png",
-          "icon1": PhosphorIcons.bowlSteam, "icon2": PhosphorIconsRegular.wine
+          "img1": "food_1.png",
+          "img2": "food_2.png",
+          "icon1": PhosphorIconsRegular.bowlSteam,
+          "icon2": PhosphorIconsRegular.wine,
         };
       case "shopping":
         return {
-          "img1": "shopping_1.png", "img2": "shopping_2.png",
-          "icon1": PhosphorIcons.shoppingCart, "icon2": PhosphorIcons.shoppingBag
+          "img1": "shopping_1.png",
+          "img2": "shopping_2.png",
+          "icon1": PhosphorIconsRegular.shoppingCart,
+          "icon2": PhosphorIconsRegular.shoppingBag,
         };
       case "to people":
         return {
-          "img1": "people_1.png", "img2": "people_2.png",
-          "icon1": PhosphorIcons.user, "icon2": PhosphorIcons.users
+          "img1": "people_1.png",
+          "img2": "people_2.png",
+          "icon1": PhosphorIconsRegular.user,
+          "icon2": PhosphorIconsRegular.users,
         };
       case "fuel":
         return {
-          "img1": "fuel_1.png", "img2": "fuel_2.png",
-          "icon1": PhosphorIcons.gasPump, "icon2": PhosphorIcons.gasCan
+          "img1": "fuel_1.png",
+          "img2": "fuel_2.png",
+          "icon1": PhosphorIconsRegular.gasPump,
+          "icon2": PhosphorIconsRegular.gasCan,
         };
       case "recharge":
       case "bills":
         return {
-          "img1": "bills_1.png", "img2": "bills_2.png",
-          "icon1": PhosphorIcons.invoice, "icon2": PhosphorIcons.scroll
+          "img1": "bills_1.png",
+          "img2": "bills_2.png",
+          "icon1": PhosphorIconsRegular.invoice,
+          "icon2": PhosphorIconsRegular.scroll,
         };
       default:
         return {
-          "img1": "other_1.png", "img2": "other_2.png",
-          "icon1": PhosphorIcons.money, "icon2": PhosphorIcons.newspaperClipping
+          "img1": "other_1.png",
+          "img2": "other_2.png",
+          "icon1": PhosphorIconsRegular.money,
+          "icon2": PhosphorIconsRegular.newspaperClipping,
         };
     }
   }

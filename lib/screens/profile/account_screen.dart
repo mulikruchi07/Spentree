@@ -183,7 +183,7 @@
 //           children: [
 //             ListTile(
 //               leading: PhosphorIcon(
-//                 PhosphorIcons.image(),
+//                 PhosphorIconsRegular.image(),
 //                 color: AppColors.colblack,
 //               ),
 //               title: Text(
@@ -198,7 +198,7 @@
 //             if (_originalImagePath != null)
 //               ListTile(
 //                 leading: PhosphorIcon(
-//                   PhosphorIcons.crop(),
+//                   PhosphorIconsRegular.crop(),
 //                   color: AppColors.colblack,
 //                 ),
 //                 title: Text(
@@ -212,7 +212,7 @@
 //               ),
 //             ListTile(
 //               leading: PhosphorIcon(
-//                 PhosphorIcons.trash(),
+//                 PhosphorIconsRegular.trash(),
 //                 color: AppColors.destructiveRed,
 //               ),
 //               title: Text(
@@ -248,7 +248,7 @@
 //           children: [
 //             ListTile(
 //               leading: PhosphorIcon(
-//                 PhosphorIcons.camera(),
+//                 PhosphorIconsRegular.camera(),
 //                 color: AppColors.colblack,
 //               ),
 //               title: Text(
@@ -262,7 +262,7 @@
 //             ),
 //             ListTile(
 //               leading: PhosphorIcon(
-//                 PhosphorIcons.image(),
+//                 PhosphorIconsRegular.image(),
 //                 color: AppColors.colblack,
 //               ),
 //               title: Text(
@@ -505,7 +505,7 @@
 //                 const SizedBox(height: 32),
 //                 _buildSectionHeader("Login & Security"),
 //                 _buildActionTile(
-//                   PhosphorIcons.password(),
+//                   PhosphorIconsRegular.password(),
 //                   "Change Password",
 //                   "Change your current password",
 //                   onTap: () {
@@ -518,7 +518,7 @@
 //                   },
 //                 ),
 //                 _buildToggleTile(
-//                   PhosphorIcons.fingerprintSimple(),
+//                   PhosphorIconsRegular.fingerprintSimple(),
 //                   "Face ID / Touch ID",
 //                   "Manage your device security",
 //                   _isFaceIdEnabled,
@@ -532,28 +532,28 @@
 //                 const SizedBox(height: 32),
 //                 _buildSectionHeader("Communication Preferences"),
 //                 _buildToggleTile(
-//                   PhosphorIcons.warning(),
+//                   PhosphorIconsRegular.warning(),
 //                   "Spending Alerts",
 //                   "Get alerts when you overspend",
 //                   _spendingAlerts,
 //                   (v) => setState(() => _spendingAlerts = v),
 //                 ),
 //                 _buildToggleTile(
-//                   PhosphorIcons.lightbulb(),
+//                   PhosphorIconsRegular.lightbulb(),
 //                   "Spending Tips",
 //                   "Get tips for daily expenses",
 //                   _spendingTips,
 //                   (v) => setState(() => _spendingTips = v),
 //                 ),
 //                 _buildToggleTile(
-//                   PhosphorIcons.bellSimpleRinging(),
+//                   PhosphorIconsRegular.bellSimpleRinging(),
 //                   "Notifications",
 //                   "Streak & Milestone Notifications",
 //                   _notifications,
 //                   (v) => setState(() => _notifications = v),
 //                 ),
 //                 _buildToggleTile(
-//                   PhosphorIcons.speakerHigh(),
+//                   PhosphorIconsRegular.speakerHigh(),
 //                   "Sound Effects",
 //                   "Control Sound effects & Music",
 //                   _soundEffects,
@@ -569,26 +569,26 @@
 //                 const SizedBox(height: 32),
 //                 _buildSectionHeader("Account Control"),
 //                 _buildActionTile(
-//                   PhosphorIcons.lockKey(),
+//                   PhosphorIconsRegular.lockKey(),
 //                   "Deactivate Account",
 //                   "Temporarily disable account",
 //                   onPop: () => _showConfirmationDialog(
 //                     title: "Deactivate Account",
 //                     message: "You can come back anytime by logging in again.",
 //                     confirmText: "Yes, Deactivate",
-//                     icon: PhosphorIcons.lockKey(),
+//                     icon: PhosphorIconsRegular.lockKey(),
 //                     onConfirm: () {},
 //                   ),
 //                 ),
 //                 _buildActionTile(
-//                   PhosphorIcons.trash(),
+//                   PhosphorIconsRegular.trash(),
 //                   "Delete My Account",
 //                   "Delete your account permanently",
 //                   onPop: () => _showConfirmationDialog(
 //                     title: "Delete Account",
 //                     message: "All your data will be removed permanently.",
 //                     confirmText: "Yes, Delete",
-//                     icon: PhosphorIcons.trash(),
+//                     icon: PhosphorIconsRegular.trash(),
 //                     onConfirm: () {},
 //                   ),
 //                 ),
@@ -726,7 +726,7 @@
 //                       ],
 //                     ),
 //                     child: PhosphorIcon(
-//                       PhosphorIcons.pencilSimple(),
+//                       PhosphorIconsRegular.pencilSimple(),
 //                       size: 20,
 //                       color: AppColors.colblack,
 //                     ),
@@ -1416,7 +1416,7 @@ class _AccountScreenState extends State<AccountScreen> {
           children: [
             ListTile(
               leading: PhosphorIcon(
-                PhosphorIcons.image,
+                PhosphorIconsRegular.image,
                 color: AppColors.colblack,
               ),
               title: Text(
@@ -1431,7 +1431,7 @@ class _AccountScreenState extends State<AccountScreen> {
             if (_originalImagePath != null)
               ListTile(
                 leading: PhosphorIcon(
-                  PhosphorIcons.crop,
+                  PhosphorIconsRegular.crop,
                   color: AppColors.colblack,
                 ),
                 title: Text(
@@ -1445,7 +1445,7 @@ class _AccountScreenState extends State<AccountScreen> {
               ),
             ListTile(
               leading: PhosphorIcon(
-                PhosphorIcons.trash,
+                PhosphorIconsRegular.trash,
                 color: AppColors.destructiveRed,
               ),
               title: Text(
@@ -1478,7 +1478,7 @@ class _AccountScreenState extends State<AccountScreen> {
           children: [
             ListTile(
               leading: PhosphorIcon(
-                PhosphorIcons.camera,
+                PhosphorIconsRegular.camera,
                 color: AppColors.colblack,
               ),
               title: Text(
@@ -1492,7 +1492,7 @@ class _AccountScreenState extends State<AccountScreen> {
             ),
             ListTile(
               leading: PhosphorIcon(
-                PhosphorIcons.image,
+                PhosphorIconsRegular.image,
                 color: AppColors.colblack,
               ),
               title: Text(
@@ -1748,7 +1748,7 @@ class _AccountScreenState extends State<AccountScreen> {
                     const SizedBox(height: 32),
                     _buildSectionHeader("Login & Security"),
                     _buildActionTile(
-                      PhosphorIcons.password,
+                      PhosphorIconsRegular.password,
                       "Change Password",
                       "Change your current password",
                       onTap: () {
@@ -1761,7 +1761,7 @@ class _AccountScreenState extends State<AccountScreen> {
                       },
                     ),
                     _buildToggleTile(
-                      PhosphorIcons.fingerprintSimple,
+                      PhosphorIconsRegular.fingerprintSimple,
                       "Face ID / Touch ID",
                       "Manage your device security",
                       _isFaceIdEnabled,
@@ -1775,14 +1775,14 @@ class _AccountScreenState extends State<AccountScreen> {
                     const SizedBox(height: 32),
                     _buildSectionHeader("Communication Preferences"),
                     _buildToggleTile(
-                      PhosphorIcons.warning,
+                      PhosphorIconsRegular.warning,
                       "Spending Alerts",
                       "Get alerts when you overspend",
                       _spendingAlerts,
                       (v) => setState(() => _spendingAlerts = v),
                     ),
                     _buildToggleTile(
-                      PhosphorIcons.lightbulb,
+                      PhosphorIconsRegular.lightbulb,
                       "Spending Tips",
                       "Get tips for daily expenses",
                       _spendingTips,
@@ -1792,7 +1792,7 @@ class _AccountScreenState extends State<AccountScreen> {
                     const SizedBox(height: 32),
                     _buildSectionHeader("Account Control"),
                     _buildActionTile(
-                      PhosphorIcons.lockKey,
+                      PhosphorIconsRegular.lockKey,
                       "Deactivate Account",
                       "Temporarily disable account",
                       onPop: () => _showConfirmationDialog(
@@ -1800,19 +1800,19 @@ class _AccountScreenState extends State<AccountScreen> {
                         message:
                             "You can come back anytime by logging in again.",
                         confirmText: "Yes, Deactivate",
-                        icon: PhosphorIcons.lockKey,
+                        icon: PhosphorIconsRegular.lockKey,
                         onConfirm: () {},
                       ),
                     ),
                     _buildActionTile(
-                      PhosphorIcons.trash,
+                      PhosphorIconsRegular.trash,
                       "Delete My Account",
                       "Delete your account permanently",
                       onPop: () => _showConfirmationDialog(
                         title: "Delete Account",
                         message: "All your data will be removed permanently.",
                         confirmText: "Yes, Delete",
-                        icon: PhosphorIcons.trash,
+                        icon: PhosphorIconsRegular.trash,
                         onConfirm: () {},
                       ),
                     ),
@@ -1864,12 +1864,12 @@ class _AccountScreenState extends State<AccountScreen> {
                                 fit: BoxFit.cover,
                               )
                             : Center(
-                              child: Icon(
-                                PhosphorIcons.user, // Icon as requested
-                                size: 60,
-                                color: AppColors.grey600,
+                                child: Icon(
+                                  PhosphorIconsRegular.user, // Icon as requested
+                                  size: 60,
+                                  color: AppColors.grey600,
+                                ),
                               ),
-                            ),
                       ),
                     ),
                   ),
@@ -1897,7 +1897,7 @@ class _AccountScreenState extends State<AccountScreen> {
                           ],
                         ),
                         child: PhosphorIcon(
-                          PhosphorIcons.pencilSimple,
+                          PhosphorIconsRegular.pencilSimple,
                           size: 20,
                           color: AppColors.colblack,
                         ),

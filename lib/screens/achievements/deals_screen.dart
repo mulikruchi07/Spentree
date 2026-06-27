@@ -485,7 +485,7 @@ class _DealsScreenState extends State<DealsScreen>
                                         fontWeight: FontWeight.w400,
                                         color: selectedPlanIndex == 0
                                             ? AppColors.primaryGreen
-                                                .withOpacity(0.8)
+                                                  .withOpacity(0.8)
                                             : const Color(0xFF808080),
                                       ),
                                     ),
@@ -548,7 +548,7 @@ class _DealsScreenState extends State<DealsScreen>
                                         fontWeight: FontWeight.w400,
                                         color: selectedPlanIndex == 1
                                             ? AppColors.primaryGreen
-                                                .withOpacity(0.8)
+                                                  .withOpacity(0.8)
                                             : const Color(0xFF808080),
                                       ),
                                     ),
@@ -737,8 +737,10 @@ class _DealsScreenState extends State<DealsScreen>
                     itemCount: _memberDrops.length,
                     itemBuilder: (context, index) {
                       return Padding(
-                        padding:
-                            const EdgeInsets.only(right: 15.0, bottom: 8.0),
+                        padding: const EdgeInsets.only(
+                          right: 15.0,
+                          bottom: 8.0,
+                        ),
                         child: _buildSmallDealCard(_memberDrops[index]),
                       );
                     },
@@ -954,7 +956,11 @@ class _DealsScreenState extends State<DealsScreen>
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(PhosphorIcons.lock, color: AppColors.unlockst, size: 28),
+                Icon(
+                  PhosphorIconsRegular.lock,
+                  color: AppColors.unlockst,
+                  size: 28,
+                ),
                 const SizedBox(height: 4),
                 Text(
                   "Unlocks at\nLevel 9",
@@ -1459,8 +1465,7 @@ class _ExpandedDealOverlayState extends State<ExpandedDealOverlay> {
                                               style: GoogleFonts.montserrat(
                                                 fontSize: 12.0,
                                                 fontWeight: FontWeight.w500,
-                                                color:
-                                                    const Color(0xFF656565),
+                                                color: const Color(0xFF656565),
                                               ),
                                             ),
                                           ),
@@ -1477,8 +1482,7 @@ class _ExpandedDealOverlayState extends State<ExpandedDealOverlay> {
                                               style: GoogleFonts.montserrat(
                                                 fontSize: 12.0,
                                                 fontWeight: FontWeight.w500,
-                                                color:
-                                                    const Color(0xFF656565),
+                                                color: const Color(0xFF656565),
                                                 letterSpacing: 2.0,
                                               ),
                                             ),
@@ -1505,8 +1509,9 @@ class _ExpandedDealOverlayState extends State<ExpandedDealOverlay> {
                                       height: 50.0,
                                       decoration: BoxDecoration(
                                         color: AppColors.primaryGreen,
-                                        borderRadius:
-                                            BorderRadius.circular(12.0),
+                                        borderRadius: BorderRadius.circular(
+                                          12.0,
+                                        ),
                                       ),
                                       child: Center(
                                         child: Text(

@@ -95,7 +95,7 @@ class TodaysTreeCard extends StatelessWidget {
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
-                      PhosphorIcons.arrowsLeftRight,
+                      PhosphorIconsRegular.arrowsLeftRight,
                       size: 16,
                       color: AppColors.colblack,
                     ),
@@ -140,14 +140,16 @@ class TodaysTreeCard extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: statusColor,
                   image: DecorationImage(
-                    image: MemoryImage(treeBytes), // Draws instantly from RAM bytes
+                    image: MemoryImage(
+                      treeBytes,
+                    ), // Draws instantly from RAM bytes
                     fit: BoxFit.fitHeight, // Fills the box perfectly
-                    alignment: Alignment.bottomCenter, // Grounds the tree to the bottom
+                    alignment: Alignment
+                        .bottomCenter, // Grounds the tree to the bottom
                   ),
                 ),
               ),
             ),
-            
 
             const SizedBox(height: 12),
 

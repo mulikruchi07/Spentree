@@ -46,8 +46,11 @@ class _HideTransactionsScreenState extends State<HideTransactionsScreen> {
   }
 
   List<Transaction> get _displayedTransactions {
-    final dailyTx = TransactionService().getTransactionsForDay(_focusedDate);
-    return dailyTx.where((tx) => tx.isHidden == _viewingHidden).toList();
+    // Must use getAllTransactionsForDay (not getTransactionsForDay) because
+    // getTransactionsForDay already strips hidden — the hidden tab would always
+    // be empty if we used it.
+    final allForDay = TransactionService().getAllTransactionsForDay(_focusedDate);
+    return allForDay.where((tx) => tx.isHidden == _viewingHidden).toList();
   }
 
   Future<void> _launchURL(String url) async {

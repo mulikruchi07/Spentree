@@ -94,8 +94,6 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
     );
   }
 
-  /// Permanently deletes all selected transactions via TransactionService.
-  /// Each call persists the ID to _deletedKey so it is never fetched again.
   Future<void> _deleteSelected() async {
     final service = TransactionService();
     final ids = Set<String>.from(_selectedIds); // snapshot before clear
@@ -113,10 +111,10 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
     if (!await launchUrl(uri)) throw 'Could not launch $url';
   }
 
-  /// Transactions for the focused date, excluding hidden ones.
+  /// All transactions for the focused date — includes hidden ones so they can
+  /// be permanently deleted from this screen too.
   List<Transaction> _txForFocusedDate(TransactionService service) {
-    // getTransactionsForDay already filters hidden after Patch 4
-    return service.getTransactionsForDay(_focusedDate);
+    return service.getAllTransactionsForDay(_focusedDate);
   }
 
   @override

@@ -3,12 +3,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:home_widget/home_widget.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:math' as math;
 import 'dart:convert';
 import 'package:flutter/material.dart' show DateUtils;
 import 'package:spentree/core/user_data.dart';
-// Using built-in Material icons instead of PhosphorIcons
+// import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+// Using built-in Material icons instead of PhosphorIconsRegular
 
 class Transaction {
   String id;
@@ -98,27 +100,39 @@ class TransactionService extends ChangeNotifier {
     await _fetchAndParseSms();
   }
 
-  // Add this method to permanently block a transaction ID
+  // Permanently block a transaction ID — works for both SMS and manual transactions.
   Future<void> deleteTransaction(String id) async {
     final prefs = await SharedPreferences.getInstance();
+
+    // 1. Add to the persistent deleted-IDs blocklist.
     List<String> deletedIds = prefs.getStringList(_deletedKey) ?? [];
     if (!deletedIds.contains(id)) {
       deletedIds.add(id);
       await prefs.setStringList(_deletedKey, deletedIds);
     }
 
-    // Remove from local memory so it disappears immediately
-    // Remove from local memory so it disappears immediately
+    // 2. Remove from in-memory list immediately.
     _allTransactions.removeWhere((tx) => tx.id == id);
 
-    // Also purge from manual storage so it never reloads on restart
-    final manualList = await _loadManualTransactions();
-    final filtered = manualList.where((tx) => tx.id != id).toList();
-    final prefsManual = await SharedPreferences.getInstance();
-    await prefsManual.setString(
-      _manualKey,
-      jsonEncode(filtered.map((e) => e.toJson()).toList()),
-    );
+    // 3. Purge from manual storage so it never reloads on restart.
+    final raw = prefs.getString(_manualKey);
+    if (raw != null) {
+      try {
+        final List<dynamic> decoded = jsonDecode(raw);
+        final filtered = decoded.where((item) => item['id'] != id).toList();
+        await prefs.setString(_manualKey, jsonEncode(filtered));
+      } catch (_) {
+        // If manual storage is corrupt, clear it entirely to stay safe.
+        await prefs.remove(_manualKey);
+      }
+    }
+
+    // 4. Remove from overrides store to free up space.
+    final overrides = await _loadOverrides();
+    if (overrides.containsKey(id)) {
+      overrides.remove(id);
+      await prefs.setString(_overrideKey, jsonEncode(overrides));
+    }
 
     notifyListeners();
     syncWidget();
@@ -137,7 +151,13 @@ class TransactionService extends ChangeNotifier {
         String address = sms['address'] ?? 'Unknown';
         int timestamp = sms['date'] ?? 0;
 
-        bool isDebit = body.contains('debited') || body.contains('sent to');
+        const debitKeywords = [
+          'debited', 'debit', 'dr', 'withdrawn', 'withdrawal', 'spent',
+          'purchase', 'paid', 'payment', 'sent', 'transfer', 'transferred',
+          'upi', 'imps', 'neft', 'rtgs', 'pos', 'ecom', 'merchant', 'atm',
+          'autopay', 'ecs', 'nach', 'mandate', 'emi', 'fee', 'charge', 'deducted'
+        ];
+        bool isDebit = debitKeywords.any((kw) => body.contains(kw));
         bool hasAmount =
             body.contains('rs') || body.contains('inr') || body.contains('₹');
 
@@ -331,17 +351,17 @@ class TransactionService extends ChangeNotifier {
   IconData _getIconForCategory(String cat) {
     switch (cat) {
       case "Food & Beverages":
-        return PhosphorIcons.bowlSteam;
+        return PhosphorIconsRegular.bowlSteam;
       case "Shopping":
-        return PhosphorIcons.tShirt;
+        return PhosphorIconsRegular.tShirt;
       case "Fuel":
-        return PhosphorIcons.gasCan;
+        return PhosphorIconsRegular.gasCan;
       case "Bills & Subscriptions":
-        return PhosphorIcons.simCard;
+        return PhosphorIconsRegular.simCard;
       case "To People":
-        return PhosphorIcons.user;
+        return PhosphorIconsRegular.user;
       default:
-        return PhosphorIcons.currencyInr;
+        return PhosphorIconsRegular.currencyInr;
     }
   }
 
@@ -383,33 +403,26 @@ class TransactionService extends ChangeNotifier {
     int index = _allTransactions.indexWhere((tx) => tx.id == id);
     if (index == -1) return;
 
+    // Update state
     _allTransactions[index].isHidden = hide;
 
+    // Persist this state change without deleting the object
     if (_allTransactions[index].isManual) {
-      // Save manual list to SharedPreferences
       final prefs = await SharedPreferences.getInstance();
-      final manualItems = _allTransactions
-          .where((element) => element.isManual)
-          .toList();
-      await prefs.setString(
-        _manualKey,
-        jsonEncode(manualItems.map((e) => e.toJson()).toList()),
-      );
+      final manualItems = _allTransactions.where((e) => e.isManual).toList();
+      await prefs.setString(_manualKey, jsonEncode(manualItems.map((e) => e.toJson()).toList()));
     } else {
-      // Save SMS override to SharedPreferences
       final overrides = await _loadOverrides();
       final existing = overrides[id] ?? {};
       existing['isHidden'] = hide;
-      // Preserve current title/category in case they weren't overridden yet
+      // Ensure we keep existing data
       existing['title'] = existing['title'] ?? _allTransactions[index].title;
-      existing['category'] =
-          existing['category'] ?? _allTransactions[index].category;
-
+      existing['category'] = existing['category'] ?? _allTransactions[index].category;
+      
       overrides[id] = existing;
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_overrideKey, jsonEncode(overrides));
     }
-
     notifyListeners();
     syncWidget();
   }
@@ -474,7 +487,7 @@ class TransactionService extends ChangeNotifier {
     return _allTransactions
         .where(
           (tx) =>
-              !tx.isHidden && // Transactions marked hidden will NOT be returned
+              !tx.isHidden && // hidden transactions are excluded
               tx.date.year == date.year &&
               tx.date.month == date.month &&
               tx.date.day == date.day,
@@ -482,7 +495,21 @@ class TransactionService extends ChangeNotifier {
         .toList();
   }
 
-  /// Visible transactions only — use this everywhere on Dashboard, Forest, Analytics.
+  /// All non-deleted transactions for a given day — includes hidden ones.
+  /// Use ONLY on the Delete screen so users can delete hidden transactions too.
+  List<Transaction> getAllTransactionsForDay(DateTime date) {
+    return _allTransactions
+        .where(
+          (tx) =>
+              tx.date.year == date.year &&
+              tx.date.month == date.month &&
+              tx.date.day == date.day,
+        )
+        .toList();
+  }
+
+  /// Visible (non-hidden) transactions only.
+  /// Use this everywhere: Dashboard, Analytics, Forest, SpentWrap calculations.
   List<Transaction> get visibleTransactions =>
       _allTransactions.where((tx) => !tx.isHidden).toList();
 

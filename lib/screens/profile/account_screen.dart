@@ -1262,9 +1262,6 @@ import '../forest/forest_screen.dart';
 class AccountScreen extends StatefulWidget {
   const AccountScreen({super.key});
 
-  // Sound effects cache — still useful for ForestScreen instant reads
-  static bool cachedSoundEffects = true;
-
   @override
   State<AccountScreen> createState() => _AccountScreenState();
 }
@@ -1276,9 +1273,7 @@ class _AccountScreenState extends State<AccountScreen> {
   // Toggle States
   bool _isFaceIdEnabled = false;
   bool _spendingAlerts = false;
-  bool _notifications = false;
   bool _spendingTips = false;
-  bool _soundEffects = true;
   String _selectedTheme = "System";
 
   // Inline Editing States & Validation
@@ -1326,7 +1321,6 @@ class _AccountScreenState extends State<AccountScreen> {
     setState(() {
       _isFaceIdEnabled = prefs.getBool('isFaceIdEnabled') ?? false;
       _selectedTheme = prefs.getString('app_theme') ?? "System";
-      _soundEffects = prefs.getBool('sound_effects') ?? true;
       // Profile image is loaded from userProfileNotifier — no local loading needed
       _isLoading = false;
     });
@@ -1794,31 +1788,6 @@ class _AccountScreenState extends State<AccountScreen> {
                       _spendingTips,
                       (v) => setState(() => _spendingTips = v),
                     ),
-                    _buildToggleTile(
-                      PhosphorIcons.bellSimpleRinging,
-                      "Notifications",
-                      "Streak & Milestone Notifications",
-                      _notifications,
-                      (v) => setState(() => _notifications = v),
-                    ),
-                    _buildToggleTile(
-                      PhosphorIcons.speakerHigh,
-                      "Sound Effects",
-                      "Control Sound effects & Music",
-                      _soundEffects,
-                      (v) async {
-                        setState(() => _soundEffects = v);
-                        AccountScreen.cachedSoundEffects = v;
-                        final prefs = await SharedPreferences.getInstance();
-                        await prefs.setBool('sound_effects', v);
-                      },
-                    ),
-
-                    const SizedBox(height: 32),
-                    _buildSectionHeader("Account Preferences"),
-                    _buildStaticField("Language", "English"),
-                    const SizedBox(height: 16),
-                    _buildStaticField("Currency", "INR"),
 
                     const SizedBox(height: 32),
                     _buildSectionHeader("Account Control"),
@@ -1894,16 +1863,13 @@ class _AccountScreenState extends State<AccountScreen> {
                                 profile.imageBytes!,
                                 fit: BoxFit.cover,
                               )
-                            : Image.asset(
-                                'assets/images/user_avatar.png',
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) =>
-                                    Icon(
-                                      Icons.person,
-                                      size: 60,
-                                      color: AppColors.colblack,
-                                    ),
+                            : Center(
+                              child: Icon(
+                                PhosphorIcons.user, // Icon as requested
+                                size: 60,
+                                color: AppColors.grey600,
                               ),
+                            ),
                       ),
                     ),
                   ),
@@ -2238,7 +2204,7 @@ class _AccountScreenState extends State<AccountScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 4),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(20),
-          color: value ? AppColors.primaryGreen : const Color(0xFFE8E8E8),
+          color: value ? AppColors.primaryGreen : AppColors.toggle,
         ),
         child: AnimatedAlign(
           duration: const Duration(milliseconds: 200),
@@ -2248,7 +2214,7 @@ class _AccountScreenState extends State<AccountScreen> {
             height: 20,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: value ? Colors.white : const Color(0xFFABABAB),
+              color: value ? Colors.white : AppColors.toggledot,
             ),
           ),
         ),

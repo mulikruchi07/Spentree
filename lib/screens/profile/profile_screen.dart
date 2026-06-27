@@ -218,9 +218,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               height: 70,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: profile.imageBytes != null
-                                    ? AppColors.inputFill
-                                    : AppColors.primaryGreen,
+                                color: AppColors.inputFill,
+                                border: Border.all(
+                                  color: const Color.fromARGB(
+                                    255,
+                                    182,
+                                    181,
+                                    181,
+                                  ).withOpacity(0.5), // Adjust color as needed
+                                  width: 1.0, // "Thin" border
+                                ), // Background behind the icon
                               ),
                               clipBehavior: Clip.antiAlias,
                               child: profile.imageBytes != null
@@ -229,15 +236,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       fit: BoxFit.cover,
                                     )
                                   : Center(
-                                      child: Text(
-                                        profile.name.isNotEmpty
-                                            ? profile.name[0].toUpperCase()
-                                            : "?",
-                                        style: GoogleFonts.montserrat(
-                                          fontSize: 28,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.white,
-                                        ),
+                                      child: Icon(
+                                        PhosphorIcons
+                                            .user, // Unfilled icon as requested
+                                        size: 35,
+                                        color: AppColors.grey600,
                                       ),
                                     ),
                             ),

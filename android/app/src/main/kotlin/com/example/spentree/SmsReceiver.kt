@@ -28,7 +28,12 @@ class SmsReceiver : BroadcastReceiver() {
                 val body = msg.displayMessageBody?.lowercase() ?: ""
                 val originalBody = msg.displayMessageBody ?: ""
 
-                val isDebit = listOf("debited", "paid", "spent", "withdrawn", "sent to").any { body.contains(it) }
+                val isDebit = listOf(
+                    "debited", "debit", "dr", "withdrawn", "withdrawal", "spent",
+                    "purchase", "paid", "payment", "sent", "transfer", "transferred",
+                    "upi", "imps", "neft", "rtgs", "pos", "ecom", "merchant", "atm",
+                    "autopay", "ecs", "nach", "mandate", "emi", "fee", "charge", "deducted"
+                ).any { body.contains(it) }
                 val isCredit = listOf("credited", "received", "refund").any { body.contains(it) }
 
                 if (isDebit && !isCredit) {

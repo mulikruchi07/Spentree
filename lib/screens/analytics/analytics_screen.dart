@@ -1938,7 +1938,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                                 style: GoogleFonts.poppins(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w500,
-                                  color: AppColors.white500,
+                                  color: AppColors.primaryGreen,
                                 ),
                               ),
                             ),
@@ -2005,7 +2005,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                             style: GoogleFonts.poppins(
                               fontSize: 15,
                               fontWeight: FontWeight.w500,
-                              color: AppColors.white500,
+                              color: AppColors.primaryGreen,
                             ),
                           ),
                         ),
@@ -2136,7 +2136,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
             Text(
               "My",
               style: GoogleFonts.montserrat(
-                fontSize: 18,
+                fontSize: 16,
                 fontWeight: FontWeight.w500,
                 color: AppColors.colblack,
               ),
@@ -2381,7 +2381,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
           style: GoogleFonts.poppins(
             fontSize: 15,
             fontWeight: FontWeight.w500,
-            color: AppColors.white500,
+            color: AppColors.primaryGreen,
           ),
         ),
       ],

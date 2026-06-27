@@ -91,7 +91,15 @@ class AppColors {
   static Color get redirctcircle =>
       isDarkMode ? const Color(0xFF2D2D2D) : const Color(0xFFD9D9D9);
   static Color get specialcode =>
-      isDarkMode ? const Color(0xFF2C2C2C) : const Color(0xFF656565);
+      isDarkMode ? const Color(0xFF2C2C2C) : const Color(0xFFF1F1F1);
+  static Color get toggle =>
+      isDarkMode ? const Color(0xFF676767) : const Color(0xFFE8E8E8);
+  static Color get toggledot =>
+      isDarkMode ? const Color(0xFFF2F2F2) : const Color(0xFFABABAB);
+  static Color get claimcard =>
+      isDarkMode ? const Color(0xFF222222) : const Color(0xFFFFFFFF);
+      static Color get smclaimcard =>
+      isDarkMode ? const Color(0xFF2C2C2C) : const Color(0xFFFFFFFF);
 }
 
 // --- 4. DYNAMIC TEXT STYLES ---

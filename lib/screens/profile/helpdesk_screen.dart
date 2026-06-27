@@ -37,7 +37,7 @@ class HelpdeskScreen extends StatelessWidget {
                   Text(
                     "Helpdesk",
                     style: GoogleFonts.montserrat(
-                      fontSize: 18,
+                      fontSize: 16,
                       fontWeight: FontWeight.w500,
                       color: AppColors.colblack,
                     ),

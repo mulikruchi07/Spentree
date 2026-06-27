@@ -39,7 +39,7 @@ class ContactScreen extends StatelessWidget {
                     Text(
                       "Contact",
                       style: GoogleFonts.montserrat(
-                        fontSize: 18,
+                        fontSize: 16,
                         fontWeight: FontWeight.w500,
                         color: AppColors.colblack,
                       ),

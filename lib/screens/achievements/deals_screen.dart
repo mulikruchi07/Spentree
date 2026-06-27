@@ -987,7 +987,7 @@ class _DealsScreenState extends State<DealsScreen>
             child: Container(
               width: cardWidth,
               height: cardHeight,
-              color: AppColors.specialcode,
+              color: AppColors.smclaimcard,
               child: innerContent,
             ),
           ),
@@ -1161,7 +1161,7 @@ class _DealsScreenState extends State<DealsScreen>
             child: Container(
               width: MediaQuery.of(context).size.width - 48,
               height: cardHeight,
-              color: AppColors.specialcode,
+              color: AppColors.smclaimcard,
               child: innerContent,
             ),
           ),
@@ -1345,7 +1345,7 @@ class _ExpandedDealOverlayState extends State<ExpandedDealOverlay> {
               width: MediaQuery.of(context).size.width - 48,
               height: cardHeight,
               // color: AppColors.navbar,
-              color: const Color(0xFF222222),
+              color: AppColors.claimcard,
               child: Stack(
                 children: [
                   Positioned(

@@ -9,8 +9,6 @@ import 'dart:math' as math;
 import 'dart:convert';
 import 'package:flutter/material.dart' show DateUtils;
 import 'package:spentree/core/user_data.dart';
-// import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
-// Using built-in Material icons instead of PhosphorIconsRegular
 
 class Transaction {
   String id;
@@ -73,9 +71,6 @@ class TransactionService extends ChangeNotifier {
 
   static const MethodChannel _channel = MethodChannel('sms_channel');
 
-  // ── Override store key ────────────────────────────────────────────────────
-  // JSON string: Map<txId, {title, category}>
-  // Persists user edits (title/category) through app restarts.
   static const String _overrideKey = 'tx_overrides';
   static const String _manualKey = 'tx_manual';
   static const String _deletedKey = 'tx_deleted_ids';
@@ -84,8 +79,6 @@ class TransactionService extends ChangeNotifier {
   bool isLoading = true;
 
   List<Transaction> get allTransactions => _allTransactions;
-
-  // ── Init ─────────────────────────────────────────────────────────────────
 
   Future<void> initService() async {
     if (kIsWeb) {
@@ -100,21 +93,17 @@ class TransactionService extends ChangeNotifier {
     await _fetchAndParseSms();
   }
 
-  // Permanently block a transaction ID — works for both SMS and manual transactions.
   Future<void> deleteTransaction(String id) async {
     final prefs = await SharedPreferences.getInstance();
 
-    // 1. Add to the persistent deleted-IDs blocklist.
     List<String> deletedIds = prefs.getStringList(_deletedKey) ?? [];
     if (!deletedIds.contains(id)) {
       deletedIds.add(id);
       await prefs.setStringList(_deletedKey, deletedIds);
     }
 
-    // 2. Remove from in-memory list immediately.
     _allTransactions.removeWhere((tx) => tx.id == id);
 
-    // 3. Purge from manual storage so it never reloads on restart.
     final raw = prefs.getString(_manualKey);
     if (raw != null) {
       try {
@@ -122,12 +111,10 @@ class TransactionService extends ChangeNotifier {
         final filtered = decoded.where((item) => item['id'] != id).toList();
         await prefs.setString(_manualKey, jsonEncode(filtered));
       } catch (_) {
-        // If manual storage is corrupt, clear it entirely to stay safe.
         await prefs.remove(_manualKey);
       }
     }
 
-    // 4. Remove from overrides store to free up space.
     final overrides = await _loadOverrides();
     if (overrides.containsKey(id)) {
       overrides.remove(id);
@@ -138,59 +125,167 @@ class TransactionService extends ChangeNotifier {
     syncWidget();
   }
 
-  // ── SMS parse ─────────────────────────────────────────────────────────────
-
   Future<void> _fetchAndParseSms() async {
     try {
       final List<dynamic> result = await _channel.invokeMethod('getAllSms');
       List<Transaction> parsedList = [];
 
       for (var sms in result) {
-        String body = (sms['body'] ?? '').toLowerCase();
         String originalBody = sms['body'] ?? '';
+        String body = originalBody.toLowerCase();
         String address = sms['address'] ?? 'Unknown';
         int timestamp = sms['date'] ?? 0;
 
+        const blocklist = ['mandate', 'autopay', 'standing instruction', 'si registered', 'e-mandate', 'si debit'];
+  if (blocklist.any((kw) => body.contains(kw))) {
+    continue; 
+  }
+
+        // 1. Credit & Inflow Exclusion Check [2]
+        const creditKeywords = [
+          'credited',
+          'received',
+          'refund',
+          'reversal',
+          'deposited',
+          'cr',
+        ];
+        bool isCredit = creditKeywords.any((kw) {
+          if (kw == 'cr' && body.contains('credit card')) return false;
+          return body.contains(kw);
+        });
+        if (isCredit) continue;
+
+        // 2. Failure & Unsuccessful Exclusion Check [3, 4, 5, 6]
+        const failureKeywords = [
+          'failed',
+          'declined',
+          'bounced',
+          'insufficient',
+          'unsuccessful',
+          'rejected',
+          'could not',
+          'returned',
+          'locked',
+          'block',
+          'limit is less',
+          'non compliant',
+          'bounces',
+          'unauthorized',
+          'declines',
+          'rejection',
+        ];
+        bool isFailure = failureKeywords.any((kw) => body.contains(kw));
+        if (isFailure) continue;
+
+        // 3. OTP and Authentication Exclusion Check [7, 4]
+        const otpKeywords = [
+          'otp',
+          'verification code',
+          'is your secret',
+          'do not share',
+          'valid for',
+          'auth code',
+          'one time password',
+        ];
+        bool isOtp = otpKeywords.any((kw) => body.contains(kw));
+        if (isOtp) continue;
+
+        // 4. Predictive Recurring Mandate Intimation Alert Exclusion Check [9]
+        const predictiveKeywords = [
+          'is due on',
+          'will be processed',
+          'scheduled for',
+          'upcoming',
+          'due by',
+        ];
+        bool isPredictive = predictiveKeywords.any((kw) => body.contains(kw));
+        if (isPredictive) continue;
+
+        // 5. Outflow Identification (Famous & Local/Cooperative Bank Legacy "WDL" keywords)
         const debitKeywords = [
-          'debited', 'debit', 'dr', 'withdrawn', 'withdrawal', 'spent',
-          'purchase', 'paid', 'payment', 'sent', 'transfer', 'transferred',
-          'upi', 'imps', 'neft', 'rtgs', 'pos', 'ecom', 'merchant', 'atm',
-          'autopay', 'ecs', 'nach', 'mandate', 'emi', 'fee', 'charge', 'deducted'
+          'debited',
+          'debit',
+          'withdrawn',
+          'withdrawal',
+          'spent',
+          'purchase',
+          'paid',
+          'sent',
+          'transfer',
+          'transferred',
+          'imps',
+          'neft',
+          'rtgs',
+          'pos',
+          'merchant',
+          'atm',
+          'deducted',
+          'wdl',
         ];
         bool isDebit = debitKeywords.any((kw) => body.contains(kw));
-        bool hasAmount =
-            body.contains('rs') || body.contains('inr') || body.contains('₹');
+        if (!isDebit) continue;
 
-        if (!isDebit || !hasAmount) continue;
+        // 6. Extract Amount
+        double amount = 0.0;
 
-        RegExp amountRegex = RegExp(
+        // Primary Regex Pattern for Scheduled Commercial Banks [1]
+        RegExp primaryAmountRegex = RegExp(
           r'(?:rs\.?|inr|₹)\s*([\d,]+\.?\d*)',
           caseSensitive: false,
         );
-        var amountMatch = amountRegex.firstMatch(originalBody);
-        double amount = 0.0;
+        var amountMatch = primaryAmountRegex.firstMatch(originalBody);
+
         if (amountMatch != null && amountMatch.group(1) != null) {
           amount =
               double.tryParse(amountMatch.group(1)!.replaceAll(',', '')) ?? 0.0;
+        } else {
+          // Legacy Fallback Regex matching Cooperative Banks ("ATM WDL 700.00" style) [11, 12, 2]
+          RegExp fallbackAmountRegex = RegExp(
+            r'(?:wdl|cash|prch|txn|dr)\s+(?:[a-z0-9\-]+\s+)?([\d,]+\.\d{2})',
+            caseSensitive: false,
+          );
+          var fallbackMatch = fallbackAmountRegex.firstMatch(originalBody);
+          if (fallbackMatch != null && fallbackMatch.group(1) != null) {
+            amount =
+                double.tryParse(fallbackMatch.group(1)!.replaceAll(',', '')) ??
+                0.0;
+          }
         }
 
+        if (amount <= 0.0) continue; // Ignore empty or zero balance records
+
+        // 8. Payee / Receiver Name Extraction [2]
         String merchant = address;
-        RegExp toRegex = RegExp(
-          r'(?:to|info|vpa)\s+([a-zA-Z0-9\.\s@]+?)(?:\s+(?:ref|on|from|via|upi|okk))',
+
+        RegExp merchantRegex = RegExp(
+          r'(?:to|towards|at|info|vpa|merchnt:|merchant:|spent on card xx\d+ at)\s+([a-zA-Z0-9\.\s@\-]+?)(?:\s+(?:ref|on|from|via|upi|okk|bal|avl|limit|seq|card|a/c|ending|statement|dr|cr|\.))',
           caseSensitive: false,
         );
-        var toMatch = toRegex.firstMatch(originalBody);
-        if (toMatch != null && toMatch.group(1) != null) {
-          merchant = toMatch.group(1)!.trim();
+
+        var merchantMatch = merchantRegex.firstMatch(originalBody);
+        if (merchantMatch != null && merchantMatch.group(1) != null) {
+          merchant = merchantMatch.group(1)!.trim();
+        } else {
+          // Cooperative legacy location-based/branch naming fallback [10]
+          RegExp coopBranchRegex = RegExp(
+            r'([a-zA-Z\s\-]+(?:\sbranch|\satm|\spos))',
+            caseSensitive: false,
+          );
+          var coopMatch = coopBranchRegex.firstMatch(originalBody);
+          if (coopMatch != null && coopMatch.group(1) != null) {
+            merchant = coopMatch.group(1)!.trim();
+          }
         }
 
-        if (merchant.length > 20) merchant = merchant.substring(0, 20) + "...";
+        merchant = merchant.replaceAll(RegExp(r'\s+'), ' ').trim();
+        if (merchant.length > 20) {
+          merchant = merchant.substring(0, 20) + "...";
+        }
 
         String category = _determineCategory(body, merchant);
         IconData icon = _getIconForCategory(category);
         DateTime date = DateTime.fromMillisecondsSinceEpoch(timestamp);
-        // Use timestamp as a stable, deterministic id so overrides survive
-        // list rebuilds (the old id used Random which changed on every reload).
         String id = timestamp.toString();
 
         parsedList.add(
@@ -207,23 +302,18 @@ class TransactionService extends ChangeNotifier {
         );
       }
 
-      // Restore and merge manually created items
-      // Load permanently deleted IDs and strip them from parsed SMS list
       final prefs2 = await SharedPreferences.getInstance();
       final deletedIds = Set<String>.from(
         prefs2.getStringList(_deletedKey) ?? [],
       );
       parsedList.removeWhere((tx) => deletedIds.contains(tx.id));
 
-      // Restore and merge manually created items (also filter deleted)
       List<Transaction> manualTx = await _loadManualTransactions();
       manualTx.removeWhere((tx) => deletedIds.contains(tx.id));
       parsedList.addAll(manualTx);
 
       _allTransactions = parsedList;
 
-      // ── Re-apply persisted overrides ─────────────────────────────────────
-      // After every SMS rebuild, restore title/category edits the user made.
       await _applyOverrides();
 
       _sortTransactions();
@@ -236,8 +326,6 @@ class TransactionService extends ChangeNotifier {
       debugPrint("Error processing SMS: $e");
     }
   }
-
-  // ── Manual Transaction Persistence Fix ───────────────────────────────────
 
   Future<List<Transaction>> _loadManualTransactions() async {
     final prefs = await SharedPreferences.getInstance();
@@ -261,9 +349,6 @@ class TransactionService extends ChangeNotifier {
     await prefs.setString(_manualKey, encoded);
   }
 
-  // ── Override persistence ──────────────────────────────────────────────────
-
-  /// Load the override map from SharedPreferences.
   Future<Map<String, dynamic>> _loadOverrides() async {
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getString(_overrideKey);
@@ -275,7 +360,6 @@ class TransactionService extends ChangeNotifier {
     }
   }
 
-  /// Apply stored overrides to the current in-memory list.
   Future<void> _applyOverrides() async {
     final overrides = await _loadOverrides();
     for (final tx in _allTransactions) {
@@ -296,10 +380,8 @@ class TransactionService extends ChangeNotifier {
     }
   }
 
-  /// Persist a title/category override for a transaction id.
   Future<void> _saveOverride(String id, String title, String category) async {
     final overrides = await _loadOverrides();
-    // Merge with existing data so we don't overwrite the isHidden flag
     final existing = overrides[id] ?? {};
 
     existing['title'] = title;
@@ -309,13 +391,9 @@ class TransactionService extends ChangeNotifier {
     await prefs.setString(_overrideKey, jsonEncode(overrides));
   }
 
-  // ── Sort ──────────────────────────────────────────────────────────────────
-
   void _sortTransactions() {
     _allTransactions.sort((a, b) => b.date.compareTo(a.date));
   }
-
-  // ── Category / icon helpers ───────────────────────────────────────────────
 
   String _determineCategory(String body, String merchant) {
     String lowerBody = body.toLowerCase();
@@ -325,26 +403,37 @@ class TransactionService extends ChangeNotifier {
         lowerBody.contains('swiggy') ||
         lowerBody.contains('mcdonald') ||
         lowerBody.contains('domino') ||
-        lowerMerchant.contains('restaurant'))
+        lowerMerchant.contains('restaurant') ||
+        lowerBody.contains('starbucks')) {
       return "Food & Beverages";
+    }
     if (lowerBody.contains('amazon') ||
         lowerBody.contains('flipkart') ||
         lowerBody.contains('myntra') ||
-        lowerMerchant.contains('mart'))
+        lowerMerchant.contains('mart') ||
+        lowerBody.contains('shopping')) {
       return "Shopping";
+    }
     if (lowerBody.contains('petrol') ||
         lowerBody.contains('fuel') ||
-        lowerBody.contains('indian oil'))
+        lowerBody.contains('indian oil') ||
+        lowerBody.contains('bpcl')) {
       return "Fuel";
+    }
     if (lowerBody.contains('jio') ||
         lowerBody.contains('airtel') ||
         lowerBody.contains('recharge') ||
-        lowerBody.contains('bill'))
+        lowerBody.contains('bill') ||
+        lowerBody.contains('netflix') ||
+        lowerBody.contains('spotify')) {
       return "Bills & Subscriptions";
+    }
     if (lowerBody.contains('upi') ||
         lowerBody.contains('vpa') ||
-        lowerBody.contains('sent to'))
+        lowerBody.contains('sent to') ||
+        lowerBody.contains('transfer to')) {
       return "To People";
+    }
     return "Other";
   }
 
@@ -364,8 +453,6 @@ class TransactionService extends ChangeNotifier {
         return PhosphorIconsRegular.currencyInr;
     }
   }
-
-  // ── Add ───────────────────────────────────────────────────────────────────
 
   void addExpense(
     String title,
@@ -397,28 +484,27 @@ class TransactionService extends ChangeNotifier {
     syncWidget();
   }
 
-  // ── Hide / Unhide ─────────────────────────────────────────────────────────
-
   void toggleTransactionVisibility(String id, bool hide) async {
     int index = _allTransactions.indexWhere((tx) => tx.id == id);
     if (index == -1) return;
 
-    // Update state
     _allTransactions[index].isHidden = hide;
 
-    // Persist this state change without deleting the object
     if (_allTransactions[index].isManual) {
       final prefs = await SharedPreferences.getInstance();
       final manualItems = _allTransactions.where((e) => e.isManual).toList();
-      await prefs.setString(_manualKey, jsonEncode(manualItems.map((e) => e.toJson()).toList()));
+      await prefs.setString(
+        _manualKey,
+        jsonEncode(manualItems.map((e) => e.toJson()).toList()),
+      );
     } else {
       final overrides = await _loadOverrides();
       final existing = overrides[id] ?? {};
       existing['isHidden'] = hide;
-      // Ensure we keep existing data
       existing['title'] = existing['title'] ?? _allTransactions[index].title;
-      existing['category'] = existing['category'] ?? _allTransactions[index].category;
-      
+      existing['category'] =
+          existing['category'] ?? _allTransactions[index].category;
+
       overrides[id] = existing;
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_overrideKey, jsonEncode(overrides));
@@ -426,15 +512,6 @@ class TransactionService extends ChangeNotifier {
     notifyListeners();
     syncWidget();
   }
-
-  // ── Update ────────────────────────────────────────────────────────────────
-  //
-  // CHANGED:
-  // • title, category, icon are now ALWAYS updated regardless of isManual.
-  //   The UI (canEditAmount / canEditTime) already ensures amount/time
-  //   passed in for auto-fetched transactions are unchanged values.
-  // • For auto-fetched transactions the override is persisted so the edit
-  //   survives the next SMS re-parse / app restart.
 
   void updateExpense(
     String id,
@@ -463,7 +540,6 @@ class TransactionService extends ChangeNotifier {
         time.minute,
       );
 
-      // Re-save entire manual transaction list to preserve edits to manual items
       final prefs = await SharedPreferences.getInstance();
       final manualItems = _allTransactions
           .where((element) => element.isManual)
@@ -481,13 +557,11 @@ class TransactionService extends ChangeNotifier {
     syncWidget();
   }
 
-  // ── Query ─────────────────────────────────────────────────────────────────
-
   List<Transaction> getTransactionsForDay(DateTime date) {
     return _allTransactions
         .where(
           (tx) =>
-              !tx.isHidden && // hidden transactions are excluded
+              !tx.isHidden &&
               tx.date.year == date.year &&
               tx.date.month == date.month &&
               tx.date.day == date.day,
@@ -495,8 +569,6 @@ class TransactionService extends ChangeNotifier {
         .toList();
   }
 
-  /// All non-deleted transactions for a given day — includes hidden ones.
-  /// Use ONLY on the Delete screen so users can delete hidden transactions too.
   List<Transaction> getAllTransactionsForDay(DateTime date) {
     return _allTransactions
         .where(
@@ -508,12 +580,8 @@ class TransactionService extends ChangeNotifier {
         .toList();
   }
 
-  /// Visible (non-hidden) transactions only.
-  /// Use this everywhere: Dashboard, Analytics, Forest, SpentWrap calculations.
   List<Transaction> get visibleTransactions =>
       _allTransactions.where((tx) => !tx.isHidden).toList();
-
-  // ── Widget sync ───────────────────────────────────────────────────────────
 
   Future<void> syncWidget() async {
     if (kIsWeb) return;

@@ -748,6 +748,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // Added for weekly limit check
+import 'package:spentree/core/database/local_transaction.dart';
 import 'package:spentree/core/user_profile.dart';
 import '../../core/app_style.dart';
 import '../../core/user_data.dart';
@@ -956,7 +957,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         );
 
         // NEW: Determine visible transactions based on expand state
-        final List<Transaction> visibleTx = _isExpensesExpanded
+        final List<LocalTransaction> visibleTx = _isExpensesExpanded
             ? dailyTx
             : dailyTx.take(4).toList();
         final bool hasMoreThanFour = dailyTx.length > 4;
@@ -1662,7 +1663,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildTransactionCard(Transaction tx) {
+  Widget _buildTransactionCard(LocalTransaction tx) {
     return Container(
       margin: const EdgeInsets.only(bottom: 15),
       width: double.infinity,
@@ -1688,7 +1689,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ],
             ),
-            child: Icon(tx.icon, color: AppColors.colblack, size: 28),
+            child: Icon(TransactionService().getIconForCategory(tx.category), color: AppColors.colblack, size: 28),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -1697,7 +1698,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  tx.title,
+                  tx.receiverName,
                   style: GoogleFonts.montserrat(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -1708,7 +1709,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  tx.isManual ? "Cash" : "Bank account",
+                  (tx.type == 'Cash') ? "Cash" : "Bank account",
                   style: GoogleFonts.montserrat(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
@@ -1732,7 +1733,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
               const SizedBox(height: 2),
               Text(
-                tx.time.format(context),
+                TimeOfDay.fromDateTime(tx.dateTime).format(context),
                 style: GoogleFonts.montserrat(
                   fontSize: 11,
                   fontWeight: FontWeight.w500,

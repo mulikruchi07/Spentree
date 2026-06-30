@@ -4,6 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:spentree/core/app_style.dart';
+import 'package:spentree/core/database/local_transaction.dart';
 import 'package:spentree/core/transaction_service.dart';
 import 'package:spentree/core/user_data.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -102,7 +103,7 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
       _isPinned = false;
     });
     for (final id in ids) {
-      await service.deleteTransaction(id);
+      await service.deleteTransaction(id as int);
     }
   }
 
@@ -113,7 +114,7 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
 
   /// All transactions for the focused date — includes hidden ones so they can
   /// be permanently deleted from this screen too.
-  List<Transaction> _txForFocusedDate(TransactionService service) {
+  List<LocalTransaction> _txForFocusedDate(TransactionService service) {
     return service.getAllTransactionsForDay(_focusedDate);
   }
 
@@ -303,15 +304,15 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
     );
   }
 
-  Widget _buildTransactionCard(Transaction tx) {
+  Widget _buildTransactionCard(LocalTransaction tx) {
     final bool isSelected = _selectedIds.contains(tx.id);
-    final hour = tx.time.hourOfPeriod == 0 ? 12 : tx.time.hourOfPeriod;
-    final minute = tx.time.minute.toString().padLeft(2, '0');
-    final period = tx.time.period == DayPeriod.am ? "AM" : "PM";
+    final hour = TimeOfDay.fromDateTime(tx.dateTime).hourOfPeriod == 0 ? 12 : TimeOfDay.fromDateTime(tx.dateTime).hourOfPeriod;
+    final minute = TimeOfDay.fromDateTime(tx.dateTime).minute.toString().padLeft(2, '0');
+    final period = TimeOfDay.fromDateTime(tx.dateTime).period == DayPeriod.am ? "AM" : "PM";
     final timeStr = "$hour:$minute $period";
 
     return GestureDetector(
-      onTap: () => _toggleSelection(tx.id),
+      onTap: () => _toggleSelection(tx.id as String),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         margin: const EdgeInsets.only(bottom: 15),
@@ -342,7 +343,7 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
                   ),
                 ],
               ),
-              child: Icon(tx.icon, color: AppColors.colblack, size: 28),
+              child: Icon(TransactionService().getIconForCategory(tx.category), color: AppColors.colblack, size: 28),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -351,7 +352,7 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    tx.title,
+                    tx.receiverName,
                     style: GoogleFonts.montserrat(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -359,7 +360,7 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
                     ),
                   ),
                   Text(
-                    tx.isManual ? "Manual entry" : "Bank account",
+                    (tx.type == 'Cash') ? "Manual entry" : "Bank account",
                     style: GoogleFonts.montserrat(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,

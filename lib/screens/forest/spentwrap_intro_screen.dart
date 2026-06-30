@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:intl/intl.dart';
+import 'package:spentree/core/database/local_transaction.dart';
 import 'package:spentree/core/monthly_insights_service.dart';
 import 'package:spentree/core/transaction_service.dart';
 import 'package:spentree/screens/forest/forest_screen.dart';
@@ -120,7 +121,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
   late ForestStatus _forestStatus;
   late List<Map<String, dynamic>> _allCategories;
   late List<Map<String, dynamic>> _topCategories;
-  late List<Transaction> _topTransactions;
+  late List<LocalTransaction> _topTransactions;
   late Map<String, dynamic> _strongestDayData;
   late Map<String, dynamic> _categoryAssets;
   late double _totalExpense;
@@ -282,7 +283,7 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
 
     // Top 3 TX
     final daysInMonth = _insights.daysInMonth(widget.targetMonth);
-    final List<Transaction> allTx = [];
+    final List<LocalTransaction> allTx = [];
     for (int day = 1; day <= daysInMonth; day++) {
       allTx.addAll(
         TransactionService().getTransactionsForDay(
@@ -1373,15 +1374,15 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                                         : _topTransactions
                                               .map(
                                                 (tx) => _buildTransactionCard(
-                                                  tx.title,
-                                                  tx.isManual
+                                                  tx.receiverName,
+                                                  (tx.type == 'Cash')
                                                       ? "Cash"
                                                       : "Bank account",
                                                   "- Rs. ${NumberFormat('#,##0').format(tx.amount)}",
                                                   DateFormat(
                                                     'E, d MMMM yyyy',
-                                                  ).format(tx.date),
-                                                  tx.icon,
+                                                  ).format(tx.dateTime),
+                                                  TransactionService().getIconForCategory(tx.category),
                                                   screenWidth,
                                                   screenHeight,
                                                 ),

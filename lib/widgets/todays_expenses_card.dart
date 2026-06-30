@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import 'package:spentree/core/database/local_transaction.dart';
 import '../core/app_style.dart'; // Make sure this path is correct
 import '../core/transaction_service.dart'; // Required for the Transaction model
 
 class TodaysExpensesCard extends StatelessWidget {
-  final List<Transaction> transactions;
+  final List<LocalTransaction> transactions;
   final VoidCallback onGoToAnalytics;
   final VoidCallback onSwapTap;
 
@@ -179,7 +180,7 @@ class TodaysExpensesCard extends StatelessWidget {
   // ==========================================
   // INDIVIDUAL TRANSACTION PILL
   // ==========================================
-  Widget _buildTransactionRow(BuildContext context, Transaction tx) {
+  Widget _buildTransactionRow(BuildContext context, LocalTransaction tx) {
     return Container(
       // Note: Margin removed from here! It's handled by the SizedBox in the loop for perfect math.
       height: 72.57, // Exact height from your inner boxes
@@ -205,7 +206,7 @@ class TodaysExpensesCard extends StatelessWidget {
                 ),
               ],
             ),
-            child: Icon(tx.icon, color: AppColors.colblack, size: 30),
+            child: Icon(TransactionService().getIconForCategory(tx.category), color: AppColors.colblack, size: 30),
           ),
           const SizedBox(width: 12),
 
@@ -216,7 +217,7 @@ class TodaysExpensesCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  tx.title,
+                  tx.receiverName,
                   style: GoogleFonts.montserrat(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
@@ -227,7 +228,7 @@ class TodaysExpensesCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  tx.isManual ? "Cash" : "Bank account",
+                  (tx.type == 'Cash') ? "Cash" : "Bank account",
                   style: GoogleFonts.montserrat(
                     fontSize: 11,
                     fontWeight: FontWeight.w500,
@@ -253,7 +254,7 @@ class TodaysExpensesCard extends StatelessWidget {
               ),
               const SizedBox(height: 2),
               Text(
-                tx.time.format(context),
+                TimeOfDay.fromDateTime(tx.dateTime).format(context),
                 style: GoogleFonts.montserrat(
                   fontSize: 11,
                   fontWeight: FontWeight.w500,

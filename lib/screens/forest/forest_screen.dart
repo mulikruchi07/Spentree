@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:spentree/core/app_style.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:spentree/core/database/local_transaction.dart';
 import 'package:spentree/core/monthly_insights_service.dart';
 import '../../core/transaction_service.dart';
 import '../../core/user_data.dart';
@@ -416,9 +417,9 @@ class _ForestScreenState extends State<ForestScreen> {
     return result;
   }
 
-  List<Transaction> _computeTopExpenses() {
+  List<LocalTransaction> _computeTopExpenses() {
     final daysInMonth = _insights.daysInMonth(_focusedDate);
-    final List<Transaction> allTx = [];
+    final List<LocalTransaction> allTx = [];
     for (int day = 1; day <= daysInMonth; day++) {
       allTx.addAll(
         TransactionService().getTransactionsForDay(
@@ -1108,7 +1109,7 @@ class _ForestScreenState extends State<ForestScreen> {
     );
   }
 
-  Widget _buildTopExpensesList(List<Transaction> topExpenses) {
+  Widget _buildTopExpensesList(List<LocalTransaction> topExpenses) {
     if (topExpenses.isEmpty) {
       return Center(
         child: Text(
@@ -1150,7 +1151,7 @@ class _ForestScreenState extends State<ForestScreen> {
                         ),
                       ],
                     ),
-                    child: Icon(tx.icon, size: 28, color: AppColors.colblack),
+                    child: Icon(TransactionService().getIconForCategory(tx.category), size: 28, color: AppColors.colblack),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -1159,7 +1160,7 @@ class _ForestScreenState extends State<ForestScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          tx.title,
+                          tx.receiverName,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.montserrat(
@@ -1169,7 +1170,7 @@ class _ForestScreenState extends State<ForestScreen> {
                           ),
                         ),
                         Text(
-                          tx.isManual ? "Cash" : "Bank account",
+                          (tx.type == 'Cash') ? "Cash" : "Bank account",
                           style: GoogleFonts.montserrat(
                             fontSize: 12,
                             color: AppColors.white500,
@@ -1192,7 +1193,7 @@ class _ForestScreenState extends State<ForestScreen> {
                         ),
                       ),
                       Text(
-                        DateFormat('E, d MMMM yyyy').format(tx.date),
+                        DateFormat('E, d MMMM yyyy').format(tx.dateTime),
                         style: GoogleFonts.montserrat(
                           fontSize: 11,
                           color: AppColors.white500,

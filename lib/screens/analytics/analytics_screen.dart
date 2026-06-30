@@ -188,7 +188,7 @@
 //       tx.title = title;
 //       tx.amount = double.tryParse(amountStr) ?? tx.amount;
 //       tx.category = category;
-//       tx.time = time;
+//       TimeOfDay.fromDateTime(tx.dateTime) = time;
 //       tx.icon = _getIconForCategory(category);
 //       _editingTransactionId = null;
 //       _isEditMode = false;
@@ -493,8 +493,8 @@
 //                           '',
 //                         ),
 //                         initialCategory: tx.category,
-//                         initialDate: tx.date,
-//                         initialTime: tx.time,
+//                         initialDate: tx.dateTime,
+//                         initialTime: TimeOfDay.fromDateTime(tx.dateTime),
 //                         onCancel: () =>
 //                             setState(() => _editingTransactionId = null),
 //                         onSave: (t, a, c, time) =>
@@ -622,7 +622,7 @@
 //                 ),
 //                 const SizedBox(height: 2),
 //                 Text(
-//                   tx.time.format(context),
+//                   TimeOfDay.fromDateTime(tx.dateTime).format(context),
 //                   style: GoogleFonts.montserrat(
 //                     fontSize: 11,
 //                     fontWeight: FontWeight.w500,
@@ -1588,6 +1588,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../core/app_style.dart';
 import '../../core/transaction_service.dart'; // Make sure this path points to your new service
+import 'package:spentree/core/database/local_transaction.dart';
 
 class AnalyticsScreen extends StatefulWidget {
   static final ValueNotifier<bool> triggerOpenForm = ValueNotifier(false);
@@ -1753,7 +1754,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
   }
 
   void _updateExpense(
-    Transaction tx,
+    LocalTransaction tx,
     String title,
     String amountStr,
     String category,
@@ -1769,7 +1770,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
     });
   }
 
-  List<Map<String, dynamic>> _calculateChartData(List<Transaction> dailyTx) {
+  List<Map<String, dynamic>> _calculateChartData(List<LocalTransaction> dailyTx) {
     Map<String, double> totals = {};
     for (var tx in dailyTx) {
       totals[tx.category] = (totals[tx.category] ?? 0.0) + tx.amount;
@@ -2056,7 +2057,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                       itemBuilder: (context, index) {
                         final tx = dailyTx[index];
                         if (!_itemKeys.containsKey(tx.id))
-                          _itemKeys[tx.id] = GlobalKey();
+                          Map<String, GlobalKey> _itemKeys = {};
 
                         if (_isEditMode && _editingTransactionId == tx.id) {
                           return Padding(
@@ -2064,16 +2065,15 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                             padding: const EdgeInsets.only(bottom: 12),
                             child: ExpenseForm(
                               isEditing: true,
-                              isManual: tx
-                                  .isManual, // Pass status to restrict fields if Bank
-                              initialTitle: tx.title,
+                              isManual: (tx.type == 'Cash'), // Pass status to restrict fields if Bank
+                              initialTitle: tx.receiverName,
                               initialAmount: tx.amount.toString().replaceAll(
                                 '.0',
                                 '',
                               ),
                               initialCategory: tx.category,
-                              initialDate: tx.date,
-                              initialTime: tx.time,
+                              initialDate: tx.dateTime,
+                              initialTime: TimeOfDay.fromDateTime(tx.dateTime),
                               onCancel: () =>
                                   setState(() => _editingTransactionId = null),
                               onSave: (t, a, c, time) =>
@@ -2461,12 +2461,12 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
     );
   }
 
-  Widget _buildTransactionCard(Transaction tx) {
+  Widget _buildTransactionCard(LocalTransaction tx) {
     return GestureDetector(
       onTap: () {
         if (_isEditMode) {
-          setState(() => _editingTransactionId = tx.id);
-          _scrollToItem(tx.id);
+          setState(() => _editingTransactionId = tx.id as String?);
+          _scrollToItem(tx.id as String);
         }
       },
       child: AnimatedContainer(
@@ -2494,7 +2494,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                   ),
                 ],
               ),
-              child: Icon(tx.icon, color: AppColors.colblack, size: 28),
+              child: Icon(TransactionService().getIconForCategory(tx.category), color: AppColors.colblack, size: 28),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -2503,7 +2503,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    tx.title,
+                    tx.receiverName,
                     style: GoogleFonts.montserrat(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -2513,7 +2513,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                     overflow: TextOverflow.ellipsis,
                   ),
                   Text(
-                    tx.isManual ? "Cash" : "Bank account",
+                    (tx.type == 'Cash') ? "Cash" : "Bank account",
                     style: GoogleFonts.montserrat(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
@@ -2537,7 +2537,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  tx.time.format(context),
+                  TimeOfDay.fromDateTime(tx.dateTime).format(context),
                   style: GoogleFonts.montserrat(
                     fontSize: 11,
                     fontWeight: FontWeight.w500,

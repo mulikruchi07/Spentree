@@ -4,6 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:spentree/core/app_style.dart';
+import 'package:spentree/core/database/local_transaction.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/transaction_service.dart';
 
@@ -45,7 +46,7 @@ class _HideTransactionsScreenState extends State<HideTransactionsScreen> {
     if (mounted) setState(() {});
   }
 
-  List<Transaction> get _displayedTransactions {
+  List<LocalTransaction> get _displayedTransactions {
     // Must use getAllTransactionsForDay (not getTransactionsForDay) because
     // getTransactionsForDay already strips hidden — the hidden tab would always
     // be empty if we used it.
@@ -375,7 +376,7 @@ class _HideTransactionsScreenState extends State<HideTransactionsScreen> {
     );
   }
 
-  Widget _buildTransactionCard(int index, Transaction tx) {
+  Widget _buildTransactionCard(int index, LocalTransaction tx) {
     bool isSelected = _selectedIndices.contains(index);
 
     return GestureDetector(
@@ -414,7 +415,7 @@ class _HideTransactionsScreenState extends State<HideTransactionsScreen> {
                   ),
                 ],
               ),
-              child: Icon(tx.icon, color: AppColors.colblack, size: 28),
+              child: Icon(TransactionService().getIconForCategory(tx.category), color: AppColors.colblack, size: 28),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -423,7 +424,7 @@ class _HideTransactionsScreenState extends State<HideTransactionsScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    tx.title,
+                    tx.receiverName,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.montserrat(
@@ -433,7 +434,7 @@ class _HideTransactionsScreenState extends State<HideTransactionsScreen> {
                     ),
                   ),
                   Text(
-                    tx.isManual ? "Cash" : "Bank account",
+                    (tx.type == 'Cash') ? "Cash" : "Bank account",
                     style: GoogleFonts.montserrat(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
@@ -457,7 +458,7 @@ class _HideTransactionsScreenState extends State<HideTransactionsScreen> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  tx.time.format(context),
+                  TimeOfDay.fromDateTime(tx.dateTime).format(context),
                   style: GoogleFonts.montserrat(
                     fontSize: 11,
                     fontWeight: FontWeight.w500,

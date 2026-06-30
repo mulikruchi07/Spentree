@@ -28,8 +28,16 @@ dependencies:
   audioplayers: ^6.5.1
   glassmorphism: ^3.0.0
   phosphoricons_flutter: ^1.0.0
+  provider: ^6.1.5+1
+  supabase_flutter: ^2.5.0
+  flutter_dotenv: ^5.1.0
+  isar: ^3.1.0
+  isar_flutter_libs: ^3.1.0+1
+  isar_generator: ^3.1.0+1
 
 dev_dependencies:
+  # analyzer: ^14.0.0
+  build_runner: any
   flutter_test:
     sdk: flutter
 
@@ -39,6 +47,7 @@ flutter:
   uses-material-design: true
 
   assets:
+    - .env
     - assets/logo.png
     - assets/appname.png
     - assets/dappname.png

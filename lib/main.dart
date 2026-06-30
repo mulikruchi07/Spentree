@@ -551,6 +551,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:home_widget/home_widget.dart';
+import 'package:spentree/core/database/local_database_service.dart';
 import 'package:spentree/screens/analytics/analytics_screen.dart';
 import 'package:spentree/screens/main_wrapper.dart';
 import 'package:spentree/screens/onboarding/splash_onboarding_screen.dart';
@@ -561,8 +562,8 @@ import 'core/transaction_service.dart';
 import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-// import 'package:flutter_dotenv/flutter_dotenv.dart';
-// import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 @pragma('vm:entry-point')
 Future<void> backgroundCallback(Uri? uri) async {
@@ -574,14 +575,16 @@ Future<void> backgroundCallback(Uri? uri) async {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // // 1. Load Environment Variables
-  // await dotenv.load(fileName: ".env");
+  // 1. Load Environment Variables
+  await dotenv.load(fileName: ".env");
 
-  // // 2. Initialize Supabase
-  // await Supabase.initialize(
-  //   url: dotenv.env['SUPABASE_URL']!,
-  //   anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
-  // );
+  // 2. Initialize Supabase
+  await Supabase.initialize(
+    url: dotenv.env['SUPABASE_URL']!,
+    anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
+  );
+  // 3. Initialize Isar Local Database (ADD THIS LINE)
+  await LocalDatabaseService.initialize();
 
   // ── Initialise lock BEFORE runApp so the overlay is ready on frame 1 ──
   // The notifier starts as AppLockState.locked (pessimistic). initialize()
@@ -652,8 +655,8 @@ class MyApp extends StatelessWidget {
             useMaterial3: true,
             scaffoldBackgroundColor: const Color(0xFF121212),
           ),
-          home: MainWrapper(initialIndex: initialTab),
-          // home: const SplashOnboardingScreen(),
+          // home: MainWrapper(initialIndex: initialTab),
+          home: const SplashOnboardingScreen(),
           // ── Global lock overlay ─────────────────────────────────────────
           // The `builder` layer sits ABOVE the Navigator's entire route stack,
           // including every pushed route AND every showDialog / showModalBottomSheet.

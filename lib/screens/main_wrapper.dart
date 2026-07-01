@@ -7,6 +7,8 @@ import 'analytics/analytics_screen.dart';
 import 'dashboard/dashboard_screen.dart';
 import 'profile/profile_screen.dart';
 import 'achievements/achievements_screen.dart';
+import 'package:supabase_flutter/supabase_flutter.dart'; // Import Supabase
+import 'package:spentree/core/auth_landing_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // MainWrapper
@@ -45,6 +47,15 @@ class _MainWrapperState extends State<MainWrapper> with WidgetsBindingObserver {
     _selectedIndex = widget.initialIndex;
     _pageController = PageController(initialPage: _selectedIndex);
     WidgetsBinding.instance.addObserver(this);
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user == null) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const AuthLandingScreen()),
+        );
+      }
+    });
   }
 
   @override
@@ -136,7 +147,8 @@ class _MainWrapperState extends State<MainWrapper> with WidgetsBindingObserver {
           body: PageView(
             controller: _pageController,
             physics:
-                const _ClampingPagePhysics(), // ← fixes overscroll; swiping disabled
+                // const _ClampingPagePhysics(), // ← fixes overscroll; swiping disabled
+                const ClampingScrollPhysics(),
             onPageChanged: (i) => setState(() => _selectedIndex = i),
             children: _pages,
           ),
@@ -229,11 +241,11 @@ class _MainWrapperState extends State<MainWrapper> with WidgetsBindingObserver {
   }
 }
 
-class _ClampingPagePhysics extends PageScrollPhysics {
-  const _ClampingPagePhysics() : super(parent: const ClampingScrollPhysics());
+// class _ClampingPagePhysics extends PageScrollPhysics {
+//   const _ClampingPagePhysics() : super(parent: const ClampingScrollPhysics());
 
-  @override
-  _ClampingPagePhysics applyTo(ScrollPhysics? ancestor) {
-    return const _ClampingPagePhysics();
-  }
-}
+//   @override
+//   _ClampingPagePhysics applyTo(ScrollPhysics? ancestor) {
+//     return const _ClampingPagePhysics();
+//   }
+// }

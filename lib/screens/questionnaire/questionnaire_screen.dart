@@ -1,10 +1,13 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:spentree/screens/main_wrapper.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/app_style.dart';
 import 'package:flutter/services.dart';
 import '../onboarding/loading_screen.dart';
 import '../../core/user_data.dart';
+import '../../core/auth_landing_screen.dart';
 
 class QuestionnaireScreen extends StatefulWidget {
   const QuestionnaireScreen({super.key});
@@ -21,6 +24,7 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
   String? _selectedCategory;
   String? _selectedGoal;
   String? _inlineError;
+  bool _isLoading = false;
 
   final double textPadding = 24.0;
   final double descPadding = 60.0;
@@ -113,14 +117,16 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
           body: SafeArea(
             child: Column(
               children: [
-                SizedBox(height: topGap), // CHANGED: was topMargin (90*scale), now 24*scale
+                SizedBox(
+                  height: topGap,
+                ), // CHANGED: was topMargin (90*scale), now 24*scale
 
                 Text(
                   _currentIndex == 0
                       ? "Step 1"
                       : _currentIndex == 1
-                          ? "Step 2"
-                          : "We're almost ready!",
+                      ? "Step 2"
+                      : "We're almost ready!",
                   style: GoogleFonts.montserrat(
                     fontSize: 20 * scale,
                     fontWeight: FontWeight.w600,
@@ -151,7 +157,9 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
                   ),
                 ),
 
-                SizedBox(height: bottomGap), // CHANGED: was topMargin * 0.4, now a small fixed bottomGap
+                SizedBox(
+                  height: bottomGap,
+                ), // CHANGED: was topMargin * 0.4, now a small fixed bottomGap
               ],
             ),
           ),
@@ -166,9 +174,7 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
         return SingleChildScrollView(
           physics: const ClampingScrollPhysics(),
           child: ConstrainedBox(
-            constraints: BoxConstraints(
-              minHeight: constraints.maxHeight,
-            ),
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
             child: content,
           ),
         );
@@ -362,7 +368,8 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.start, // unchanged — already .start, now matches Q1
+        mainAxisAlignment: MainAxisAlignment
+            .start, // unchanged — already .start, now matches Q1
         children: [
           Padding(
             padding: EdgeInsets.symmetric(horizontal: textPadding * scale),
@@ -430,29 +437,51 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
             child: _buildMainButton(
               label: isDone ? "Done" : "Next",
               scale: scale,
+              // Inside your questionnaire_screen.dart
               onTap: () async {
                 if (isDone) {
                   if (_validateCurrentPage()) {
-                    final limitValue = _amountController.text.isNotEmpty
-                        ? _amountController.text.replaceAll(
-                            RegExp(r'[^0-9]'),
-                            '',
-                          )
-                        : "5000";
+                    setState(
+                      () => _isLoading = true,
+                    ); // Ensure you have this state
+                    try {
+                      final limitValue = _amountController.text.isNotEmpty
+                          ? _amountController.text.replaceAll(
+                              RegExp(r'[^0-9]'),
+                              '',
+                            )
+                          : "5000";
 
-                    await UserData.saveQuestionnaireData(
-                      dailyLimitValue: limitValue,
-                      category: _selectedCategory ?? "",
-                      goal: _selectedGoal ?? "",
-                    );
+                      // 1. Save to Supabase
+                      final user = Supabase.instance.client.auth.currentUser;
+                      if (user != null) {
+                        await Supabase.instance.client.from('users').upsert({
+                          'id': user.id,
+                          'daily_limit': int.tryParse(limitValue) ?? 5000,
+                          'category_preference': _selectedCategory,
+                          'goal': _selectedGoal,
+                        });
+                      }
 
-                    if (mounted) {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const LoadingScreen(),
-                        ),
+                      // 2. Save locally
+                      await UserData.saveQuestionnaireData(
+                        dailyLimitValue: limitValue,
+                        category: _selectedCategory ?? "",
+                        goal: _selectedGoal ?? "",
                       );
+
+                      if (mounted) {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const AuthLandingScreen(),
+                          ),
+                        );
+                      }
+                    } catch (e) {
+                      debugPrint("Error saving questionnaire: $e");
+                    } finally {
+                      if (mounted) setState(() => _isLoading = false);
                     }
                   }
                 } else {

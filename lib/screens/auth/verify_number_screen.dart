@@ -1,28 +1,44 @@
+import 'dart:async';
+
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:spentree/screens/main_wrapper.dart';
+import 'package:spentree/core/transaction_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/app_style.dart';
+import '../auth/change_password_screen.dart';
 
-class VerifyNumberScreen extends StatefulWidget {
-  const VerifyNumberScreen({super.key});
+class VerifyEmailScreen extends StatefulWidget {
+  final String email; // Accept the email from the sign-up screen
+  final bool isRecovery; // Add this flag
+
+  const VerifyEmailScreen({
+    super.key,
+    required this.email,
+    this.isRecovery = false,
+  });
 
   @override
-  State<VerifyNumberScreen> createState() => _VerifyNumberScreenState();
+  State<VerifyEmailScreen> createState() => _VerifyEmailScreenState();
 }
 
-class _VerifyNumberScreenState extends State<VerifyNumberScreen> {
-  final int otpLength = 5;
+class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
+  final int otpLength = 6; // SUPABASE OTPS ARE 6 DIGITS
   final double horizontalPadding = 24.0;
-  final double otpBoxWidth = 60.0;
-  final double otpBoxHeight = 76.0;
+  final double otpBoxWidth = 50.0; // Slightly smaller to fit 6 boxes
+  final double otpBoxHeight = 65.0;
   final double componentHeight = 60.0;
   final double cornerRadius = 14.0;
 
   late List<TextEditingController> _controllers;
   late List<FocusNode> _focusNodes;
-  bool _hasError = false;
+  String? _statusMessage;
+  bool _isError = true;
+  bool _isLoading = false;
+  int _resendCooldown = 0;
+  Timer? _cooldownTimer;
 
   @override
   void initState() {
@@ -35,13 +51,96 @@ class _VerifyNumberScreenState extends State<VerifyNumberScreen> {
   void dispose() {
     for (var c in _controllers) c.dispose();
     for (var n in _focusNodes) n.dispose();
+    _cooldownTimer?.cancel();
     super.dispose();
+  }
+
+  Future<void> _verifyOtp() async {
+    setState(() {
+      _statusMessage = null;
+      _isLoading = true;
+    });
+
+    String otp = _controllers.map((c) => c.text).join();
+
+    if (otp.length != otpLength) {
+      setState(() {
+        _statusMessage = "Please enter the complete 6-digit code.";
+        _isError = true;
+        _isLoading = false;
+      });
+      return;
+    }
+
+    try {
+      await Supabase.instance.client.auth.verifyOTP(
+        type: widget.isRecovery ? OtpType.recovery : OtpType.signup,
+        token: otp,
+        email: widget.email,
+      );
+    } on AuthException catch (e) {
+      setState(() {
+        _statusMessage = "Invalid code. Please try again.";
+        _isError = true;
+      });
+      debugPrint("OTP Error: ${e.message}");
+    } catch (e) {
+      setState(() {
+        _statusMessage = "Invalid code. Please try again.";
+        _isError = true;
+      });
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _resendOtp() async {
+    if (_resendCooldown > 0) return;
+    try {
+      await Supabase.instance.client.auth.resend(
+        type: OtpType.signup,
+        email: widget.email,
+      );
+      if (mounted) {
+        setState(() {
+          _statusMessage = "OTP resent! Check your inbox.";
+          _isError = false;
+        });
+        _startCooldown(60);
+      }
+    } on AuthException catch (e) {
+      final seconds = RegExp(r'(\d+) second').firstMatch(e.message)?.group(1);
+      setState(() {
+        _statusMessage = seconds != null
+            ? "You can request a new code after $seconds seconds for security reasons."
+            : e.message;
+        _isError = true;
+      });
+      if (seconds != null) _startCooldown(int.parse(seconds));
+    } catch (e) {
+      setState(() {
+        _statusMessage = "Couldn't resend the code. Please try again.";
+        _isError = true;
+      });
+    }
+  }
+
+  void _startCooldown(int seconds) {
+    _cooldownTimer?.cancel();
+    setState(() => _resendCooldown = seconds);
+    _cooldownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) return;
+      if (_resendCooldown <= 1) {
+        timer.cancel();
+        setState(() => _resendCooldown = 0);
+      } else {
+        setState(() => _resendCooldown--);
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    MediaQuery.platformBrightnessOf(context);
-
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: themeNotifier,
       builder: (context, currentTheme, child) {
@@ -59,11 +158,10 @@ class _VerifyNumberScreenState extends State<VerifyNumberScreen> {
                     ),
                     child: Column(
                       children: [
-                        // --- UNIFORM HEADER HEIGHT ---
                         const SizedBox(height: 110),
 
                         Text(
-                          "Enter OTP",
+                          "Verify Email",
                           style: GoogleFonts.poppins(
                             fontSize: 34,
                             fontWeight: FontWeight.w600,
@@ -76,7 +174,7 @@ class _VerifyNumberScreenState extends State<VerifyNumberScreen> {
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16.0),
                           child: Text(
-                            "Enter the OTP code we just sent you on your registered Phone number",
+                            "Enter the 6-digit code we just sent to\n${widget.email}",
                             textAlign: TextAlign.center,
                             style: GoogleFonts.poppins(
                               fontSize: 14,
@@ -89,8 +187,6 @@ class _VerifyNumberScreenState extends State<VerifyNumberScreen> {
 
                         const SizedBox(height: 32),
 
-                        // --- OTP INPUTS ---
-                        // FIX: Wrapped in FittedBox to scale down on slim phones instead of overflow
                         FittedBox(
                           fit: BoxFit.scaleDown,
                           child: Row(
@@ -107,13 +203,16 @@ class _VerifyNumberScreenState extends State<VerifyNumberScreen> {
                           ),
                         ),
 
-                        if (_hasError)
+                        if (_statusMessage != null)
                           Padding(
                             padding: const EdgeInsets.only(top: 16.0),
                             child: Text(
-                              "Invalid OTP. Please try again.",
+                              _statusMessage!,
+                              textAlign: TextAlign.center,
                               style: GoogleFonts.poppins(
-                                color: AppColors.errorRed,
+                                color: _isError
+                                    ? AppColors.errorRed
+                                    : AppColors.primaryGreen,
                                 fontSize: 13,
                               ),
                             ),
@@ -125,17 +224,7 @@ class _VerifyNumberScreenState extends State<VerifyNumberScreen> {
                           width: double.infinity,
                           height: componentHeight,
                           child: ElevatedButton(
-                            onPressed: () {
-                              // Navigate to Dashboard
-                              Navigator.pushAndRemoveUntil(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const MainWrapper(),
-                                ),
-                                (route) => false,
-                              );
-                              setState(() => _hasError = true);
-                            },
+                            onPressed: _isLoading ? null : _verifyOtp,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primaryGreen,
                               shape: RoundedRectangleBorder(
@@ -145,14 +234,23 @@ class _VerifyNumberScreenState extends State<VerifyNumberScreen> {
                               ),
                               elevation: 0,
                             ),
-                            child: Text(
-                              "Verify OTP",
-                              style: GoogleFonts.poppins(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                                color: AppColors.colwhite,
-                              ),
-                            ),
+                            child: _isLoading
+                                ? SizedBox(
+                                    height: 24,
+                                    width: 24,
+                                    child: CircularProgressIndicator(
+                                      color: AppColors.colwhite,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : Text(
+                                    "Verify",
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500,
+                                      color: AppColors.colwhite,
+                                    ),
+                                  ),
                           ),
                         ),
 
@@ -168,15 +266,21 @@ class _VerifyNumberScreenState extends State<VerifyNumberScreen> {
                                 color: AppColors.grey800,
                               ),
                               children: [
-                                TextSpan(text: "Didn’t get OTP? "),
+                                const TextSpan(text: "Didn’t get the code? "),
                                 TextSpan(
-                                  text: "Resend OTP",
-                                  style: const TextStyle(
-                                    color: AppColors.primaryGreen,
+                                  text: _resendCooldown > 0
+                                      ? "Resend in ${_resendCooldown}s"
+                                      : "Resend",
+                                  style: TextStyle(
+                                    color: _resendCooldown > 0
+                                        ? AppColors.textGrey
+                                        : AppColors.primaryGreen,
                                     fontWeight: FontWeight.w400,
                                   ),
                                   recognizer: TapGestureRecognizer()
-                                    ..onTap = () {},
+                                    ..onTap = _resendCooldown > 0
+                                        ? null
+                                        : _resendOtp,
                                 ),
                               ],
                             ),
@@ -204,9 +308,7 @@ class _VerifyNumberScreenState extends State<VerifyNumberScreen> {
       decoration: BoxDecoration(
         color: AppColors.inputFill,
         borderRadius: BorderRadius.circular(12),
-        border: _hasError
-            ? Border.all(color: AppColors.errorRed, width: 1)
-            : null,
+        border: (_isError && _statusMessage != null) ? Border.all(color: AppColors.errorRed, width: 1) : null,
       ),
       child: TextField(
         controller: _controllers[index],
@@ -231,7 +333,7 @@ class _VerifyNumberScreenState extends State<VerifyNumberScreen> {
           } else if (value.isEmpty && index > 0) {
             FocusScope.of(context).requestFocus(_focusNodes[index - 1]);
           }
-          if (_hasError) setState(() => _hasError = false);
+          if (_statusMessage != null) setState(() => _statusMessage = null);
         },
       ),
     );

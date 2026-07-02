@@ -2,12 +2,16 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:spentree/screens/auth/verify_number_screen.dart';
 import 'package:spentree/screens/profile/privacy_screen.dart';
 import 'package:spentree/screens/profile/terms_screen.dart';
 import '../../core/app_style.dart';
-import 'verify_number_screen.dart';
+import 'package:flutter/material.dart';
 import 'sign_in_screen.dart';
 import '../../core/user_data.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:spentree/screens/main_wrapper.dart';
+import 'package:spentree/core/transaction_service.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -18,7 +22,7 @@ class SignUpScreen extends StatefulWidget {
 
 class _SignUpScreenState extends State<SignUpScreen> {
   final _nameController = TextEditingController();
-  final _phoneController = TextEditingController();
+  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
@@ -26,10 +30,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
   bool _isConfirmPasswordVisible = false;
   bool _isChecked = false;
   bool _showTermsError = false;
+  bool _isLoading = false; // Added loading state
 
   // Errors
   String? _nameError;
-  String? _phoneError;
+  String? _emailError;
   String? _passwordError;
   String? _confirmPasswordError;
 
@@ -41,23 +46,38 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final double inputTermsGap = 26.0;
   final double termsButtonGap = 32.0;
 
-  void _validateAndSubmit() {
+  Future<void> _validateAndSubmit() async {
     setState(() {
       _nameError = null;
-      _phoneError = null;
+      _emailError = null;
       _passwordError = null;
       _confirmPasswordError = null;
       _showTermsError = false;
     });
 
     bool isValid = true;
+    final email = _emailController.text.trim();
+    final _emailRegex = RegExp(r'^[\w\.\-]+@([\w\-]+\.)+[\w\-]{2,}$');
+    // Add this near your other validation in _validateAndSubmit(), before the Supabase call:
+    final password = _passwordController.text;
+    final passwordPattern = RegExp(
+      r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#\$&*~^%()_\-+=]).{8,}$',
+    );
+    if (_passwordController.text.isNotEmpty &&
+        !passwordPattern.hasMatch(_passwordController.text)) {
+      setState(
+        () => _passwordError =
+            "Password must be at least 8 characters and include an uppercase letter, a lowercase letter, a number, and a symbol.",
+      );
+      isValid = false;
+    }
 
-    if (_nameController.text.isEmpty) {
+    if (_nameController.text.trim().isEmpty) {
       setState(() => _nameError = "Name is required");
       isValid = false;
     }
-    if (_phoneController.text.length != 10) {
-      setState(() => _phoneError = "Phone number must be 10 digits");
+    if (email.isEmpty || !_emailRegex.hasMatch(email)) {
+      setState(() => _emailError = "Please enter a valid email address");
       isValid = false;
     }
     if (_passwordController.text.isEmpty) {
@@ -77,11 +97,61 @@ class _SignUpScreenState extends State<SignUpScreen> {
     }
 
     if (isValid) {
-      UserData.userName = _nameController.text;
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const VerifyNumberScreen()),
-      );
+      setState(() => _isLoading = true);
+      try {
+        // 1. Create user in Supabase Auth
+        final res = await Supabase.instance.client.auth.signUp(
+          email: email,
+          password: _passwordController.text,
+          data: {'full_name': _nameController.text.trim()},
+        );
+
+        final user = res.user;
+        if (user != null &&
+            (user.identities == null || user.identities!.isEmpty)) {
+          setState(
+            () => _emailError =
+                "This email is already registered. Please sign in instead.",
+          );
+          return;
+        }
+
+        if (user != null) {
+          UserData.userName = _nameController.text.trim();
+          if (mounted) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => VerifyEmailScreen(email: email),
+              ),
+            );
+          }
+        }
+      } on AuthException catch (e) {
+        final msg = e.message.toLowerCase();
+        if (msg.contains('password')) {
+          setState(
+            () => _passwordError =
+                "Password must be at least 8 characters and include an uppercase letter, a lowercase letter, a number, and a symbol.",
+          );
+        } else if (msg.contains('confirmation') ||
+            msg.contains('sending') ||
+            e.code == 'unexpected_failure') {
+          setState(
+            () => _emailError =
+                "We couldn't send the verification email right now. Please try again in a moment.",
+          );
+        } else {
+          setState(() => _emailError = e.message);
+        }
+      } catch (e) {
+        setState(
+          () => _emailError =
+              "Something went wrong creating your account. Please try again.",
+        );
+      } finally {
+        if (mounted) setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -146,10 +216,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         SizedBox(height: inputGap),
 
                         _buildTextField(
-                          _phoneController,
-                          "Phone Number",
-                          isPhone: true,
-                          errorText: _phoneError,
+                          _emailController,
+                          "Email Address",
+                          isEmail:
+                              true, // You'll need to add an 'isEmail' boolean to your _buildTextField signature to change keyboardType to TextInputType.emailAddress
+                          errorText: _emailError,
                         ),
                         SizedBox(height: inputGap),
 
@@ -291,14 +362,23 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                       ),
                                       elevation: 0,
                                     ),
-                                    child: Text(
-                                      "Create Account",
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w500,
-                                        color: AppColors.colwhite,
-                                      ),
-                                    ),
+                                    child: _isLoading
+                                        ? SizedBox(
+                                            height: 24,
+                                            width: 24,
+                                            child: CircularProgressIndicator(
+                                              color: AppColors.colwhite,
+                                              strokeWidth: 2,
+                                            ),
+                                          )
+                                        : Text(
+                                            "Create Account",
+                                            style: GoogleFonts.poppins(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w500,
+                                              color: AppColors.colwhite,
+                                            ),
+                                          ),
                                   ),
                                 ),
                               ],
@@ -328,8 +408,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                         color: AppColors.colwhite,
                                         borderRadius: BorderRadius.circular(8),
                                         border: Border.all(
-                                          color: Colors.orangeAccent
-                                              .withOpacity(0.5),
+                                          color: const Color(
+                                            0xFFFFAB40,
+                                          ).withOpacity(0.5),
                                         ),
                                         boxShadow: [
                                           BoxShadow(
@@ -419,7 +500,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     TextEditingController controller,
     String hint, {
     bool isPassword = false,
-    bool isPhone = false,
+    bool isEmail = false,
     bool? isVisible,
     VoidCallback? onVisibilityChanged,
     String? errorText,
@@ -440,18 +521,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
           child: TextField(
             controller: controller,
             obscureText: isPassword && !(isVisible ?? false),
-            keyboardType: isPhone ? TextInputType.phone : TextInputType.text,
+            // Open the Email keyboard layout if it's an email field
+            keyboardType: isEmail
+                ? TextInputType.emailAddress
+                : TextInputType.text,
             style: GoogleFonts.poppins(
               fontSize: 15,
               color: AppColors.colblack,
               fontWeight: FontWeight.w400,
             ),
-            inputFormatters: isPhone
-                ? [
-                    LengthLimitingTextInputFormatter(10),
-                    FilteringTextInputFormatter.digitsOnly,
-                  ]
-                : [],
             textAlignVertical: TextAlignVertical.center,
             decoration: InputDecoration(
               isCollapsed: true,
@@ -505,7 +583,7 @@ class _ArrowPainter extends CustomPainter {
       ..style = PaintingStyle.fill;
 
     final borderPaint = Paint()
-      ..color = Colors.orangeAccent.withOpacity(0.5)
+      ..color = const Color(0xFFFFAB40).withOpacity(0.5)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1;
 

@@ -2,10 +2,13 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:spentree/screens/auth/forgot_password_screen.dart';
+import 'package:spentree/core/auth_landing_screen.dart';
 import 'package:spentree/screens/main_wrapper.dart';
 import '../../core/app_style.dart';
 import 'sign_up_screen.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:spentree/core/transaction_service.dart';
+import 'forgot_password_screen.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -15,29 +18,33 @@ class SignInScreen extends StatefulWidget {
 }
 
 class _SignInScreenState extends State<SignInScreen> {
-  final _phoneController = TextEditingController();
+  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isPasswordVisible = false;
 
   // Validation Errors
-  String? _phoneError;
+  String? _emailError;
   String? _passwordError;
+  bool _isLoading = false;
 
   final double horizontalPadding = 24.0;
   final double componentHeight = 60.0;
   final double cornerRadius = 14.0;
   final double inputGap = 16.0;
 
-  void _validateAndSubmit() {
+  Future<void> _validateAndSubmit() async {
     setState(() {
-      _phoneError = null;
+      _emailError = null;
       _passwordError = null;
     });
 
     bool isValid = true;
+    final _emailRegex = RegExp(r'^[\w\.\-]+@([\w\-]+\.)+[\w\-]{2,}$');
+    final email = _emailController.text.trim();
 
-    if (_phoneController.text.length != 10) {
-      setState(() => _phoneError = "Phone number must be 10 digits");
+    // Basic Email Validation
+    if (email.isEmpty || !_emailRegex.hasMatch(email)) {
+      setState(() => _emailError = "Please enter a valid email address");
       isValid = false;
     }
     if (_passwordController.text.isEmpty) {
@@ -46,11 +53,33 @@ class _SignInScreenState extends State<SignInScreen> {
     }
 
     if (isValid) {
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (context) => const MainWrapper()),
-        (route) => false,
-      );
+      setState(() => _isLoading = true);
+      try {
+        // 1. Authenticate with Supabase
+        await Supabase.instance.client.auth.signInWithPassword(
+          email: email,
+          password: _passwordController.text,
+        );
+
+        // 2. Start the Sync Engine! (Pushes/Pulls cloud data)
+        await TransactionService().initService();
+
+        // // 3. Navigate to Dashboard
+        // if (mounted) {
+        //   Navigator.pushAndRemoveUntil(
+        //     context,
+        //     MaterialPageRoute(builder: (context) => const MainWrapper()),
+        //     (route) => false,
+        //   );
+        // }
+      } on AuthException catch (e) {
+        // Handle invalid credentials
+        setState(() => _passwordError = e.message);
+      } catch (e) {
+        setState(() => _passwordError = "An unexpected error occurred.");
+      } finally {
+        if (mounted) setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -105,10 +134,10 @@ class _SignInScreenState extends State<SignInScreen> {
 
                         // --- INPUTS ---
                         _buildTextField(
-                          _phoneController,
-                          "Phone Number",
-                          isPhone: true,
-                          errorText: _phoneError,
+                          _emailController,
+                          "Email Address",
+                          isEmail: true,
+                          errorText: _emailError,
                         ),
                         SizedBox(height: inputGap),
 
@@ -129,8 +158,12 @@ class _SignInScreenState extends State<SignInScreen> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) =>
-                                    const ForgotPasswordScreen(),
+                                builder: (context) => ForgotPasswordScreen(
+                                  prefilledEmail:
+                                      _emailController.text.trim().isNotEmpty
+                                      ? _emailController.text.trim()
+                                      : null,
+                                ),
                               ),
                             );
                           },
@@ -167,14 +200,23 @@ class _SignInScreenState extends State<SignInScreen> {
                               ),
                               elevation: 0,
                             ),
-                            child: Text(
-                              "Log In",
-                              style: GoogleFonts.poppins(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                                color: AppColors.colwhite,
-                              ),
-                            ),
+                            child: _isLoading
+                                ? SizedBox(
+                                    height: 24,
+                                    width: 24,
+                                    child: CircularProgressIndicator(
+                                      color: AppColors.colwhite,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : Text(
+                                    "Log In",
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500,
+                                      color: AppColors.colwhite,
+                                    ),
+                                  ),
                           ),
                         ),
 
@@ -204,7 +246,7 @@ class _SignInScreenState extends State<SignInScreen> {
                                         context,
                                         MaterialPageRoute(
                                           builder: (context) =>
-                                              const SignUpScreen(),
+                                              const AuthLandingScreen(),
                                         ),
                                       );
                                     },
@@ -232,7 +274,7 @@ class _SignInScreenState extends State<SignInScreen> {
     TextEditingController controller,
     String hint, {
     bool isPassword = false,
-    bool isPhone = false,
+    bool isEmail = false, // Changed from isPhone
     bool? isVisible,
     VoidCallback? onVisibilityChanged,
     String? errorText,
@@ -253,18 +295,16 @@ class _SignInScreenState extends State<SignInScreen> {
           child: TextField(
             controller: controller,
             obscureText: isPassword && !(isVisible ?? false),
-            keyboardType: isPhone ? TextInputType.phone : TextInputType.text,
+            // Use email keyboard layout if it's an email field
+            keyboardType: isEmail
+                ? TextInputType.emailAddress
+                : TextInputType.text,
             style: GoogleFonts.poppins(
               fontSize: 15,
               color: AppColors.colblack,
               fontWeight: FontWeight.w400,
             ),
-            inputFormatters: isPhone
-                ? [
-                    LengthLimitingTextInputFormatter(10),
-                    FilteringTextInputFormatter.digitsOnly,
-                  ]
-                : [],
+            // Removed the phone number digit restrictors
             textAlignVertical: TextAlignVertical.center,
             decoration: InputDecoration(
               isCollapsed: true,

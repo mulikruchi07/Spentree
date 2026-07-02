@@ -554,6 +554,7 @@ import 'package:home_widget/home_widget.dart';
 import 'package:spentree/core/database/local_database_service.dart';
 import 'package:spentree/screens/analytics/analytics_screen.dart';
 import 'package:spentree/screens/main_wrapper.dart';
+import 'package:spentree/screens/onboarding/loading_screen.dart';
 import 'package:spentree/screens/onboarding/splash_onboarding_screen.dart';
 import 'app_lock.dart';
 import 'core/user_profile.dart';
@@ -571,35 +572,39 @@ Future<void> backgroundCallback(Uri? uri) async {
     await TransactionService().initService();
   }
 }
+// 1. Add this GlobalKey at the top of the file
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  // 1. Load Environment Variables
   await dotenv.load(fileName: ".env");
 
-  // 2. Initialize Supabase
   await Supabase.initialize(
     url: dotenv.env['SUPABASE_URL']!,
     anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
   );
-  // 3. Initialize Isar Local Database (ADD THIS LINE)
+
+  // 2. The Global Auth Gatekeeper
+  Supabase.instance.client.auth.onAuthStateChange.listen((data) async {
+    final event = data.event;
+    final session = data.session;
+
+    if (event == AuthChangeEvent.signedIn && session != null) {
+      navigatorKey.currentState?.pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const LoadingScreen(isAuthFlow: true)),
+        (route) => false,
+      );
+    }
+  });
+
   await LocalDatabaseService.initialize();
-
-  // ── Initialise lock BEFORE runApp so the overlay is ready on frame 1 ──
-  // The notifier starts as AppLockState.locked (pessimistic). initialize()
-  // reads SharedPreferences and flips to unlocked if lock is disabled.
   await AppLockController.initialize();
-  await loadSavedTheme(); // ← NEW: restore persisted theme before first frame
-  await userProfileNotifier
-      .initialize(); // ← NEW: restore name + image before first frame
+  await loadSavedTheme(); 
+  await userProfileNotifier.initialize(); 
 
-  // ONLY register widget code if we are NOT on the web
   if (!kIsWeb) {
     HomeWidget.registerInteractivityCallback(backgroundCallback);
     await TransactionService().initService();
-
-    // Method Channel setup is also platform-specific
     const platform = MethodChannel('spentree_widget_channel');
     platform.setMethodCallHandler((call) async {
       if (call.method == "themeChanged") {
@@ -608,27 +613,16 @@ void main() async {
     });
   }
 
-  // Handle widget actions only if not on Web
-  int startTab = 0;
-  if (!kIsWeb) {
-    try {
-      const platform = MethodChannel('spentree_widget_channel');
-      final action = await platform.invokeMethod('getWidgetAction');
-      if (action == "OPEN_ADD_EXPENSE") {
-        startTab = 1;
-        AnalyticsScreen.triggerOpenForm.value = true;
-      }
-    } catch (e) {
-      debugPrint("Failed to get widget action: $e");
-    }
-  }
+  // 3. CHECK IF ALREADY LOGGED IN TO SKIP SPLASH SCREEN
+  final session = Supabase.instance.client.auth.currentSession;
+  Widget startScreen = session != null ? const MainWrapper() : const SplashOnboardingScreen();
 
-  runApp(MyApp(initialTab: startTab));
+  runApp(MyApp(startScreen: startScreen));
 }
 
 class MyApp extends StatelessWidget {
-  final int initialTab;
-  const MyApp({super.key, required this.initialTab});
+  final Widget startScreen;
+  const MyApp({super.key, required this.startScreen});
 
   @override
   Widget build(BuildContext context) {
@@ -636,32 +630,21 @@ class MyApp extends StatelessWidget {
       valueListenable: themeNotifier,
       builder: (context, currentMode, child) {
         return MaterialApp(
+          navigatorKey: navigatorKey,
           debugShowCheckedModeBanner: false,
           title: 'SpenTree',
           themeMode: currentMode,
           theme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: AppColors.primaryGreen,
-              brightness: Brightness.light,
-            ),
+            colorScheme: ColorScheme.fromSeed(seedColor: AppColors.primaryGreen, brightness: Brightness.light),
             useMaterial3: true,
             scaffoldBackgroundColor: AppColors.bgWhite,
           ),
           darkTheme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: AppColors.primaryGreen,
-              brightness: Brightness.dark,
-            ),
+            colorScheme: ColorScheme.fromSeed(seedColor: AppColors.primaryGreen, brightness: Brightness.dark),
             useMaterial3: true,
             scaffoldBackgroundColor: const Color(0xFF121212),
           ),
-          // home: MainWrapper(initialIndex: initialTab),
-          home: const SplashOnboardingScreen(),
-          // ── Global lock overlay ─────────────────────────────────────────
-          // The `builder` layer sits ABOVE the Navigator's entire route stack,
-          // including every pushed route AND every showDialog / showModalBottomSheet.
-          // AppLockWrapper renders the blur overlay at this level so nothing
-          // — no screen, no dialog, no bottom sheet — can slip through.
+          home: startScreen, // Now uses the dynamic start screen
           builder: (context, child) {
             return AppLockWrapper(child: child ?? const SizedBox.shrink());
           },

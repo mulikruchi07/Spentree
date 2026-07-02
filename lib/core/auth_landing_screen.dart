@@ -59,12 +59,18 @@ class AuthLandingScreen extends StatelessWidget {
                   // EMAIL BUTTONS
                   _buildButton(
                     label: "Create account with Email ID",
-                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SignUpScreen())),
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const SignUpScreen()),
+                    ),
                   ),
                   const SizedBox(height: 16),
                   _buildButton(
                     label: "Sign in using Email ID",
-                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SignInScreen())),
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const SignInScreen()),
+                    ),
                   ),
 
                   const SizedBox(height: 24),
@@ -75,7 +81,10 @@ class AuthLandingScreen extends StatelessWidget {
                       Expanded(child: Divider(color: AppColors.inactiveGrey)),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Text("Or", style: GoogleFonts.poppins(color: AppColors.textGrey)),
+                        child: Text(
+                          "Or",
+                          style: GoogleFonts.poppins(color: AppColors.textGrey),
+                        ),
                       ),
                       Expanded(child: Divider(color: AppColors.inactiveGrey)),
                     ],
@@ -115,17 +124,27 @@ class AuthLandingScreen extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.inputFill, // Using theme-aware input color
           elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(cornerRadius)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(cornerRadius),
+          ),
         ),
         child: Text(
           label,
-          style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500, color: AppColors.grey800),
+          style: GoogleFonts.poppins(
+            fontSize: 15,
+            fontWeight: FontWeight.w500,
+            color: AppColors.grey800,
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildSocialButton({required String imagePath, required String label, required VoidCallback onTap}) {
+  Widget _buildSocialButton({
+    required String imagePath,
+    required String label,
+    required VoidCallback onTap,
+  }) {
     return SizedBox(
       width: double.infinity,
       height: componentHeight,
@@ -134,7 +153,9 @@ class AuthLandingScreen extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.inputFill,
           elevation: 0,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(cornerRadius)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(cornerRadius),
+          ),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -143,7 +164,11 @@ class AuthLandingScreen extends StatelessWidget {
             const SizedBox(width: 12),
             Text(
               label,
-              style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w500, color: AppColors.grey800),
+              style: GoogleFonts.poppins(
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
+                color: AppColors.grey800,
+              ),
             ),
           ],
         ),
@@ -152,15 +177,14 @@ class AuthLandingScreen extends StatelessWidget {
   }
 
   Future<void> _signInWithOAuth(OAuthProvider provider) async {
-    try {
-      // Simply call the provider. Supabase handles the PKCE flow automatically 
-      // when you provide the redirectTo parameter.
-      await Supabase.instance.client.auth.signInWithOAuth(
-        provider,
-        redirectTo: 'spentree://login-callback', 
-      );
-    } catch (e) {
-      debugPrint("Social Auth Error: $e");
-    }
+  try {
+    await Supabase.instance.client.auth.signInWithOAuth(
+      provider,   // ← was hardcoded to OAuthProvider.google
+      redirectTo: 'spentree://login-callback',
+      authScreenLaunchMode: LaunchMode.inAppWebView,
+    );
+  } catch (e) {
+    debugPrint("Social Auth Error: $e");
   }
+}
 }

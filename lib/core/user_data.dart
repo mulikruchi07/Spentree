@@ -29,6 +29,7 @@ class UserData {
     ); // FIX 4: same key Dashboard already reads
     await prefs.setString('spending_category', category);
     await prefs.setString('spending_goal', goal);
+    await prefs.setBool('questionnaire_sync_pending', true); 
   }
 
   // ── FIX 3: Load questionnaire answers on app start ──

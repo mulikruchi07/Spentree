@@ -4,6 +4,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:spentree/core/error_helper.dart';
 import 'package:spentree/screens/main_wrapper.dart';
 import 'package:spentree/core/transaction_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -73,6 +74,15 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
     }
 
     try {
+      final hasInternet = await checkInternetConnection();
+      if (!hasInternet) {
+        setState(() {
+          _statusMessage =
+              "No internet connection. Please check your network and try again.";
+          _isError = true;
+        });
+        return;
+      }
       await Supabase.instance.client.auth.verifyOTP(
         type: widget.isRecovery ? OtpType.recovery : OtpType.signup,
         token: otp,
@@ -83,7 +93,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
         _statusMessage = "Invalid code. Please try again.";
         _isError = true;
       });
-      debugPrint("OTP Error: ${e.message}");
+      debugPrint("OTP Error: ${mapAuthError(e)}");
     } catch (e) {
       setState(() {
         _statusMessage = "Invalid code. Please try again.";
@@ -97,6 +107,15 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
   Future<void> _resendOtp() async {
     if (_resendCooldown > 0) return;
     try {
+      final hasInternet = await checkInternetConnection();
+      if (!hasInternet) {
+        setState(() {
+          _statusMessage =
+              "No internet connection. Please check your network and try again.";
+          _isError = true;
+        });
+        return;
+      }
       await Supabase.instance.client.auth.resend(
         type: OtpType.signup,
         email: widget.email,
@@ -109,11 +128,13 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
         _startCooldown(60);
       }
     } on AuthException catch (e) {
-      final seconds = RegExp(r'(\d+) second').firstMatch(e.message)?.group(1);
+      final seconds = RegExp(
+        r'(\d+) second',
+      ).firstMatch(mapAuthError(e))?.group(1);
       setState(() {
         _statusMessage = seconds != null
             ? "You can request a new code after $seconds seconds for security reasons."
-            : e.message;
+            : mapAuthError(e);
         _isError = true;
       });
       if (seconds != null) _startCooldown(int.parse(seconds));
@@ -308,7 +329,9 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
       decoration: BoxDecoration(
         color: AppColors.inputFill,
         borderRadius: BorderRadius.circular(12),
-        border: (_isError && _statusMessage != null) ? Border.all(color: AppColors.errorRed, width: 1) : null,
+        border: (_isError && _statusMessage != null)
+            ? Border.all(color: AppColors.errorRed, width: 1)
+            : null,
       ),
       child: TextField(
         controller: _controllers[index],

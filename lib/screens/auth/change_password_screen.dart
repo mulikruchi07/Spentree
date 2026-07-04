@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:spentree/core/error_helper.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/app_style.dart';
 import '../main_wrapper.dart';
@@ -69,6 +70,11 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 
     setState(() => _isLoading = true);
     try {
+      final hasInternet = await checkInternetConnection();
+if (!hasInternet) {
+  setState(() => _newPasswordError = "No internet connection. Please check your network and try again.");
+  return;
+}
       await Supabase.instance.client.auth.updateUser(
         UserAttributes(password: newPassword),
       );
@@ -89,7 +95,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       if (msg.contains('password')) {
         setState(() => _newPasswordError = _passwordRuleMessage);
       } else {
-        setState(() => _newPasswordError = e.message);
+        setState(() => _newPasswordError = mapAuthError(e));
       }
     } catch (e) {
       setState(

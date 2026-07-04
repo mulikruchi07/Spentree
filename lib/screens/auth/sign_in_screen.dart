@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:spentree/core/auth_landing_screen.dart';
+import 'package:spentree/core/error_helper.dart';
+import 'package:spentree/core/transaction_service.dart';
 import 'package:spentree/screens/main_wrapper.dart';
 import '../../core/app_style.dart';
 import 'sign_up_screen.dart';
@@ -39,11 +41,10 @@ class _SignInScreenState extends State<SignInScreen> {
     });
 
     bool isValid = true;
-    final _emailRegex = RegExp(r'^[\w\.\-]+@([\w\-]+\.)+[\w\-]{2,}$');
+    final emailRegex = RegExp(r'^[\w\.\-]+@([\w\-]+\.)+[\w\-]{2,}$');
     final email = _emailController.text.trim();
 
-    // Basic Email Validation
-    if (email.isEmpty || !_emailRegex.hasMatch(email)) {
+    if (email.isEmpty || !emailRegex.hasMatch(email)) {
       setState(() => _emailError = "Please enter a valid email address");
       isValid = false;
     }
@@ -51,35 +52,54 @@ class _SignInScreenState extends State<SignInScreen> {
       setState(() => _passwordError = "Password is required");
       isValid = false;
     }
+    if (!isValid) return;
 
-    if (isValid) {
-      setState(() => _isLoading = true);
-      try {
-        // 1. Authenticate with Supabase
-        await Supabase.instance.client.auth.signInWithPassword(
-          email: email,
-          password: _passwordController.text,
+    setState(() => _isLoading = true);
+    try {
+      final hasInternet = await checkInternetConnection();
+      if (!hasInternet) {
+        setState(
+          () => _passwordError =
+              "No internet connection. Please check your network and try again.",
         );
-
-        // 2. Start the Sync Engine! (Pushes/Pulls cloud data)
-        await TransactionService().initService();
-
-        // // 3. Navigate to Dashboard
-        // if (mounted) {
-        //   Navigator.pushAndRemoveUntil(
-        //     context,
-        //     MaterialPageRoute(builder: (context) => const MainWrapper()),
-        //     (route) => false,
-        //   );
-        // }
-      } on AuthException catch (e) {
-        // Handle invalid credentials
-        setState(() => _passwordError = e.message);
-      } catch (e) {
-        setState(() => _passwordError = "An unexpected error occurred.");
-      } finally {
-        if (mounted) setState(() => _isLoading = false);
+        return;
       }
+
+      await Supabase.instance.client.auth.signInWithPassword(
+        email: email,
+        password: _passwordController.text,
+      );
+
+      // Reactivation check — runs AFTER a successful sign-in, when a session actually exists
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user != null) {
+        final userRow = await Supabase.instance.client
+            .from('users')
+            .select('is_active, deactivated_at')
+            .eq('id', user.id)
+            .maybeSingle();
+        if (userRow != null &&
+            userRow['is_active'] == false &&
+            userRow['deactivated_at'] != null) {
+          final deactivatedAt = DateTime.parse(userRow['deactivated_at']);
+          if (DateTime.now().toUtc().difference(deactivatedAt).inDays <= 30) {
+            await Supabase.instance.client
+                .from('users')
+                .update({'is_active': true, 'deactivated_at': null})
+                .eq('id', user.id);
+          }
+        }
+      }
+
+      await TransactionService().resetForNewUser();
+    } on AuthException catch (e) {
+      setState(() => _passwordError = mapAuthError(e));
+    } catch (e) {
+      setState(
+        () => _passwordError = "Something went wrong. Please try again.",
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 

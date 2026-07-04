@@ -304,7 +304,7 @@
 //         );
 //       }
 //     } on AuthException catch (e) {
-//       setState(() => _emailError = e.message);
+//       setState(() => _emailError = mapAuthError(e));
 //     } catch (e) {
 //       setState(() => _emailError = "An unexpected error occurred.");
 //     } finally {
@@ -481,6 +481,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:async';
 import '../../core/app_style.dart';
 import 'sign_in_screen.dart';
+import 'package:spentree/core/error_helper.dart';
 
 enum _ForgotStep { email, otp, newPassword }
 
@@ -559,10 +560,18 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
     setState(() => _isLoading = true);
     try {
+      final hasInternet = await checkInternetConnection();
+      if (!hasInternet) {
+        setState(
+          () => _emailError =
+              "No internet connection. Please check your network and try again.",
+        );
+        return;
+      }
       await Supabase.instance.client.auth.resetPasswordForEmail(email);
       _showGenericSentMessageAndProceed();
     } on AuthException catch (e) {
-      final msg = e.message.toLowerCase();
+      final msg = mapAuthError(e).toLowerCase();
       if (msg.contains('second') || msg.contains('security')) {
         setState(
           () => _emailError =
@@ -602,6 +611,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
     setState(() => _isLoading = true);
     try {
+      final hasInternet = await checkInternetConnection();
+if (!hasInternet) {
+  setState(() => _otpError = "No internet connection. Please check your network and try again.");
+  return;
+}
       await Supabase.instance.client.auth.verifyOTP(
         type: OtpType.recovery,
         token: otp,
@@ -610,7 +624,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       if (mounted) setState(() => _step = _ForgotStep.newPassword);
     } on AuthException catch (e) {
       setState(() => _otpError = "Invalid code. Please try again.");
-      debugPrint("Recovery OTP error: ${e.message}");
+      debugPrint("Recovery OTP error: ${mapAuthError(e)}");
     } catch (e) {
       setState(() => _otpError = "Invalid code. Please try again.");
     } finally {
@@ -633,11 +647,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         setState(() => _resendMessage = "Code resent! Check your inbox.");
       }
     } on AuthException catch (e) {
-      final seconds = RegExp(r'(\d+) second').firstMatch(e.message)?.group(1);
+      final seconds = RegExp(r'(\d+) second').firstMatch(mapAuthError(e))?.group(1);
       setState(() {
         _resendMessage = seconds != null
             ? "You can request a new code after $seconds seconds for security reasons."
-            : e.message;
+            : mapAuthError(e);
         _resendIsError = true;
       });
       if (seconds != null) _startCooldown(int.parse(seconds));
@@ -711,7 +725,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         );
       }
     } on AuthException catch (e) {
-      setState(() => _newPasswordError = e.message);
+      setState(() => _newPasswordError = mapAuthError(e));
     } catch (e) {
       setState(
         () => _newPasswordError = "Something went wrong. Please try again.",

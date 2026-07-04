@@ -2,6 +2,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:spentree/core/error_helper.dart';
 import 'package:spentree/screens/auth/verify_number_screen.dart';
 import 'package:spentree/screens/profile/privacy_screen.dart';
 import 'package:spentree/screens/profile/terms_screen.dart';
@@ -99,6 +100,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
     if (isValid) {
       setState(() => _isLoading = true);
       try {
+        final hasInternet = await checkInternetConnection();
+        if (!hasInternet) {
+          setState(
+            () => _emailError =
+                "No internet connection. Please check your network and try again.",
+          );
+          return;
+        }
         // 1. Create user in Supabase Auth
         final res = await Supabase.instance.client.auth.signUp(
           email: email,
@@ -128,23 +137,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
           }
         }
       } on AuthException catch (e) {
-        final msg = e.message.toLowerCase();
-        if (msg.contains('password')) {
-          setState(
-            () => _passwordError =
-                "Password must be at least 8 characters and include an uppercase letter, a lowercase letter, a number, and a symbol.",
-          );
-        } else if (msg.contains('confirmation') ||
-            msg.contains('sending') ||
-            e.code == 'unexpected_failure') {
-          setState(
-            () => _emailError =
-                "We couldn't send the verification email right now. Please try again in a moment.",
-          );
-        } else {
-          setState(() => _emailError = e.message);
-        }
-      } catch (e) {
+  setState(() => _emailError = mapAuthError(e));
+} catch (e) {
         setState(
           () => _emailError =
               "Something went wrong creating your account. Please try again.",

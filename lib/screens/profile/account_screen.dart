@@ -1250,6 +1250,10 @@ import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:spentree/app_lock.dart';
+import 'package:spentree/core/auth_landing_screen.dart';
+import 'package:spentree/core/error_helper.dart';
+import 'package:spentree/screens/auth/sign_in_screen.dart';
+import 'package:spentree/screens/onboarding/splash_onboarding_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:image_cropper/image_cropper.dart';
@@ -1258,6 +1262,7 @@ import '../../core/biometric_service.dart';
 import '../auth/change_password_screen.dart';
 import '../../core/app_style.dart';
 import '../forest/forest_screen.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AccountScreen extends StatefulWidget {
   const AccountScreen({super.key});
@@ -1278,17 +1283,18 @@ class _AccountScreenState extends State<AccountScreen> {
 
   // Inline Editing States & Validation
   bool _isEditingName = false;
-  bool _isEditingPhone = false;
-
   late TextEditingController _nameController;
-  late TextEditingController _phoneController;
 
   late String _originalName;
-  late String _originalPhone;
+  //email editing states
+  String _accountEmail = "";
+  bool _isEditingEmail = false;
+  late TextEditingController _emailController;
+  late String _originalEmail;
+  String? _emailError;
+  String? _emailInfo;
 
   String? _nameError;
-  String? _phoneError;
-
   final ScrollController _scrollController = ScrollController();
   final GlobalKey _editSectionKey = GlobalKey();
 
@@ -1301,19 +1307,91 @@ class _AccountScreenState extends State<AccountScreen> {
     super.initState();
     // Name sourced from the global notifier
     _originalName = userProfileNotifier.value.name;
-    _originalPhone = "0000000000";
 
     _nameController = TextEditingController(text: _originalName);
-    _phoneController = TextEditingController(text: _originalPhone);
+    _originalEmail = Supabase.instance.client.auth.currentUser?.email ?? "";
+    _emailController = TextEditingController(text: _originalEmail);
+    _accountEmail = Supabase.instance.client.auth.currentUser?.email ?? "";
     _loadSettings();
+    _loadNameFromDatabase();
   }
 
   @override
   void dispose() {
     _nameController.dispose();
-    _phoneController.dispose();
+    _emailController.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadNameFromDatabase() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) return;
+    try {
+      final row = await Supabase.instance.client
+          .from('users')
+          .select('name')
+          .eq('id', user.id)
+          .maybeSingle();
+      if (row != null && row['name'] != null && mounted) {
+        final dbName = row['name'] as String;
+        userProfileNotifier.updateName(dbName);
+        setState(() {
+          _originalName = dbName;
+          _nameController.text = dbName;
+        });
+      }
+    } catch (e) {
+      debugPrint("Couldn't load name from DB: $e");
+    }
+  }
+
+  Future<void> _syncNameToDatabase(String name) async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) return;
+    try {
+      await Supabase.instance.client
+          .from('users')
+          .update({'name': name})
+          .eq('id', user.id);
+    } catch (e) {
+      debugPrint("Name sync failed: $e");
+    }
+  }
+
+  void _toggleEmailEdit() async {
+    if (_isEditingEmail) {
+      final newEmail = _emailController.text.trim();
+      final emailRegex = RegExp(r'^[\w\.\-]+@([\w\-]+\.)+[\w\-]{2,}$');
+      if (!emailRegex.hasMatch(newEmail)) {
+        setState(() => _emailError = "Please enter a valid email address");
+        return;
+      }
+      if (newEmail == _originalEmail) {
+        setState(() => _isEditingEmail = false);
+        return;
+      }
+      try {
+        await Supabase.instance.client.auth.updateUser(
+          UserAttributes(email: newEmail),
+        );
+        setState(() {
+          _emailError = null;
+          _emailInfo = "Check your new email to confirm the change.";
+          _isEditingEmail = false;
+        });
+      } on AuthException catch (e) {
+        setState(() => _emailError = mapAuthError(e));
+      } catch (e) {
+        setState(() => _emailError = "Something went wrong. Please try again.");
+      }
+    } else {
+      setState(() {
+        _isEditingEmail = true;
+        _emailError = null;
+        _emailInfo = null;
+      });
+    }
   }
 
   Future<void> _loadSettings() async {
@@ -1328,16 +1406,8 @@ class _AccountScreenState extends State<AccountScreen> {
 
   void _handleBackNavigation() {
     bool nameChanged = _nameController.text != _originalName;
-    bool phoneChanged = _phoneController.text != _originalPhone;
-
-    if ((_isEditingName && nameChanged) || (_isEditingPhone && phoneChanged)) {
-      setState(() {
-        if (_isEditingName && nameChanged)
-          _nameError = "Please save your name before leaving.";
-        if (_isEditingPhone && phoneChanged)
-          _phoneError = "Please save your phone number before leaving.";
-      });
-
+    if (_isEditingName && nameChanged) {
+      setState(() => _nameError = "Please save your name before leaving.");
       Scrollable.ensureVisible(
         _editSectionKey.currentContext!,
         duration: const Duration(milliseconds: 300),
@@ -1346,9 +1416,7 @@ class _AccountScreenState extends State<AccountScreen> {
     } else {
       setState(() {
         _isEditingName = false;
-        _isEditingPhone = false;
         _nameController.text = _originalName;
-        _phoneController.text = _originalPhone;
       });
       Navigator.of(context).pop();
     }
@@ -1361,36 +1429,17 @@ class _AccountScreenState extends State<AccountScreen> {
         return;
       }
       final newName = _nameController.text.trim();
-      // Write through the notifier — broadcasts instantly to every screen
       userProfileNotifier.updateName(newName);
       setState(() {
         _originalName = newName;
         _nameError = null;
         _isEditingName = false;
       });
+      _syncNameToDatabase(newName);
     } else {
       setState(() {
         _isEditingName = true;
         _nameError = null;
-      });
-    }
-  }
-
-  void _togglePhoneEdit() {
-    if (_isEditingPhone) {
-      if (_phoneController.text.length < 10) {
-        setState(() => _phoneError = "Phone number must be exactly 10 digits");
-        return;
-      }
-      setState(() {
-        _originalPhone = _phoneController.text;
-        _phoneError = null;
-        _isEditingPhone = false;
-      });
-    } else {
-      setState(() {
-        _isEditingPhone = true;
-        _phoneError = null;
       });
     }
   }
@@ -1567,6 +1616,7 @@ class _AccountScreenState extends State<AccountScreen> {
         final bytes = await croppedFile.readAsBytes();
         // Persists bytes to SharedPrefs + broadcasts to all listeners
         await userProfileNotifier.updateImage(bytes);
+        _uploadImageToStorage(bytes);
         // Sync the home widget
         await HomeWidget.saveWidgetData<String>(
           'widget_user_name',
@@ -1580,6 +1630,33 @@ class _AccountScreenState extends State<AccountScreen> {
       }
     } catch (e) {
       debugPrint("Error cropping image: $e");
+    }
+  }
+
+  Future<void> _uploadImageToStorage(Uint8List bytes) async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) return;
+    try {
+      final path = '${user.id}/profile.jpg';
+      await Supabase.instance.client.storage
+          .from('avatars')
+          .uploadBinary(
+            path,
+            bytes,
+            fileOptions: const FileOptions(
+              upsert: true,
+              contentType: 'image/jpeg',
+            ),
+          );
+      final url = Supabase.instance.client.storage
+          .from('avatars')
+          .getPublicUrl(path);
+      await Supabase.instance.client
+          .from('users')
+          .update({'profile_image_url': url})
+          .eq('id', user.id);
+    } catch (e) {
+      debugPrint("Image upload deferred (likely offline): $e");
     }
   }
 
@@ -1734,12 +1811,11 @@ class _AccountScreenState extends State<AccountScreen> {
                           ),
                           const SizedBox(height: 16),
                           _buildInlineEditableField(
-                            label: "Phone Number",
-                            controller: _phoneController,
-                            isEditing: _isEditingPhone,
-                            onToggle: _togglePhoneEdit,
-                            isPhone: true,
-                            errorMsg: _phoneError,
+                            label: "Email",
+                            controller: _emailController,
+                            isEditing: _isEditingEmail,
+                            onToggle: _toggleEmailEdit,
+                            errorMsg: _emailError,
                           ),
                         ],
                       ),
@@ -1779,7 +1855,18 @@ class _AccountScreenState extends State<AccountScreen> {
                       "Spending Alerts",
                       "Get alerts when you overspend",
                       _spendingAlerts,
-                      (v) => setState(() => _spendingAlerts = v),
+                      (v) async {
+                        setState(() => _spendingAlerts = v);
+                        final prefs = await SharedPreferences.getInstance();
+                        await prefs.setBool('spending_alerts_enabled', v);
+                        final user = Supabase.instance.client.auth.currentUser;
+                        if (user != null) {
+                          await Supabase.instance.client
+                              .from('users')
+                              .update({'alert_enabled': v})
+                              .eq('id', user.id);
+                        }
+                      },
                     ),
                     _buildToggleTile(
                       PhosphorIconsRegular.lightbulb,
@@ -1801,7 +1888,35 @@ class _AccountScreenState extends State<AccountScreen> {
                             "You can come back anytime by logging in again.",
                         confirmText: "Yes, Deactivate",
                         icon: PhosphorIconsRegular.lockKey,
-                        onConfirm: () {},
+                        onConfirm: () async {
+                          final user =
+                              Supabase.instance.client.auth.currentUser;
+                          if (user == null) return;
+                          try {
+                            await Supabase.instance.client
+                                .from('users')
+                                .update({
+                                  'is_active': false,
+                                  'deactivated_at': DateTime.now()
+                                      .toUtc()
+                                      .toIso8601String(),
+                                })
+                                .eq('id', user.id);
+                            await Supabase.instance.client.auth.signOut();
+                            if (mounted) {
+                              Navigator.pushAndRemoveUntil(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const AuthLandingScreen(),
+                                ),
+                                (route) => false,
+                              );
+                            }
+                          } catch (e) {
+                            debugPrint("Deactivation failed: $e");
+                          }
+                        },
                       ),
                     ),
                     _buildActionTile(
@@ -1813,7 +1928,28 @@ class _AccountScreenState extends State<AccountScreen> {
                         message: "All your data will be removed permanently.",
                         confirmText: "Yes, Delete",
                         icon: PhosphorIconsRegular.trash,
-                        onConfirm: () {},
+                        onConfirm: () async {
+                          try {
+                            await Supabase.instance.client.functions.invoke(
+                              'delete-account',
+                            );
+                            await Supabase.instance.client.auth.signOut();
+                            final prefs = await SharedPreferences.getInstance();
+                            await prefs.clear();
+                            if (mounted) {
+                              Navigator.pushAndRemoveUntil(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const SplashOnboardingScreen(),
+                                ),
+                                (route) => false,
+                              );
+                            }
+                          } catch (e) {
+                            debugPrint("Account deletion failed: $e");
+                          }
+                        },
                       ),
                     ),
 
@@ -1865,7 +2001,8 @@ class _AccountScreenState extends State<AccountScreen> {
                               )
                             : Center(
                                 child: Icon(
-                                  PhosphorIconsRegular.user, // Icon as requested
+                                  PhosphorIconsRegular
+                                      .user, // Icon as requested
                                   size: 60,
                                   color: AppColors.grey600,
                                 ),
@@ -1999,7 +2136,6 @@ class _AccountScreenState extends State<AccountScreen> {
     required TextEditingController controller,
     required bool isEditing,
     required VoidCallback onToggle,
-    bool isPhone = false,
     String? errorMsg,
   }) {
     return Column(
@@ -2030,15 +2166,9 @@ class _AccountScreenState extends State<AccountScreen> {
                     ? TextField(
                         controller: controller,
                         autofocus: true,
-                        keyboardType: isPhone
-                            ? TextInputType.number
+                        keyboardType: label == "Email"
+                            ? TextInputType.emailAddress
                             : TextInputType.text,
-                        inputFormatters: isPhone
-                            ? [
-                                FilteringTextInputFormatter.digitsOnly,
-                                LengthLimitingTextInputFormatter(10),
-                              ]
-                            : [],
                         style: GoogleFonts.poppins(
                           fontSize: 14,
                           color: AppColors.colblack,
@@ -2050,10 +2180,12 @@ class _AccountScreenState extends State<AccountScreen> {
                         onChanged: (_) {
                           if (errorMsg != null) {
                             setState(() {
-                              if (isPhone)
-                                _phoneError = null;
-                              else
+                              if (label == "Email") {
+                                _emailError = null;
+                                _emailInfo = null;
+                              } else {
                                 _nameError = null;
+                              }
                             });
                           }
                         },
@@ -2069,7 +2201,7 @@ class _AccountScreenState extends State<AccountScreen> {
               TextButton(
                 onPressed: onToggle,
                 child: Text(
-                  isEditing ? "Save" : (isPhone ? "Change" : "Edit"),
+                  isEditing ? "Save" : "Edit",
                   style: GoogleFonts.poppins(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
@@ -2084,7 +2216,7 @@ class _AccountScreenState extends State<AccountScreen> {
           Padding(
             padding: const EdgeInsets.only(top: 6.0, left: 4.0),
             child: Text(
-              errorMsg,
+              _emailInfo!,
               style: GoogleFonts.poppins(
                 fontSize: 12,
                 color: AppColors.destructiveRed,
@@ -2095,6 +2227,51 @@ class _AccountScreenState extends State<AccountScreen> {
       ],
     );
   }
+
+  // Widget _buildStaticField(String label, String value) {
+  //   return Column(
+  //     crossAxisAlignment: CrossAxisAlignment.start,
+  //     children: [
+  //       Text(
+  //         label,
+  //         style: GoogleFonts.poppins(
+  //           fontSize: 14,
+  //           fontWeight: FontWeight.w500,
+  //           color: AppColors.colblack,
+  //         ),
+  //       ),
+  //       const SizedBox(height: 8),
+  //       Container(
+  //         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+  //         decoration: BoxDecoration(
+  //           color: AppColors.inputFill,
+  //           borderRadius: BorderRadius.circular(12),
+  //         ),
+  //         child: Row(
+  //           children: [
+  //             Expanded(
+  //               child: Text(
+  //                 value,
+  //                 style: GoogleFonts.poppins(
+  //                   fontSize: 14,
+  //                   color: AppColors.grey600,
+  //                 ),
+  //               ),
+  //             ),
+  //             Text(
+  //               "Change",
+  //               style: GoogleFonts.poppins(
+  //                 fontSize: 14,
+  //                 fontWeight: FontWeight.w500,
+  //                 color: AppColors.white500,
+  //               ),
+  //             ),
+  //           ],
+  //         ),
+  //       ),
+  //     ],
+  //   );
+  // }
 
   Widget _buildStaticField(String label, String value) {
     return Column(
@@ -2115,26 +2292,9 @@ class _AccountScreenState extends State<AccountScreen> {
             color: AppColors.inputFill,
             borderRadius: BorderRadius.circular(12),
           ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  value,
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    color: AppColors.grey600,
-                  ),
-                ),
-              ),
-              Text(
-                "Change",
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.white500,
-                ),
-              ),
-            ],
+          child: Text(
+            value,
+            style: GoogleFonts.poppins(fontSize: 14, color: AppColors.grey600),
           ),
         ),
       ],

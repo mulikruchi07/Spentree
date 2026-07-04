@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:spentree/core/transaction_service.dart';
+import 'package:spentree/core/user_profile.dart';
 import 'package:spentree/screens/main_wrapper.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/app_style.dart';
@@ -48,6 +49,7 @@ class _LoadingScreenState extends State<LoadingScreen>
     _startLoadingSequence();
     _syncData(); // Trigger sync
   }
+
   Future<void> _syncData() async {
     // 1. If this is an auth flow, ensure the user row exists
     if (widget.isAuthFlow) {
@@ -56,39 +58,57 @@ class _LoadingScreenState extends State<LoadingScreen>
     }
 
     // 2. Initialize sync engine
-    await TransactionService().initService();
+    await userProfileNotifier
+        .initialize(); // ← ADD THIS — refresh name for whoever just signed in
+    await TransactionService().resetForNewUser();
   }
 
   Future<void> _ensureUserExistsInDatabase(User? user) async {
-  if (user == null) return;
-  try {
-    await UserData.loadQuestionnaireData();
-    final prefs = await SharedPreferences.getInstance();
-    final pendingSync = prefs.getBool('questionnaire_sync_pending') ?? false;
+    if (user == null) return;
+    try {
+      await UserData.loadQuestionnaireData();
+      final prefs = await SharedPreferences.getInstance();
+      final pendingSync = prefs.getBool('questionnaire_sync_pending') ?? false;
 
-    final Map<String, dynamic> payload = {
-      'id': user.id,
-      'name': user.userMetadata?['full_name'] ?? 'New User',
-    };
+      final Map<String, dynamic> payload = {
+        'id': user.id,
+        'name': user.userMetadata?['full_name'] ?? 'New User',
+      };
 
-    // Only push questionnaire answers if they were captured this session
-    // and haven't been synced yet — prevents overwriting a returning
-    // user's real data with local defaults on a fresh install/device.
-    if (pendingSync) {
-      payload['daily_limit'] = int.tryParse(UserData.dailyLimit) ?? 5000;
-      payload['category_preference'] = UserData.spendingCategory;
-      payload['goal'] = UserData.spendingGoal;
+      // Only push questionnaire answers if they were captured this session
+      // and haven't been synced yet — prevents overwriting a returning
+      // user's real data with local defaults on a fresh install/device.
+      if (pendingSync) {
+        payload['daily_limit'] = int.tryParse(UserData.dailyLimit) ?? 5000;
+        payload['category_preference'] = UserData.spendingCategory;
+        payload['goal'] = UserData.spendingGoal;
+      }
+
+      await Supabase.instance.client.from('users').upsert(payload);
+      final userRow = await Supabase.instance.client
+          .from('users')
+          .select('is_active, deactivated_at')
+          .eq('id', user.id)
+          .maybeSingle();
+      if (userRow != null &&
+          userRow['is_active'] == false &&
+          userRow['deactivated_at'] != null) {
+        final deactivatedAt = DateTime.parse(userRow['deactivated_at']);
+        if (DateTime.now().toUtc().difference(deactivatedAt).inDays <= 30) {
+          await Supabase.instance.client
+              .from('users')
+              .update({'is_active': true, 'deactivated_at': null})
+              .eq('id', user.id);
+        }
+      }
+
+      if (pendingSync) {
+        await prefs.setBool('questionnaire_sync_pending', false);
+      }
+    } catch (e) {
+      debugPrint("Sync Error: $e");
     }
-
-    await Supabase.instance.client.from('users').upsert(payload);
-
-    if (pendingSync) {
-      await prefs.setBool('questionnaire_sync_pending', false);
-    }
-  } catch (e) {
-    debugPrint("Sync Error: $e");
   }
-}
 
   void _startLoadingSequence() {
     _timer = Timer.periodic(const Duration(milliseconds: 1100), (timer) {
@@ -105,8 +125,8 @@ class _LoadingScreenState extends State<LoadingScreen>
 
   void _navigateToNext() async {
     // Wait for the sync engine to finish if it's still running
-    await TransactionService().initService(); 
-    
+    await TransactionService().initService();
+
     if (mounted) {
       Navigator.pushAndRemoveUntil(
         context,

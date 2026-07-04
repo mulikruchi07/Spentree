@@ -66,6 +66,11 @@ const LocalTransactionSchema = CollectionSchema(
       id: 9,
       name: r'type',
       type: IsarType.string,
+    ),
+    r'userId': PropertySchema(
+      id: 10,
+      name: r'userId',
+      type: IsarType.string,
     )
   },
   estimateSize: _localTransactionEstimateSize,
@@ -87,10 +92,28 @@ const LocalTransactionSchema = CollectionSchema(
         )
       ],
     ),
+    r'userId_smsHash': IndexSchema(
+      id: 7717958863723268236,
+      name: r'userId_smsHash',
+      unique: false,
+      replace: false,
+      properties: [
+        IndexPropertySchema(
+          name: r'userId',
+          type: IndexType.hash,
+          caseSensitive: true,
+        ),
+        IndexPropertySchema(
+          name: r'smsHash',
+          type: IndexType.hash,
+          caseSensitive: true,
+        )
+      ],
+    ),
     r'smsHash': IndexSchema(
       id: 2345896571030605512,
       name: r'smsHash',
-      unique: true,
+      unique: false,
       replace: false,
       properties: [
         IndexPropertySchema(
@@ -130,6 +153,12 @@ int _localTransactionEstimateSize(
     }
   }
   bytesCount += 3 + object.type.length * 3;
+  {
+    final value = object.userId;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   return bytesCount;
 }
 
@@ -149,6 +178,7 @@ void _localTransactionSerialize(
   writer.writeString(offsets[7], object.receiverName);
   writer.writeString(offsets[8], object.smsHash);
   writer.writeString(offsets[9], object.type);
+  writer.writeString(offsets[10], object.userId);
 }
 
 LocalTransaction _localTransactionDeserialize(
@@ -169,6 +199,7 @@ LocalTransaction _localTransactionDeserialize(
   object.receiverName = reader.readString(offsets[7]);
   object.smsHash = reader.readStringOrNull(offsets[8]);
   object.type = reader.readString(offsets[9]);
+  object.userId = reader.readStringOrNull(offsets[10]);
   return object;
 }
 
@@ -199,6 +230,8 @@ P _localTransactionDeserializeProp<P>(
       return (reader.readStringOrNull(offset)) as P;
     case 9:
       return (reader.readString(offset)) as P;
+    case 10:
+      return (reader.readStringOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -215,61 +248,6 @@ List<IsarLinkBase<dynamic>> _localTransactionGetLinks(LocalTransaction object) {
 void _localTransactionAttach(
     IsarCollection<dynamic> col, Id id, LocalTransaction object) {
   object.id = id;
-}
-
-extension LocalTransactionByIndex on IsarCollection<LocalTransaction> {
-  Future<LocalTransaction?> getBySmsHash(String? smsHash) {
-    return getByIndex(r'smsHash', [smsHash]);
-  }
-
-  LocalTransaction? getBySmsHashSync(String? smsHash) {
-    return getByIndexSync(r'smsHash', [smsHash]);
-  }
-
-  Future<bool> deleteBySmsHash(String? smsHash) {
-    return deleteByIndex(r'smsHash', [smsHash]);
-  }
-
-  bool deleteBySmsHashSync(String? smsHash) {
-    return deleteByIndexSync(r'smsHash', [smsHash]);
-  }
-
-  Future<List<LocalTransaction?>> getAllBySmsHash(List<String?> smsHashValues) {
-    final values = smsHashValues.map((e) => [e]).toList();
-    return getAllByIndex(r'smsHash', values);
-  }
-
-  List<LocalTransaction?> getAllBySmsHashSync(List<String?> smsHashValues) {
-    final values = smsHashValues.map((e) => [e]).toList();
-    return getAllByIndexSync(r'smsHash', values);
-  }
-
-  Future<int> deleteAllBySmsHash(List<String?> smsHashValues) {
-    final values = smsHashValues.map((e) => [e]).toList();
-    return deleteAllByIndex(r'smsHash', values);
-  }
-
-  int deleteAllBySmsHashSync(List<String?> smsHashValues) {
-    final values = smsHashValues.map((e) => [e]).toList();
-    return deleteAllByIndexSync(r'smsHash', values);
-  }
-
-  Future<Id> putBySmsHash(LocalTransaction object) {
-    return putByIndex(r'smsHash', object);
-  }
-
-  Id putBySmsHashSync(LocalTransaction object, {bool saveLinks = true}) {
-    return putByIndexSync(r'smsHash', object, saveLinks: saveLinks);
-  }
-
-  Future<List<Id>> putAllBySmsHash(List<LocalTransaction> objects) {
-    return putAllByIndex(r'smsHash', objects);
-  }
-
-  List<Id> putAllBySmsHashSync(List<LocalTransaction> objects,
-      {bool saveLinks = true}) {
-    return putAllByIndexSync(r'smsHash', objects, saveLinks: saveLinks);
-  }
 }
 
 extension LocalTransactionQueryWhereSort
@@ -411,6 +389,142 @@ extension LocalTransactionQueryWhere
               indexName: r'cloudId',
               lower: [],
               upper: [cloudId],
+              includeUpper: false,
+            ));
+      }
+    });
+  }
+
+  QueryBuilder<LocalTransaction, LocalTransaction, QAfterWhereClause>
+      userIdIsNullAnySmsHash() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'userId_smsHash',
+        value: [null],
+      ));
+    });
+  }
+
+  QueryBuilder<LocalTransaction, LocalTransaction, QAfterWhereClause>
+      userIdIsNotNullAnySmsHash() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'userId_smsHash',
+        lower: [null],
+        includeLower: false,
+        upper: [],
+      ));
+    });
+  }
+
+  QueryBuilder<LocalTransaction, LocalTransaction, QAfterWhereClause>
+      userIdEqualToAnySmsHash(String? userId) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'userId_smsHash',
+        value: [userId],
+      ));
+    });
+  }
+
+  QueryBuilder<LocalTransaction, LocalTransaction, QAfterWhereClause>
+      userIdNotEqualToAnySmsHash(String? userId) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'userId_smsHash',
+              lower: [],
+              upper: [userId],
+              includeUpper: false,
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'userId_smsHash',
+              lower: [userId],
+              includeLower: false,
+              upper: [],
+            ));
+      } else {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'userId_smsHash',
+              lower: [userId],
+              includeLower: false,
+              upper: [],
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'userId_smsHash',
+              lower: [],
+              upper: [userId],
+              includeUpper: false,
+            ));
+      }
+    });
+  }
+
+  QueryBuilder<LocalTransaction, LocalTransaction, QAfterWhereClause>
+      userIdEqualToSmsHashIsNull(String? userId) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'userId_smsHash',
+        value: [userId, null],
+      ));
+    });
+  }
+
+  QueryBuilder<LocalTransaction, LocalTransaction, QAfterWhereClause>
+      userIdEqualToSmsHashIsNotNull(String? userId) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.between(
+        indexName: r'userId_smsHash',
+        lower: [userId, null],
+        includeLower: false,
+        upper: [
+          userId,
+        ],
+      ));
+    });
+  }
+
+  QueryBuilder<LocalTransaction, LocalTransaction, QAfterWhereClause>
+      userIdSmsHashEqualTo(String? userId, String? smsHash) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IndexWhereClause.equalTo(
+        indexName: r'userId_smsHash',
+        value: [userId, smsHash],
+      ));
+    });
+  }
+
+  QueryBuilder<LocalTransaction, LocalTransaction, QAfterWhereClause>
+      userIdEqualToSmsHashNotEqualTo(String? userId, String? smsHash) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'userId_smsHash',
+              lower: [userId],
+              upper: [userId, smsHash],
+              includeUpper: false,
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'userId_smsHash',
+              lower: [userId, smsHash],
+              includeLower: false,
+              upper: [userId],
+            ));
+      } else {
+        return query
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'userId_smsHash',
+              lower: [userId, smsHash],
+              includeLower: false,
+              upper: [userId],
+            ))
+            .addWhereClause(IndexWhereClause.between(
+              indexName: r'userId_smsHash',
+              lower: [userId],
+              upper: [userId, smsHash],
               includeUpper: false,
             ));
       }
@@ -1410,6 +1524,160 @@ extension LocalTransactionQueryFilter
       ));
     });
   }
+
+  QueryBuilder<LocalTransaction, LocalTransaction, QAfterFilterCondition>
+      userIdIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'userId',
+      ));
+    });
+  }
+
+  QueryBuilder<LocalTransaction, LocalTransaction, QAfterFilterCondition>
+      userIdIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'userId',
+      ));
+    });
+  }
+
+  QueryBuilder<LocalTransaction, LocalTransaction, QAfterFilterCondition>
+      userIdEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'userId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalTransaction, LocalTransaction, QAfterFilterCondition>
+      userIdGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'userId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalTransaction, LocalTransaction, QAfterFilterCondition>
+      userIdLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'userId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalTransaction, LocalTransaction, QAfterFilterCondition>
+      userIdBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'userId',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalTransaction, LocalTransaction, QAfterFilterCondition>
+      userIdStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'userId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalTransaction, LocalTransaction, QAfterFilterCondition>
+      userIdEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'userId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalTransaction, LocalTransaction, QAfterFilterCondition>
+      userIdContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'userId',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalTransaction, LocalTransaction, QAfterFilterCondition>
+      userIdMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'userId',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<LocalTransaction, LocalTransaction, QAfterFilterCondition>
+      userIdIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'userId',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<LocalTransaction, LocalTransaction, QAfterFilterCondition>
+      userIdIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'userId',
+        value: '',
+      ));
+    });
+  }
 }
 
 extension LocalTransactionQueryObject
@@ -1556,6 +1824,20 @@ extension LocalTransactionQuerySortBy
       sortByTypeDesc() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'type', Sort.desc);
+    });
+  }
+
+  QueryBuilder<LocalTransaction, LocalTransaction, QAfterSortBy>
+      sortByUserId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'userId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<LocalTransaction, LocalTransaction, QAfterSortBy>
+      sortByUserIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'userId', Sort.desc);
     });
   }
 }
@@ -1713,6 +1995,20 @@ extension LocalTransactionQuerySortThenBy
       return query.addSortBy(r'type', Sort.desc);
     });
   }
+
+  QueryBuilder<LocalTransaction, LocalTransaction, QAfterSortBy>
+      thenByUserId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'userId', Sort.asc);
+    });
+  }
+
+  QueryBuilder<LocalTransaction, LocalTransaction, QAfterSortBy>
+      thenByUserIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'userId', Sort.desc);
+    });
+  }
 }
 
 extension LocalTransactionQueryWhereDistinct
@@ -1786,6 +2082,13 @@ extension LocalTransactionQueryWhereDistinct
       return query.addDistinctBy(r'type', caseSensitive: caseSensitive);
     });
   }
+
+  QueryBuilder<LocalTransaction, LocalTransaction, QDistinct> distinctByUserId(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'userId', caseSensitive: caseSensitive);
+    });
+  }
 }
 
 extension LocalTransactionQueryProperty
@@ -1855,6 +2158,12 @@ extension LocalTransactionQueryProperty
   QueryBuilder<LocalTransaction, String, QQueryOperations> typeProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'type');
+    });
+  }
+
+  QueryBuilder<LocalTransaction, String?, QQueryOperations> userIdProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'userId');
     });
   }
 }

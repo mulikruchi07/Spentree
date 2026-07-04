@@ -1586,6 +1586,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:spentree/core/transaction_service.dart';
 import '../../core/app_style.dart';
 import '../../core/transaction_service.dart'; // Make sure this path points to your new service
 import 'package:spentree/core/database/local_transaction.dart';
@@ -1770,7 +1771,9 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
     });
   }
 
-  List<Map<String, dynamic>> _calculateChartData(List<LocalTransaction> dailyTx) {
+  List<Map<String, dynamic>> _calculateChartData(
+    List<LocalTransaction> dailyTx,
+  ) {
     Map<String, double> totals = {};
     for (var tx in dailyTx) {
       totals[tx.category] = (totals[tx.category] ?? 0.0) + tx.amount;
@@ -2056,16 +2059,21 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                       itemCount: dailyTx.length,
                       itemBuilder: (context, index) {
                         final tx = dailyTx[index];
-                        if (!_itemKeys.containsKey(tx.id))
-                          Map<String, GlobalKey> _itemKeys = {};
+                        final String txIdStr = tx.id
+                            .toString(); // Safely convert ID to String
 
-                        if (_isEditMode && _editingTransactionId == tx.id) {
+                        // FIX: Properly add to the existing map without redefining it
+                        if (!_itemKeys.containsKey(txIdStr)) {
+                          _itemKeys[txIdStr] = GlobalKey();
+                        }
+
+                        if (_isEditMode && _editingTransactionId == txIdStr) {
                           return Padding(
-                            key: _itemKeys[tx.id],
+                            key: _itemKeys[txIdStr],
                             padding: const EdgeInsets.only(bottom: 12),
                             child: ExpenseForm(
                               isEditing: true,
-                              isManual: (tx.type == 'Cash'), // Pass status to restrict fields if Bank
+                              isManual: (tx.type == 'Cash'),
                               initialTitle: tx.receiverName,
                               initialAmount: tx.amount.toString().replaceAll(
                                 '.0',
@@ -2083,7 +2091,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                         }
 
                         return KeyedSubtree(
-                          key: _itemKeys[tx.id],
+                          key: _itemKeys[txIdStr],
                           child: _buildTransactionCard(tx),
                         );
                       },
@@ -2152,11 +2160,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
             ),
           ],
         ),
-        Icon(
-          PhosphorIconsRegular.trophy,
-          size: 32,
-          color: AppColors.colblack,
-        ),
+        Icon(PhosphorIconsRegular.trophy, size: 32, color: AppColors.colblack),
       ],
     );
   }
@@ -2462,11 +2466,12 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
   }
 
   Widget _buildTransactionCard(LocalTransaction tx) {
+    final String txIdStr = tx.id.toString(); // Safely convert ID to String
     return GestureDetector(
       onTap: () {
         if (_isEditMode) {
-          setState(() => _editingTransactionId = tx.id as String?);
-          _scrollToItem(tx.id as String);
+          setState(() => _editingTransactionId = txIdStr);
+          _scrollToItem(txIdStr);
         }
       },
       child: AnimatedContainer(
@@ -2494,7 +2499,11 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                   ),
                 ],
               ),
-              child: Icon(TransactionService().getIconForCategory(tx.category), color: AppColors.colblack, size: 28),
+              child: Icon(
+                TransactionService().getIconForCategory(tx.category),
+                color: AppColors.colblack,
+                size: 28,
+              ),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -2612,6 +2621,9 @@ class _ExpenseFormState extends State<ExpenseForm> {
     _selectedTime = widget.initialTime ?? TimeOfDay.now();
     if (widget.initialAmount != null) _liveAmount = widget.initialAmount!;
     _amountCtrl.addListener(() {
+      if (_amountCtrl.text == '0') {
+        _amountCtrl.clear();
+      }
       setState(() {
         _liveAmount = _amountCtrl.text.isEmpty ? "000" : _amountCtrl.text;
         _amountError = false;
@@ -2959,7 +2971,10 @@ class _ExpenseFormState extends State<ExpenseForm> {
                       fontSize: 14,
                     ),
                     keyboardType: TextInputType.number,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(6),
+                    ],
                     decoration: InputDecoration(
                       hintText: "Enter amount",
                       hintStyle: GoogleFonts.poppins(

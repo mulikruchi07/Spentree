@@ -9,22 +9,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:spentree/main.dart';
+import 'package:spentree/screens/onboarding/splash_onboarding_screen.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    // Use initialTab instead of startScreen
-await tester.pumpWidget(const MyApp(initialTab: 0));
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+  testWidgets('App smoke test', (WidgetTester tester) async {
+  // Use SizedBox() or a mock screen to satisfy the required startScreen parameter
+  await tester.pumpWidget(const MyApp(startScreen: SizedBox()));
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+  // Trigger a frame
+  await tester.pumpAndSettle();
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
-  });
+  // Verify that the splash screen is found
+  expect(find.byType(SplashOnboardingScreen), findsOneWidget);
+});
 }

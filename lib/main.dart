@@ -548,23 +548,23 @@
 //   }
 // }
 
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:home_widget/home_widget.dart';
-import 'package:spentree/core/database/local_database_service.dart';
-import 'package:spentree/screens/analytics/analytics_screen.dart';
-import 'package:spentree/screens/main_wrapper.dart';
-import 'package:spentree/screens/onboarding/loading_screen.dart';
-import 'package:spentree/screens/onboarding/splash_onboarding_screen.dart';
-import 'app_lock.dart';
-import 'core/user_profile.dart';
-import 'core/app_style.dart';
-import 'core/transaction_service.dart';
 import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:home_widget/home_widget.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:spentree/core/database/local_database_service.dart';
+import 'package:spentree/core/transaction_service.dart';
+import 'package:spentree/screens/main_wrapper.dart';
+import 'package:spentree/screens/onboarding/loading_screen.dart';
+import 'package:spentree/screens/onboarding/splash_onboarding_screen.dart';
+import 'package:spentree/screens/auth/sign_in_screen.dart';
+import 'app_lock.dart';
+import 'core/user_profile.dart';
+import 'core/app_style.dart';
 
 @pragma('vm:entry-point')
 Future<void> backgroundCallback(Uri? uri) async {
@@ -572,7 +572,7 @@ Future<void> backgroundCallback(Uri? uri) async {
     await TransactionService().initService();
   }
 }
-// 1. Add this GlobalKey at the top of the file
+
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
@@ -581,10 +581,9 @@ void main() async {
 
   await Supabase.initialize(
     url: dotenv.env['SUPABASE_URL']!,
-    anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
+    publishableKey: dotenv.env['SUPABASE_ANON_KEY']!,
   );
 
-  // 2. The Global Auth Gatekeeper
   Supabase.instance.client.auth.onAuthStateChange.listen((data) async {
     final event = data.event;
     final session = data.session;
@@ -599,8 +598,8 @@ void main() async {
 
   await LocalDatabaseService.initialize();
   await AppLockController.initialize();
-  await loadSavedTheme(); 
-  await userProfileNotifier.initialize(); 
+  await loadSavedTheme();
+  await userProfileNotifier.initialize();
 
   if (!kIsWeb) {
     HomeWidget.registerInteractivityCallback(backgroundCallback);
@@ -613,9 +612,20 @@ void main() async {
     });
   }
 
-  // 3. CHECK IF ALREADY LOGGED IN TO SKIP SPLASH SCREEN
+  // Decide the start screen: signed in -> app; signed out but has used the
+  // app before -> sign in directly; brand new device -> onboarding/splash.
   final session = Supabase.instance.client.auth.currentSession;
-  Widget startScreen = session != null ? const MainWrapper() : const SplashOnboardingScreen();
+  final prefs = await SharedPreferences.getInstance();
+  final hasCompletedOnboarding = prefs.getBool('has_completed_onboarding') ?? false;
+
+  Widget startScreen;
+  if (session != null) {
+    startScreen = const MainWrapper();
+  } else if (hasCompletedOnboarding) {
+    startScreen = const SignInScreen();
+  } else {
+    startScreen = const SplashOnboardingScreen();
+  }
 
   runApp(MyApp(startScreen: startScreen));
 }
@@ -644,7 +654,7 @@ class MyApp extends StatelessWidget {
             useMaterial3: true,
             scaffoldBackgroundColor: const Color(0xFF121212),
           ),
-          home: startScreen, // Now uses the dynamic start screen
+          home: startScreen,
           builder: (context, child) {
             return AppLockWrapper(child: child ?? const SizedBox.shrink());
           },

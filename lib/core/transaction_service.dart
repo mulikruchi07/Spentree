@@ -687,12 +687,14 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:home_widget/home_widget.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:flutter/material.dart' show DateUtils;
+import 'package:spentree/core/user_profile.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:isar/isar.dart';
 
@@ -731,25 +733,55 @@ class TransactionService extends ChangeNotifier {
       await Permission.sms.request();
     }
 
-    // First load what we already have locally to render UI instantly
     await _loadFromLocal();
-
-    // Then process any new SMS messages in the background
+    await userProfileNotifier.retryPendingSync();
+    await _migrateOrphanedLocalRows();
     await _fetchAndParseSms();
 
-    // Finally, push anything that hasn't been uploaded to Supabase
-    _syncOfflineTransactions();
-
     _isInitialized = true;
+    _pullFromSupabase()
+        .timeout(
+          const Duration(seconds: 8),
+          onTimeout: () {
+            debugPrint("Pull timed out — likely offline");
+          },
+        )
+        .catchError((e) => debugPrint("Pull failed: $e"))
+        .then(
+          (_) => _loadFromLocal(),
+        ); // refresh UI once pull finishes, if it does
+
+    _syncOfflineTransactions();
+  }
+
+  // Add to transaction_service.dart
+  Future<void> _migrateOrphanedLocalRows() async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) return;
+    final isar = LocalDatabaseService.isar;
+    final orphaned = await isar.localTransactions
+        .filter()
+        .userIdIsNull()
+        .findAll();
+    if (orphaned.isEmpty) return;
+    for (final tx in orphaned) {
+      tx.userId = user.id;
+      tx.isSynced =
+          false; // force re-push so cloud has them under the right user
+    }
+    await isar.writeTxn(() async {
+      await isar.localTransactions.putAll(orphaned);
+    });
   }
 
   /// 2. LOAD FROM LOCAL ISAR DB
   Future<void> _loadFromLocal() async {
     final isar = LocalDatabaseService.isar;
-    // Fetch all that are NOT deleted, newest first
+    final userId = _supabase.auth.currentUser?.id;
     _transactions = await isar.localTransactions
         .filter()
         .isDeletedEqualTo(false)
+        .userIdEqualTo(userId)
         .sortByDateTimeDesc()
         .findAll();
 
@@ -763,9 +795,16 @@ class TransactionService extends ChangeNotifier {
     try {
       final List<dynamic> result = await _channel.invokeMethod('getAllSms');
       final isar = LocalDatabaseService.isar;
-      
+      final currentUserId = _supabase.auth.currentUser?.id;
+
+      if (currentUserId == null) {
+        debugPrint("SMS import skipped: no authenticated user.");
+        return;
+      }
+
       List<LocalTransaction> newTransactionsToSave = [];
-      Set<String> processedHashesThisRun = {}; // Prevents duplicate crashes in the same batch
+      Set<String> processedHashesThisRun =
+          {}; // Prevents duplicate crashes in the same batch
 
       for (var sms in result) {
         try {
@@ -776,15 +815,24 @@ class TransactionService extends ChangeNotifier {
 
           // --- FILTER 1: BLOCKLIST ---
           const blocklist = [
-            'mandate', 'autopay', 'standing instruction', 
-            'si registered', 'e-mandate', 'si debit'
+            'mandate',
+            'autopay',
+            'standing instruction',
+            'si registered',
+            'e-mandate',
+            'si debit',
           ];
           if (blocklist.any((kw) => body.contains(kw))) continue;
 
           // --- FILTER 2: CREDIT / INFLOW ---
           const creditKeywords = [
-            'credited', 'received', 'refund', 'reversal', 
-            'deposited', 'cr', 'added'
+            'credited',
+            'received',
+            'refund',
+            'reversal',
+            'deposited',
+            'cr',
+            'added',
           ];
           bool isCredit = creditKeywords.any((kw) {
             if (kw == 'cr' && body.contains('credit card')) return false;
@@ -794,35 +842,76 @@ class TransactionService extends ChangeNotifier {
 
           // --- FILTER 3: FAILURES ---
           const failureKeywords = [
-            'failed', 'declined', 'bounced', 'insufficient', 
-            'unsuccessful', 'rejected', 'could not', 'returned', 
-            'locked', 'block', 'limit is less', 'non compliant', 
-            'bounces', 'unauthorized', 'declines', 'rejection'
+            'failed',
+            'declined',
+            'bounced',
+            'insufficient',
+            'unsuccessful',
+            'rejected',
+            'could not',
+            'returned',
+            'locked',
+            'block',
+            'limit is less',
+            'non compliant',
+            'bounces',
+            'unauthorized',
+            'declines',
+            'rejection',
           ];
           if (failureKeywords.any((kw) => body.contains(kw))) continue;
 
           // --- FILTER 4: OTP & AUTH ---
           const otpKeywords = [
-            'otp', 'verification code', 'is your secret', 
-            'do not share', 'valid for', 'auth code', 'one time password'
+            'otp',
+            'verification code',
+            'is your secret',
+            'do not share',
+            'valid for',
+            'auth code',
+            'one time password',
           ];
           if (otpKeywords.any((kw) => body.contains(kw))) continue;
 
           // --- FILTER 5: PREDICTIVE/UPCOMING ---
           const predictiveKeywords = [
-            'is due on', 'will be processed', 'scheduled for', 
-            'upcoming', 'due by'
+            'is due on',
+            'will be processed',
+            'scheduled for',
+            'upcoming',
+            'due by',
           ];
           if (predictiveKeywords.any((kw) => body.contains(kw))) continue;
 
           // --- FILTER 6: DEBIT CONFIRMATION ---
           const debitKeywords = [
-            'debited', 'debit', 'withdrawn', 'withdrawal', 'spent', 
-            'purchase', 'paid', 'sent', 'transfer', 'transferred', 
-            'imps', 'neft', 'rtgs', 'pos', 'merchant', 'atm', 
-            'deducted', 'deduction', 'wdl', 'charged', 'payment of', 
-            'payment made', 'txn of', 'transaction of', 'emi of', 
-            'bill payment', 'remitted'
+            'debited',
+            'debit',
+            'withdrawn',
+            'withdrawal',
+            'spent',
+            'purchase',
+            'paid',
+            'sent',
+            'transfer',
+            'transferred',
+            'imps',
+            'neft',
+            'rtgs',
+            'pos',
+            'merchant',
+            'atm',
+            'deducted',
+            'deduction',
+            'wdl',
+            'charged',
+            'payment of',
+            'payment made',
+            'txn of',
+            'transaction of',
+            'emi of',
+            'bill payment',
+            'remitted',
           ];
           if (!debitKeywords.any((kw) => body.contains(kw))) continue;
 
@@ -835,7 +924,9 @@ class TransactionService extends ChangeNotifier {
           var amountMatch = primaryAmountRegex.firstMatch(originalBody);
 
           if (amountMatch != null && amountMatch.group(1) != null) {
-            amount = double.tryParse(amountMatch.group(1)!.replaceAll(',', '')) ?? 0.0;
+            amount =
+                double.tryParse(amountMatch.group(1)!.replaceAll(',', '')) ??
+                0.0;
           } else {
             RegExp fallbackAmountRegex = RegExp(
               r'(?:wdl|cash|prch|txn|dr)\s+(?:[a-z0-9\-]+\s+)?([\d,]+\.\d{2})',
@@ -843,7 +934,11 @@ class TransactionService extends ChangeNotifier {
             );
             var fallbackMatch = fallbackAmountRegex.firstMatch(originalBody);
             if (fallbackMatch != null && fallbackMatch.group(1) != null) {
-              amount = double.tryParse(fallbackMatch.group(1)!.replaceAll(',', '')) ?? 0.0;
+              amount =
+                  double.tryParse(
+                    fallbackMatch.group(1)!.replaceAll(',', ''),
+                  ) ??
+                  0.0;
             }
           }
           if (amount <= 0.0) continue;
@@ -870,14 +965,16 @@ class TransactionService extends ChangeNotifier {
           }
 
           merchant = merchant.replaceAll(RegExp(r'\s+'), ' ').trim();
-          if (merchant.length > 20) merchant = merchant.substring(0, 20) + "...";
+          if (merchant.length > 20)
+            merchant = merchant.substring(0, 20) + "...";
 
           // --- CREATE SMS HASH TO PREVENT DUPLICATES ---
           String category = _determineCategory(body, merchant);
           DateTime date = DateTime.fromMillisecondsSinceEpoch(timestamp);
-          
+
           // Bulletproof hash combining time, amount, and the exact message string logic
-          String uniqueSmsHash = "${timestamp}_${amount.toStringAsFixed(2)}_${originalBody.hashCode}";
+          String uniqueSmsHash =
+              "${timestamp}_${amount.toStringAsFixed(2)}_${originalBody.hashCode}";
 
           // Prevent exact duplicates in the same SMS batch from crashing the database
           if (processedHashesThisRun.contains(uniqueSmsHash)) continue;
@@ -887,6 +984,7 @@ class TransactionService extends ChangeNotifier {
           final existing = await isar.localTransactions
               .filter()
               .smsHashEqualTo(uniqueSmsHash)
+              .userIdEqualTo(currentUserId)
               .findFirst();
 
           if (existing == null) {
@@ -899,6 +997,7 @@ class TransactionService extends ChangeNotifier {
               ..isHidden = false
               ..isDeleted = false
               ..isSynced = false
+              ..userId = currentUserId
               ..smsHash = uniqueSmsHash;
 
             newTransactionsToSave.add(newTx);
@@ -910,7 +1009,7 @@ class TransactionService extends ChangeNotifier {
       }
 
       // Batch insert all new transactions at once (Lightning fast)
-      // Safely insert transactions one by one. 
+      // Safely insert transactions one by one.
       // If one is a duplicate, it skips it without crashing the rest!
       if (newTransactionsToSave.isNotEmpty) {
         for (var tx in newTransactionsToSave) {
@@ -923,6 +1022,7 @@ class TransactionService extends ChangeNotifier {
           }
         }
         await _loadFromLocal(); // Refresh UI
+        await _checkAndNotifyOverspend();
       }
     } catch (e) {
       debugPrint("Fatal error processing SMS batch: $e");
@@ -953,7 +1053,8 @@ class TransactionService extends ChangeNotifier {
       )
       ..isHidden = false
       ..isDeleted = false
-      ..isSynced = false;
+      ..isSynced = false
+      ..userId = _supabase.auth.currentUser?.id;
 
     await isar.writeTxn(() async {
       await isar.localTransactions.put(newTx);
@@ -961,6 +1062,7 @@ class TransactionService extends ChangeNotifier {
 
     await _loadFromLocal();
     _pushToSupabase(newTx); // Background sync
+    await _checkAndNotifyOverspend();
   }
 
   /// 5. UPDATE EXISTING EXPENSE
@@ -1043,7 +1145,7 @@ class TransactionService extends ChangeNotifier {
 
   Future<void> _syncOfflineTransactions() async {
     final isar = LocalDatabaseService.isar;
-    
+
     final pendingUpdates = await isar.localTransactions
         .filter()
         .isSyncedEqualTo(false)
@@ -1060,6 +1162,56 @@ class TransactionService extends ChangeNotifier {
         .findAll();
     for (var tx in pendingDeletes) {
       await _deleteFromSupabase(tx);
+    }
+  }
+
+  Future<void> _pullFromSupabase() async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) return;
+    try {
+      final rows = await _supabase
+          .from('transactions')
+          .select()
+          .eq('user_id', user.id);
+      final isar = LocalDatabaseService.isar;
+
+      for (final row in (rows as List)) {
+        final cloudId = row['id'].toString();
+        final existing = await isar.localTransactions
+            .filter()
+            .cloudIdEqualTo(cloudId)
+            .findFirst();
+        if (existing != null) continue; // already have it locally
+
+        final smsHash = row['sms_hash'] as String?;
+        if (smsHash != null) {
+          final byHash = await isar.localTransactions
+              .filter()
+              .smsHashEqualTo(smsHash)
+              .findFirst();
+          if (byHash != null)
+            continue; // matched by hash instead — already have it
+        }
+
+        final pulled = LocalTransaction()
+          ..cloudId = cloudId
+          ..userId = user.id
+          ..amount = (row['amount'] as num).toDouble()
+          ..receiverName = row['receiver_name'] ?? ''
+          ..category = row['category'] ?? 'Other'
+          ..dateTime = DateTime.parse(row['date_time']).toLocal()
+          ..type = row['type'] ?? 'Bank'
+          ..isHidden = row['is_hidden'] ?? false
+          ..isDeleted = false
+          ..isSynced = true
+          ..smsHash = smsHash;
+
+        await isar.writeTxn(() async {
+          await isar.localTransactions.put(pulled);
+        });
+      }
+    } catch (e) {
+      debugPrint("Pull from Supabase failed: $e");
     }
   }
 
@@ -1080,6 +1232,7 @@ class TransactionService extends ChangeNotifier {
               'type': tx.type,
               'date_time': tx.dateTime.toIso8601String(),
               'is_hidden': tx.isHidden,
+              'sms_hash': tx.smsHash,
             })
             .select('id')
             .single();
@@ -1109,6 +1262,40 @@ class TransactionService extends ChangeNotifier {
     }
   }
 
+  Future<void> resetForNewUser() async {
+    _isInitialized = false;
+    _transactions = [];
+    isLoading = true;
+    notifyListeners();
+    await initService();
+  }
+
+  Future<void> _checkAndNotifyOverspend() async {
+    final prefs = await SharedPreferences.getInstance();
+    final alertsEnabled = prefs.getBool('spending_alerts_enabled') ?? false;
+    if (!alertsEnabled) return;
+
+    final limit = prefs.getInt('daily_expense_limit') ?? 5000;
+    final todayTotal = getTransactionsForDay(
+      DateTime.now(),
+    ).fold(0.0, (sum, tx) => sum + tx.amount);
+
+    if (todayTotal > limit) {
+      const androidDetails = AndroidNotificationDetails(
+        'spend_alerts',
+        'Spending Alerts',
+        importance: Importance.high,
+        priority: Priority.high,
+      );
+      await FlutterLocalNotificationsPlugin().show(
+        0,
+        "You've exceeded your daily limit",
+        "Today's spending is Rs. ${todayTotal.toStringAsFixed(0)}, over your Rs. $limit limit.",
+        const NotificationDetails(android: androidDetails),
+      );
+    }
+  }
+
   Future<void> _deleteFromSupabase(LocalTransaction tx) async {
     try {
       if (tx.cloudId != null) {
@@ -1121,7 +1308,7 @@ class TransactionService extends ChangeNotifier {
           await isar.localTransactions.delete(tx.id);
         });
       } else {
-        tx.isSynced = true; 
+        tx.isSynced = true;
         final isar = LocalDatabaseService.isar;
         await isar.writeTxn(() async {
           await isar.localTransactions.put(tx);
@@ -1228,14 +1415,25 @@ class TransactionService extends ChangeNotifier {
       final todaysTx = getTransactionsForDay(now);
       double todayTotal = todaysTx.fold(0, (sum, item) => sum + item.amount);
 
-      await HomeWidget.saveWidgetData<String>('widget_expense_str', todayTotal.toString());
-      await HomeWidget.saveWidgetData<String>('widget_limit_str', limit.toString());
-      await HomeWidget.saveWidgetData<String>('widget_user_name', UserData.userName);
+      await HomeWidget.saveWidgetData<String>(
+        'widget_expense_str',
+        todayTotal.toString(),
+      );
+      await HomeWidget.saveWidgetData<String>(
+        'widget_limit_str',
+        limit.toString(),
+      );
+      await HomeWidget.saveWidgetData<String>(
+        'widget_user_name',
+        UserData.userName,
+      );
 
       final recentList = todaysTx.take(4).map((tx) {
         final hour = tx.dateTime.hour == 0
             ? 12
-            : (tx.dateTime.hour > 12 ? tx.dateTime.hour - 12 : tx.dateTime.hour);
+            : (tx.dateTime.hour > 12
+                  ? tx.dateTime.hour - 12
+                  : tx.dateTime.hour);
         final minute = tx.dateTime.minute.toString().padLeft(2, '0');
         final period = tx.dateTime.hour >= 12 ? "PM" : "AM";
         return {
@@ -1247,7 +1445,10 @@ class TransactionService extends ChangeNotifier {
         };
       }).toList();
 
-      await HomeWidget.saveWidgetData<String>('today_transactions_json', jsonEncode(recentList));
+      await HomeWidget.saveWidgetData<String>(
+        'today_transactions_json',
+        jsonEncode(recentList),
+      );
 
       final daysInMonth = DateUtils.getDaysInMonth(now.year, now.month);
       Map<String, Map<String, dynamic>> monthMap = {};
@@ -1255,20 +1456,40 @@ class TransactionService extends ChangeNotifier {
       for (int i = 1; i <= daysInMonth; i++) {
         final date = DateTime(now.year, now.month, i);
         if (date.isBefore(now) ||
-            (date.year == now.year && date.month == now.month && date.day == now.day)) {
+            (date.year == now.year &&
+                date.month == now.month &&
+                date.day == now.day)) {
           final dailyTx = getTransactionsForDay(date);
           double total = dailyTx.fold(0, (sum, item) => sum + item.amount);
           monthMap[i.toString()] = {"amount": total};
         }
       }
 
-      await HomeWidget.saveWidgetData<String>('transactions_json', jsonEncode(monthMap));
+      await HomeWidget.saveWidgetData<String>(
+        'transactions_json',
+        jsonEncode(monthMap),
+      );
 
-      await HomeWidget.updateWidget(name: 'CalendarWidgetProvider', androidName: 'CalendarWidgetProvider');
-      await HomeWidget.updateWidget(name: 'MiniTreeWidgetProvider', androidName: 'MiniTreeWidgetProvider');
-      await HomeWidget.updateWidget(name: 'GreetingWidgetProvider', androidName: 'GreetingWidgetProvider');
-      await HomeWidget.updateWidget(name: 'TreeWidgetProvider', androidName: 'TreeWidgetProvider');
-      await HomeWidget.updateWidget(name: 'ExpensesWidgetProvider', androidName: 'ExpensesWidgetProvider');
+      await HomeWidget.updateWidget(
+        name: 'CalendarWidgetProvider',
+        androidName: 'CalendarWidgetProvider',
+      );
+      await HomeWidget.updateWidget(
+        name: 'MiniTreeWidgetProvider',
+        androidName: 'MiniTreeWidgetProvider',
+      );
+      await HomeWidget.updateWidget(
+        name: 'GreetingWidgetProvider',
+        androidName: 'GreetingWidgetProvider',
+      );
+      await HomeWidget.updateWidget(
+        name: 'TreeWidgetProvider',
+        androidName: 'TreeWidgetProvider',
+      );
+      await HomeWidget.updateWidget(
+        name: 'ExpensesWidgetProvider',
+        androidName: 'ExpensesWidgetProvider',
+      );
     } catch (e) {
       debugPrint("Failed to sync widget: $e");
     }

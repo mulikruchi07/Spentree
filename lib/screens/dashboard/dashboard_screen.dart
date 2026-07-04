@@ -750,6 +750,8 @@ import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // Added for weekly limit check
 import 'package:spentree/core/database/local_transaction.dart';
 import 'package:spentree/core/user_profile.dart';
+import 'package:spentree/screens/analytics/analytics_screen.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/app_style.dart';
 import '../../core/user_data.dart';
 
@@ -865,6 +867,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
         limit = parsedLimit ?? 5000;
       }
     });
+
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) return;
+    try {
+      final row = await Supabase.instance.client
+          .from('users')
+          .select('daily_limit')
+          .eq('id', user.id)
+          .maybeSingle();
+      if (row != null && row['daily_limit'] != null && mounted) {
+        final dbLimit = (row['daily_limit'] as num).toInt();
+        setState(() => limit = dbLimit);
+        await prefs.setInt('daily_expense_limit', dbLimit);
+      }
+    } catch (e) {
+      debugPrint("Couldn't refresh limit from DB: $e");
+    }
   }
 
   void _handleChangeLimit() async {
@@ -1093,6 +1112,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 ),
                                 GestureDetector(
                                   onTap: () {
+                                    // 1. Trigger the form to open automatically
+                                    AnalyticsScreen.triggerOpenForm.value =
+                                        true;
+
+                                    // 2. Redirect to Analytics page
                                     Navigator.pushReplacement(
                                       context,
                                       MaterialPageRoute(
@@ -1327,11 +1351,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         const SizedBox(
           width: 12,
         ), // ADDED: guarantees breathing room before the icon, even at max truncation width
-        Icon(
-          PhosphorIconsRegular.trophy,
-          size: 32,
-          color: AppColors.colblack,
-        ),
+        Icon(PhosphorIconsRegular.trophy, size: 32, color: AppColors.colblack),
       ],
     );
   }
@@ -1689,7 +1709,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ],
             ),
-            child: Icon(TransactionService().getIconForCategory(tx.category), color: AppColors.colblack, size: 28),
+            child: Icon(
+              TransactionService().getIconForCategory(tx.category),
+              color: AppColors.colblack,
+              size: 28,
+            ),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -1788,7 +1812,6 @@ class _ChangeLimitPopupState extends State<_ChangeLimitPopup>
 
   Future<void> _validateAndSubmit() async {
     setState(() => _errorMsg = null);
-
     final val = int.tryParse(_limitCtrl.text) ?? 0;
 
     if (val <= 0) {
@@ -1804,31 +1827,44 @@ class _ChangeLimitPopupState extends State<_ChangeLimitPopup>
       return;
     }
 
-    // --- CHECK WEEKLY LIMIT ENFORCEMENT ---
-    final prefs = await SharedPreferences.getInstance();
-    final lastChangeStr = prefs.getString('last_limit_change');
-
-    if (lastChangeStr != null) {
-      final lastChangeDate = DateTime.parse(lastChangeStr);
-      final difference = DateTime.now().difference(lastChangeDate).inDays;
-
-      if (difference < 7) {
-        _triggerError("You can only change your limit once a week.");
-        return;
-      }
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) {
+      _triggerError("You're signed out. Please sign in again.");
+      return;
     }
 
-    // --- SUCCESS: SAVE TO CACHE AND RETURN ---
-    await prefs.setInt('daily_expense_limit', val);
-    await prefs.setString(
-      'last_limit_change',
-      DateTime.now().toIso8601String(),
-    );
+    try {
+      final row = await Supabase.instance.client
+          .from('users')
+          .select('last_limit_change')
+          .eq('id', user.id)
+          .maybeSingle();
+      if (row != null && row['last_limit_change'] != null) {
+        final lastChange = DateTime.parse(row['last_limit_change']);
+        final daysSince = DateTime.now().toUtc().difference(lastChange).inDays;
+        if (daysSince < 7) {
+          _triggerError("You can only change your limit once a week.");
+          return;
+        }
+      }
 
-    await TransactionService().syncWidget();
+      final nowIso = DateTime.now().toUtc().toIso8601String();
+      await Supabase.instance.client
+          .from('users')
+          .update({'daily_limit': val, 'last_limit_change': nowIso})
+          .eq('id', user.id);
 
-    if (mounted) {
-      Navigator.pop(context, val); // Return the new value to update the UI
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt('daily_expense_limit', val);
+      await prefs.setString('last_limit_change', nowIso);
+
+      await TransactionService().syncWidget();
+
+      if (mounted) Navigator.pop(context, val);
+    } catch (e) {
+      _triggerError(
+        "Couldn't update your limit. Check your connection and try again.",
+      );
     }
   }
 

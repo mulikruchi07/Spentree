@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:spentree/screens/main_wrapper.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/app_style.dart';
@@ -469,6 +470,8 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
                         category: _selectedCategory ?? "",
                         goal: _selectedGoal ?? "",
                       );
+                      final prefs = await SharedPreferences.getInstance();
+                      await prefs.setBool('has_completed_onboarding', true);
 
                       if (mounted) {
                         Navigator.pushReplacement(

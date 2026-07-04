@@ -10,6 +10,13 @@ import 'delete_transactions_screen.dart';
 import 'privacy_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/app_style.dart';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+enum _ExportResult { success, empty, failed }
 
 class DataPrivacyScreen extends StatefulWidget {
   const DataPrivacyScreen({super.key});
@@ -19,6 +26,30 @@ class DataPrivacyScreen extends StatefulWidget {
 }
 
 class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
+  int? _currentLimit;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCurrentLimit();
+  }
+
+  Future<void> _loadCurrentLimit() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) return;
+    try {
+      final row = await Supabase.instance.client
+          .from('users')
+          .select('daily_limit')
+          .eq('id', user.id)
+          .maybeSingle();
+      if (mounted && row != null)
+        setState(() => _currentLimit = (row['daily_limit'] as num?)?.toInt());
+    } catch (e) {
+      debugPrint("Couldn't load current limit: $e");
+    }
+  }
+
   // --- UI Constants ---
   final Color colDisabled = const Color(0xFFBABABA);
 
@@ -272,68 +303,232 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
         (start.year == end.year &&
             start.month == end.month &&
             start.day == end.day);
-
-    // Removed unnecessary '!' non-null assertion
     String dateDisplay = isSingle
         ? DateFormat('d MMMM y').format(start)
         : "${DateFormat('d MMM y').format(start)}  →  ${DateFormat('d MMM y').format(end)}";
 
-    _showSquarePopup(
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _buildIconCircle(
-            PhosphorIconsRegular.export,
-            AppColors.primaryGreen,
-          ),
-          const SizedBox(height: 20),
-          Text(
-            "Export Data",
-            style: GoogleFonts.montserrat(
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-              color: AppColors.colblack,
-            ),
-          ),
-          const SizedBox(height: 20),
-          Text(
-            "Only data from this period will be exported",
-            textAlign: TextAlign.center,
-            style: GoogleFonts.montserrat(
-              fontSize: 14,
-              color: AppColors.desctext,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 24),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(
-              dateDisplay,
-              style: GoogleFonts.montserrat(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: AppColors.textMain,
+    showDialog(
+      context: context,
+      builder: (context) {
+        bool isExporting = false;
+        String? errorMsg;
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: Dialog(
+                backgroundColor: Colors.transparent,
+                insetPadding: const EdgeInsets.symmetric(horizontal: 40),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: AppColors.bgWhite,
+                    borderRadius: BorderRadius.circular(28),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _buildIconCircle(
+                        PhosphorIconsRegular.export,
+                        AppColors.primaryGreen,
+                      ),
+                      const SizedBox(height: 20),
+                      Text(
+                        "Export Data",
+                        style: GoogleFonts.montserrat(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.colblack,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      Text(
+                        "Only data from this period will be exported",
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.montserrat(
+                          fontSize: 14,
+                          color: AppColors.desctext,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          dateDisplay,
+                          style: GoogleFonts.montserrat(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textMain,
+                          ),
+                        ),
+                      ),
+                      if (errorMsg != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 16.0),
+                          child: Text(
+                            errorMsg!,
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.poppins(
+                              color: AppColors.errorRed,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      const SizedBox(height: 24),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: ElevatedButton(
+                          onPressed: isExporting
+                              ? null
+                              : () async {
+                                  setDialogState(() {
+                                    isExporting = true;
+                                    errorMsg = null;
+                                  });
+                                  final result = await _performExport(
+                                    start,
+                                    end,
+                                  );
+                                  if (result == _ExportResult.empty) {
+                                    setDialogState(() {
+                                      isExporting = false;
+                                      errorMsg =
+                                          "No data available within selected dates.";
+                                    });
+                                  } else if (result == _ExportResult.failed) {
+                                    setDialogState(() {
+                                      isExporting = false;
+                                      errorMsg =
+                                          "Couldn't export your data. Please try again.";
+                                    });
+                                  } else if (mounted) {
+                                    Navigator.pop(context);
+                                  }
+                                },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primaryGreen,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: isExporting
+                              ? SizedBox(
+                                  height: 22,
+                                  width: 22,
+                                  child: CircularProgressIndicator(
+                                    color: AppColors.colwhite,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : Text(
+                                  "Yes, Export",
+                                  style: GoogleFonts.montserrat(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                    color: AppColors.colwhite,
+                                  ),
+                                ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: ElevatedButton(
+                          onPressed: () => Navigator.pop(context),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.inputFill,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: Text(
+                            "Cancel",
+                            style: GoogleFonts.montserrat(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.destructiveRed,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ),
-          ),
-          const SizedBox(height: 24),
-          _buildActionBtn(
-            "Yes, Export",
-            AppColors.primaryGreen,
-            AppColors.colwhite,
-            () => Navigator.pop(context),
-          ),
-          const SizedBox(height: 12),
-          _buildActionBtn(
-            "Cancel",
-            AppColors.inputFill,
-            AppColors.destructiveRed,
-            () => Navigator.pop(context),
-          ),
-        ],
-      ),
+            );
+          },
+        );
+      },
     );
+  }
+
+  Future<_ExportResult> _performExport(DateTime start, DateTime? endRaw) async {
+    final end = endRaw ?? start;
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) return _ExportResult.failed;
+
+    final startIso = DateTime(
+      start.year,
+      start.month,
+      start.day,
+    ).toUtc().toIso8601String();
+    final endIso = DateTime(
+      end.year,
+      end.month,
+      end.day,
+      23,
+      59,
+      59,
+    ).toUtc().toIso8601String();
+    try {
+      final rows = await Supabase.instance.client
+          .from('transactions')
+          .select('receiver_name, category, amount, date_time')
+          .eq('user_id', user.id)
+          .eq('is_hidden', false)
+          .gte('date_time', startIso)
+          .lte('date_time', endIso)
+          .order('date_time');
+
+      if ((rows as List).isEmpty) return _ExportResult.empty;
+
+      final buffer = StringBuffer();
+      buffer.writeln('Sr. No.,Receiver Name,Category,Amount,Date,Time');
+      int i = 1;
+      for (final row in rows) {
+        final dt = DateTime.parse(row['date_time']).toLocal();
+        final date = DateFormat('dd-MM-yyyy').format(dt);
+        final time = DateFormat('hh:mm a').format(dt);
+        final name = (row['receiver_name'] ?? '').toString().replaceAll(
+          ',',
+          ' ',
+        );
+        buffer.writeln(
+          '$i,$name,${row['category']},${row['amount']},$date,$time',
+        );
+        i++;
+      }
+
+      final dir = await getTemporaryDirectory();
+      final file = File(
+        '${dir.path}/spentree_export_${DateTime.now().millisecondsSinceEpoch}.csv',
+      );
+      await file.writeAsString(buffer.toString());
+      await Share.shareXFiles([
+        XFile(file.path),
+      ], text: 'Your Spentree transaction export');
+      return _ExportResult.success;
+    } catch (e) {
+      debugPrint("Export error: $e");
+      return _ExportResult.failed;
+    }
   }
 
   @override
@@ -377,22 +572,6 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
                     "Export Data",
                     "Export your account data",
                     _handleExportFlow,
-                  ),
-                  _buildTile(
-                    PhosphorIconsRegular.arrowClockwise,
-                    "Reset App Data",
-                    "Reset your account data",
-                    () {
-                      // SHOW CUSTOM LOGOUT DIALOG
-                      _showConfirmationDialog(
-                        title: "Reset App Data",
-                        message:
-                            "Are you sure you want to reset your app data?",
-                        confirmText: "Yes, Reset",
-                        icon: Icons.refresh_rounded,
-                        onConfirm: () {},
-                      );
-                    },
                   ),
                   _buildTile(
                     PhosphorIconsRegular.trash,
@@ -923,8 +1102,8 @@ class _CustomRangeCalendarState extends State<_CustomRangeCalendar> {
 
 // --- NEW CHANGE LIMIT POPUP COMPONENT ---
 class _ChangeLimitPopup extends StatefulWidget {
-  const _ChangeLimitPopup();
-
+  final int? currentLimit;
+  const _ChangeLimitPopup({this.currentLimit});
   @override
   State<_ChangeLimitPopup> createState() => _ChangeLimitPopupState();
 }
@@ -933,6 +1112,7 @@ class _ChangeLimitPopupState extends State<_ChangeLimitPopup>
     with SingleTickerProviderStateMixin {
   final TextEditingController _limitCtrl = TextEditingController();
   bool _isChecked = false;
+  bool _isSubmitting = false;
   String? _errorMsg;
   late AnimationController _shakeController;
 
@@ -957,9 +1137,8 @@ class _ChangeLimitPopupState extends State<_ChangeLimitPopup>
     _shakeController.forward(from: 0.0);
   }
 
-  void _validateAndSubmit() {
+  Future<void> _validateAndSubmit() async {
     setState(() => _errorMsg = null);
-
     final val = int.tryParse(_limitCtrl.text) ?? 0;
 
     if (val <= 0) {
@@ -975,8 +1154,51 @@ class _ChangeLimitPopupState extends State<_ChangeLimitPopup>
       return;
     }
 
-    // Success
-    Navigator.pop(context);
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) {
+      _triggerError("You're signed out. Please sign in again.");
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+    try {
+      final row = await Supabase.instance.client
+          .from('users')
+          .select('last_limit_change')
+          .eq('id', user.id)
+          .maybeSingle();
+
+      if (row != null && row['last_limit_change'] != null) {
+        final lastChange = DateTime.parse(row['last_limit_change']);
+        final daysSince = DateTime.now().toUtc().difference(lastChange).inDays;
+        if (daysSince < 7) {
+          final remaining = 7 - daysSince;
+          _triggerError(
+            "You can only change your limit once a week. Try again in $remaining day${remaining == 1 ? '' : 's'}.",
+          );
+          setState(() => _isSubmitting = false);
+          return;
+        }
+      }
+
+      final nowIso = DateTime.now().toUtc().toIso8601String();
+      await Supabase.instance.client
+          .from('users')
+          .update({'daily_limit': val, 'last_limit_change': nowIso})
+          .eq('id', user.id);
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt('daily_expense_limit', val);
+      await prefs.setString('last_limit_change', nowIso);
+
+      if (mounted) Navigator.pop(context, val);
+    } catch (e) {
+      _triggerError(
+        "Couldn't update your limit. Check your connection and try again.",
+      );
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
   }
 
   @override
@@ -1055,9 +1277,8 @@ class _ChangeLimitPopupState extends State<_ChangeLimitPopup>
                         ],
                       ),
                       const SizedBox(height: 16),
-
                       Text(
-                        "Current Limit : Rs. 0,000",
+                        "Current Limit : Rs. ${widget.currentLimit != null ? NumberFormat('#,##0').format(widget.currentLimit) : '—'}",
                         style: GoogleFonts.montserrat(
                           fontSize: 18,
                           fontWeight: FontWeight.w600,
@@ -1122,20 +1343,16 @@ class _ChangeLimitPopupState extends State<_ChangeLimitPopup>
                           ],
                         ),
                       ),
-
                       const SizedBox(height: 16),
 
                       GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _isChecked = !_isChecked;
-                            if (_isChecked) _errorMsg = null;
-                          });
-                        },
+                        onTap: () => setState(() {
+                          _isChecked = !_isChecked;
+                          if (_isChecked) _errorMsg = null;
+                        }),
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Custom Checkbox mapping to your design
                             AnimatedContainer(
                               duration: const Duration(milliseconds: 200),
                               width: 20,
@@ -1147,9 +1364,9 @@ class _ChangeLimitPopupState extends State<_ChangeLimitPopup>
                                     : AppColors.inputFill,
                                 borderRadius: BorderRadius.circular(4),
                                 border:
-                                    _errorMsg != null &&
+                                    (_errorMsg != null &&
                                         _errorMsg!.contains("agree") &&
-                                        !_isChecked
+                                        !_isChecked)
                                     ? Border.all(
                                         color: AppColors.destructiveRed,
                                         width: 1.5,
@@ -1178,8 +1395,6 @@ class _ChangeLimitPopupState extends State<_ChangeLimitPopup>
                           ],
                         ),
                       ),
-
-                      // Error Text Display
                       if (_errorMsg != null)
                         Padding(
                           padding: const EdgeInsets.only(top: 12.0),
@@ -1192,14 +1407,12 @@ class _ChangeLimitPopupState extends State<_ChangeLimitPopup>
                             ),
                           ),
                         ),
-
                       const SizedBox(height: 24),
-
                       SizedBox(
                         width: double.infinity,
                         height: 50,
                         child: ElevatedButton(
-                          onPressed: _validateAndSubmit,
+                          onPressed: _isSubmitting ? null : _validateAndSubmit,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primaryGreen,
                             elevation: 0,
@@ -1207,14 +1420,23 @@ class _ChangeLimitPopupState extends State<_ChangeLimitPopup>
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
-                          child: Text(
-                            "Change",
-                            style: GoogleFonts.montserrat(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.colwhite,
-                            ),
-                          ),
+                          child: _isSubmitting
+                              ? SizedBox(
+                                  height: 22,
+                                  width: 22,
+                                  child: CircularProgressIndicator(
+                                    color: AppColors.colwhite,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : Text(
+                                  "Change",
+                                  style: GoogleFonts.montserrat(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.colwhite,
+                                  ),
+                                ),
                         ),
                       ),
                     ],

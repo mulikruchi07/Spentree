@@ -234,10 +234,6 @@ class _HideTransactionsScreenState extends State<HideTransactionsScreen> {
                             },
                             child: Container(
                               padding: const EdgeInsets.all(10),
-                              decoration: BoxDecoration(
-                                color: AppColors.inputFill,
-                                shape: BoxShape.circle,
-                              ),
                               child: Icon(
                                 _viewingHidden
                                     ? Icons.visibility_off

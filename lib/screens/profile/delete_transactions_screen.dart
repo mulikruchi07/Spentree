@@ -26,7 +26,7 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
   final DateTime _today = DateTime.now();
 
   // Selected transaction IDs (not indices — IDs are stable)
-  final Set<String> _selectedIds = {};
+  final Set<int> _selectedIds = {};
 
   @override
   void initState() {
@@ -82,7 +82,7 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
     }
   }
 
-  void _toggleSelection(String id) {
+  void _toggleSelection(int id) {
     setState(() {
       if (_selectedIds.contains(id)) {
         _selectedIds.remove(id);
@@ -97,13 +97,13 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
 
   Future<void> _deleteSelected() async {
     final service = TransactionService();
-    final ids = Set<String>.from(_selectedIds); // snapshot before clear
+    final ids = Set<int>.from(_selectedIds); // snapshot before clear
     setState(() {
       _selectedIds.clear();
       _isPinned = false;
     });
     for (final id in ids) {
-      await service.deleteTransaction(id as int);
+      await service.deleteTransaction(id);
     }
   }
 
@@ -312,7 +312,7 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
     final timeStr = "$hour:$minute $period";
 
     return GestureDetector(
-      onTap: () => _toggleSelection(tx.id as String),
+      onTap: () => _toggleSelection(tx.id),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         margin: const EdgeInsets.only(bottom: 15),

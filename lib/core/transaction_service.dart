@@ -694,6 +694,7 @@ import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'package:flutter/material.dart' show DateUtils;
+import 'package:spentree/core/notification_service.dart';
 import 'package:spentree/core/user_profile.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:isar/isar.dart';
@@ -735,6 +736,8 @@ class TransactionService extends ChangeNotifier {
 
     await _loadFromLocal();
     await userProfileNotifier.retryPendingSync();
+    await userProfileNotifier.retryPendingImageSync();
+
     await _migrateOrphanedLocalRows();
     await _fetchAndParseSms();
 
@@ -1271,9 +1274,11 @@ class TransactionService extends ChangeNotifier {
   }
 
   Future<void> _checkAndNotifyOverspend() async {
+    final status = await Permission.notification.status;
+    if (!status.isGranted) return;
+
     final prefs = await SharedPreferences.getInstance();
-    final alertsEnabled = prefs.getBool('spending_alerts_enabled') ?? false;
-    if (!alertsEnabled) return;
+    if (!(prefs.getBool('spending_alerts_user_enabled') ?? true)) return;
 
     final limit = prefs.getInt('daily_expense_limit') ?? 5000;
     final todayTotal = getTransactionsForDay(

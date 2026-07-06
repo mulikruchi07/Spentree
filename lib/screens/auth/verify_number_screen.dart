@@ -14,11 +14,13 @@ import '../auth/change_password_screen.dart';
 class VerifyEmailScreen extends StatefulWidget {
   final String email; // Accept the email from the sign-up screen
   final bool isRecovery; // Add this flag
+  final bool isEmailChange;  
 
   const VerifyEmailScreen({
     super.key,
     required this.email,
     this.isRecovery = false,
+    this.isEmailChange = false,
   });
 
   @override
@@ -88,6 +90,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
         token: otp,
         email: widget.email,
       );
+      if (mounted) Navigator.pop(context, true);
     } on AuthException catch (e) {
       setState(() {
         _statusMessage = "Invalid code. Please try again.";

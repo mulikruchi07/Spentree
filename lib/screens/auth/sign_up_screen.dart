@@ -38,6 +38,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   String? _emailError;
   String? _passwordError;
   String? _confirmPasswordError;
+  String? _offlineError;
 
   // --- DIMENSIONS ---
   final double horizontalPadding = 24.0;
@@ -53,6 +54,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       _emailError = null;
       _passwordError = null;
       _confirmPasswordError = null;
+      _offlineError = null;
       _showTermsError = false;
     });
 
@@ -103,7 +105,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         final hasInternet = await checkInternetConnection();
         if (!hasInternet) {
           setState(
-            () => _emailError =
+            () => _offlineError =
                 "No internet connection. Please check your network and try again.",
           );
           return;
@@ -137,8 +139,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
           }
         }
       } on AuthException catch (e) {
-  setState(() => _emailError = mapAuthError(e));
-} catch (e) {
+        setState(() => _emailError = mapAuthError(e));
+      } catch (e) {
         setState(
           () => _emailError =
               "Something went wrong creating your account. Please try again.",
@@ -338,6 +340,20 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                     ),
                                   ],
                                 ),
+                                if (_offlineError != null)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 8),
+                                    child: Align(
+                                      alignment: Alignment.centerLeft,
+                                      child: Text(
+                                        _offlineError!,
+                                        style: GoogleFonts.poppins(
+                                          color: AppColors.errorRed,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
 
                                 SizedBox(height: termsButtonGap),
 
@@ -519,6 +535,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
             keyboardType: isEmail
                 ? TextInputType.emailAddress
                 : TextInputType.text,
+            inputFormatters: hint == "Name"
+                ? [
+                    FilteringTextInputFormatter.allow(
+                      RegExp(
+                        r'[a-zA-Z\s\u00C0-\u017F\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]',
+                        unicode: true,
+                      ),
+                    ),
+                  ]
+                  : null,
             style: GoogleFonts.poppins(
               fontSize: 15,
               color: AppColors.colblack,

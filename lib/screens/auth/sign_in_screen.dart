@@ -27,6 +27,7 @@ class _SignInScreenState extends State<SignInScreen> {
   // Validation Errors
   String? _emailError;
   String? _passwordError;
+  String? _generalError;
   bool _isLoading = false;
 
   final double horizontalPadding = 24.0;
@@ -38,6 +39,7 @@ class _SignInScreenState extends State<SignInScreen> {
     setState(() {
       _emailError = null;
       _passwordError = null;
+      _generalError = null;
     });
 
     bool isValid = true;
@@ -59,7 +61,7 @@ class _SignInScreenState extends State<SignInScreen> {
       final hasInternet = await checkInternetConnection();
       if (!hasInternet) {
         setState(
-          () => _passwordError =
+          () => _generalError =
               "No internet connection. Please check your network and try again.",
         );
         return;
@@ -93,11 +95,33 @@ class _SignInScreenState extends State<SignInScreen> {
 
       await TransactionService().resetForNewUser();
     } on AuthException catch (e) {
-      setState(() => _passwordError = mapAuthError(e));
+      final msg = e.message.toLowerCase();
+      if (msg.contains('invalid login credentials')) {
+        try {
+          final res = await Supabase.instance.client.functions
+              .invoke('check-signin-method', body: {'email': email})
+              .timeout(const Duration(seconds: 5));
+          final data = res.data as Map;
+          if (data['found'] == true && data['hasPassword'] == false) {
+            setState(
+              () => _generalError =
+                  "This email is linked to Google sign-in. Try 'Continue with Google' instead.",
+            );
+          } else if (data['found'] == true) {
+            setState(
+              () => _passwordError = "Incorrect password. Please try again.",
+            );
+          } else {
+            setState(() => _emailError = "No account found with that email.");
+          }
+        } catch (_) {
+          setState(() => _generalError = "Incorrect email or password.");
+        }
+      } else {
+        setState(() => _generalError = mapAuthError(e));
+      }
     } catch (e) {
-      setState(
-        () => _passwordError = "Something went wrong. Please try again.",
-      );
+      setState(() => _generalError = "Something went wrong. Please try again.");
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -202,6 +226,20 @@ class _SignInScreenState extends State<SignInScreen> {
                             ),
                           ),
                         ),
+                        if (_generalError != null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: Align(
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                _generalError!,
+                                style: GoogleFonts.poppins(
+                                  color: AppColors.errorRed,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                          ),
 
                         const SizedBox(height: 24),
 

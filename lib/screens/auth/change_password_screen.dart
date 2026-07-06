@@ -24,6 +24,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   String? _newPasswordError;
   String? _confirmPasswordError;
   String? _successMessage;
+  String? _generalError;
 
   final double horizontalPadding = 24.0;
   final double componentHeight = 60.0;
@@ -48,6 +49,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       _newPasswordError = null;
       _confirmPasswordError = null;
       _successMessage = null;
+      _generalError = null;
     });
 
     bool isValid = true;
@@ -71,10 +73,13 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     setState(() => _isLoading = true);
     try {
       final hasInternet = await checkInternetConnection();
-if (!hasInternet) {
-  setState(() => _newPasswordError = "No internet connection. Please check your network and try again.");
-  return;
-}
+      if (!hasInternet) {
+        setState(
+          () => _generalError =
+              "No internet connection. Please check your network and try again.",
+        );
+        return;
+      }
       await Supabase.instance.client.auth.updateUser(
         UserAttributes(password: newPassword),
       );
@@ -95,12 +100,10 @@ if (!hasInternet) {
       if (msg.contains('password')) {
         setState(() => _newPasswordError = _passwordRuleMessage);
       } else {
-        setState(() => _newPasswordError = mapAuthError(e));
+        setState(() => _generalError = mapAuthError(e));
       }
     } catch (e) {
-      setState(
-        () => _newPasswordError = "Something went wrong. Please try again.",
-      );
+      setState(() => _generalError = "Something went wrong. Please try again.");
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -199,6 +202,25 @@ if (!hasInternet) {
                             ),
                           ),
                         ),
+
+                        if (_generalError != null)
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Padding(
+                              padding: const EdgeInsets.only(
+                                top: 12,
+                                left: 4,
+                                right: 4,
+                              ),
+                              child: Text(
+                                _generalError!,
+                                style: GoogleFonts.poppins(
+                                  color: AppColors.errorRed,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                          ),
 
                         if (_successMessage != null)
                           Align(

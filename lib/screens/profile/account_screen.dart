@@ -1243,9 +1243,11 @@
 // }
 
 import 'dart:ui';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:home_widget/home_widget.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -1253,6 +1255,7 @@ import 'package:spentree/app_lock.dart';
 import 'package:spentree/core/auth_landing_screen.dart';
 import 'package:spentree/core/error_helper.dart';
 import 'package:spentree/screens/auth/sign_in_screen.dart';
+import 'package:spentree/screens/auth/verify_number_screen.dart';
 import 'package:spentree/screens/onboarding/splash_onboarding_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:image_picker/image_picker.dart';
@@ -1271,7 +1274,8 @@ class AccountScreen extends StatefulWidget {
   State<AccountScreen> createState() => _AccountScreenState();
 }
 
-class _AccountScreenState extends State<AccountScreen> {
+class _AccountScreenState extends State<AccountScreen>
+    with WidgetsBindingObserver {
   // Loading state to prevent toggle switch flickering on load
   bool _isLoading = true;
 
@@ -1283,6 +1287,7 @@ class _AccountScreenState extends State<AccountScreen> {
 
   // Inline Editing States & Validation
   bool _isEditingName = false;
+  bool _isSavingEmail = false;
   late TextEditingController _nameController;
 
   late String _originalName;
@@ -1302,9 +1307,12 @@ class _AccountScreenState extends State<AccountScreen> {
   String? _originalImagePath;
   final ImagePicker _picker = ImagePicker();
 
+  bool _isCheckingEmail = false;
+
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     // Name sourced from the global notifier
     _originalName = userProfileNotifier.value.name;
 
@@ -1313,15 +1321,24 @@ class _AccountScreenState extends State<AccountScreen> {
     _emailController = TextEditingController(text: _originalEmail);
     _accountEmail = Supabase.instance.client.auth.currentUser?.email ?? "";
     _loadSettings();
+    _refreshNotificationToggleState();
     _loadNameFromDatabase();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _nameController.dispose();
     _emailController.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _refreshNotificationToggleState();
+    }
   }
 
   Future<void> _loadNameFromDatabase() async {
@@ -1361,6 +1378,7 @@ class _AccountScreenState extends State<AccountScreen> {
 
   void _toggleEmailEdit() async {
     if (_isEditingEmail) {
+      setState(() => _emailError = null);
       final newEmail = _emailController.text.trim();
       final emailRegex = RegExp(r'^[\w\.\-]+@([\w\-]+\.)+[\w\-]{2,}$');
       if (!emailRegex.hasMatch(newEmail)) {
@@ -1371,25 +1389,72 @@ class _AccountScreenState extends State<AccountScreen> {
         setState(() => _isEditingEmail = false);
         return;
       }
-      try {
-        await Supabase.instance.client.auth.updateUser(
-          UserAttributes(email: newEmail),
+      final hasInternet = await checkInternetConnection();
+      if (!hasInternet) {
+        setState(
+          () => _emailError =
+              "No internet connection. Please check your network and try again.",
         );
-        setState(() {
-          _emailError = null;
-          _emailInfo = "Check your new email to confirm the change.";
-          _isEditingEmail = false;
-        });
+        return;
+      }
+
+      setState(() => _isCheckingEmail = true);
+      try {
+        await Supabase.instance.client.auth
+            .updateUser(UserAttributes(email: newEmail))
+            .timeout(const Duration(seconds: 10));
+        setState(() => _isCheckingEmail = false);
+
+        if (!mounted) return;
+        final verified = await Navigator.push<bool>(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                VerifyEmailScreen(email: newEmail, isEmailChange: true),
+          ),
+        );
+        if (verified == true) {
+          setState(() {
+            _originalEmail = newEmail;
+            _isEditingEmail = false;
+          });
+        } else {
+          setState(() {
+            _emailController.text = _originalEmail;
+            _isEditingEmail = false;
+          });
+        }
       } on AuthException catch (e) {
-        setState(() => _emailError = mapAuthError(e));
+        final msg = e.message.toLowerCase();
+        setState(() {
+          _isCheckingEmail = false;
+          if (msg.contains('already') ||
+              msg.contains('registered') ||
+              msg.contains('exists')) {
+            _emailError = "This email already exists.";
+          } else if (msg.contains('invalid') ||
+              msg.contains('unable to validate')) {
+            _emailError = "This email address is invalid.";
+          } else {
+            _emailError = mapAuthError(e);
+          }
+        });
+      } on TimeoutException {
+        setState(() {
+          _isCheckingEmail = false;
+          _emailError =
+              "No internet connection. Please check your network and try again.";
+        });
       } catch (e) {
-        setState(() => _emailError = "Something went wrong. Please try again.");
+        setState(() {
+          _isCheckingEmail = false;
+          _emailError = "Something went wrong. Please try again.";
+        });
       }
     } else {
       setState(() {
         _isEditingEmail = true;
         _emailError = null;
-        _emailInfo = null;
       });
     }
   }
@@ -1399,6 +1464,8 @@ class _AccountScreenState extends State<AccountScreen> {
     setState(() {
       _isFaceIdEnabled = prefs.getBool('isFaceIdEnabled') ?? false;
       _selectedTheme = prefs.getString('app_theme') ?? "System";
+      _spendingAlerts = prefs.getBool('spending_alerts_user_enabled') ?? true;
+
       // Profile image is loaded from userProfileNotifier — no local loading needed
       _isLoading = false;
     });
@@ -1449,6 +1516,23 @@ class _AccountScreenState extends State<AccountScreen> {
       _showImageActionSheet();
     } else {
       _showImageSourceSelector(false);
+    }
+  }
+
+  Future<void> _removeImageFromDatabase() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) return;
+    try {
+      await Supabase.instance.client
+          .from('users')
+          .update({'profile_image_url': null})
+          .eq('id', user.id)
+          .timeout(const Duration(seconds: 5));
+      await Supabase.instance.client.storage.from('avatars').remove([
+        '${user.id}/profile.jpg',
+      ]);
+    } catch (e) {
+      debugPrint("Image removal sync deferred (offline): $e");
     }
   }
 
@@ -1503,8 +1587,8 @@ class _AccountScreenState extends State<AccountScreen> {
               ),
               onTap: () async {
                 Navigator.pop(context);
-                // Clears from notifier + SharedPreferences in one call
                 await userProfileNotifier.removeImage();
+                await _removeImageFromDatabase();
                 setState(() => _originalImagePath = null);
               },
             ),
@@ -1616,7 +1700,7 @@ class _AccountScreenState extends State<AccountScreen> {
         final bytes = await croppedFile.readAsBytes();
         // Persists bytes to SharedPrefs + broadcasts to all listeners
         await userProfileNotifier.updateImage(bytes);
-        _uploadImageToStorage(bytes);
+        await _uploadImageToStorage(bytes);
         // Sync the home widget
         await HomeWidget.saveWidgetData<String>(
           'widget_user_name',
@@ -1639,7 +1723,7 @@ class _AccountScreenState extends State<AccountScreen> {
     try {
       final path = '${user.id}/profile.jpg';
       await Supabase.instance.client.storage
-          .from('avatars')
+          .from('avatar')
           .uploadBinary(
             path,
             bytes,
@@ -1649,14 +1733,18 @@ class _AccountScreenState extends State<AccountScreen> {
             ),
           );
       final url = Supabase.instance.client.storage
-          .from('avatars')
+          .from('avatar')
           .getPublicUrl(path);
       await Supabase.instance.client
           .from('users')
           .update({'profile_image_url': url})
           .eq('id', user.id);
-    } catch (e) {
-      debugPrint("Image upload deferred (likely offline): $e");
+    } catch (e, stack) {
+      debugPrint("UPLOAD ERROR:");
+      debugPrint(e.toString());
+      debugPrint(stack.toString());
+
+      rethrow;
     }
   }
 
@@ -1740,6 +1828,18 @@ class _AccountScreenState extends State<AccountScreen> {
     await prefs.setString('app_theme', theme);
   }
 
+  Future<void> _refreshNotificationToggleState() async {
+    final status = await Permission.notification.status;
+    final prefs = await SharedPreferences.getInstance();
+    final userEnabled = prefs.getBool('spending_alerts_user_enabled') ?? true;
+
+    if (mounted) {
+      setState(() {
+        _spendingAlerts = status.isGranted && userEnabled;
+      });
+    }
+  }
+
   Future<void> _launchURL(String url) async {
     final Uri uri = Uri.parse(url);
     if (!await launchUrl(uri)) throw 'Could not launch $url';
@@ -1807,7 +1907,7 @@ class _AccountScreenState extends State<AccountScreen> {
                             controller: _nameController,
                             isEditing: _isEditingName,
                             onToggle: _toggleNameEdit,
-                            errorMsg: _nameError,
+                            errorMsg: null,
                           ),
                           const SizedBox(height: 16),
                           _buildInlineEditableField(
@@ -1817,6 +1917,49 @@ class _AccountScreenState extends State<AccountScreen> {
                             onToggle: _toggleEmailEdit,
                             errorMsg: _emailError,
                           ),
+                          if (_isCheckingEmail)
+                            Padding(
+                              padding: const EdgeInsets.only(
+                                top: 6.0,
+                                left: 4.0,
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  SizedBox(
+                                    height: 12,
+                                    width: 12,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: AppColors.grey600,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    "Checking if the email is valid...",
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 12,
+                                      color: AppColors.grey600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          else if (_emailError != null)
+                            Padding(
+                              padding: const EdgeInsets.only(
+                                top: 6.0,
+                                left: 4.0,
+                              ),
+                              child: Text(
+                                _emailError!,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 12,
+                                  color: AppColors.destructiveRed,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
                         ],
                       ),
                     ),
@@ -1856,15 +1999,30 @@ class _AccountScreenState extends State<AccountScreen> {
                       "Get alerts when you overspend",
                       _spendingAlerts,
                       (v) async {
-                        setState(() => _spendingAlerts = v);
                         final prefs = await SharedPreferences.getInstance();
-                        await prefs.setBool('spending_alerts_enabled', v);
-                        final user = Supabase.instance.client.auth.currentUser;
-                        if (user != null) {
-                          await Supabase.instance.client
-                              .from('users')
-                              .update({'alert_enabled': v})
-                              .eq('id', user.id);
+
+                        if (v) {
+                          var status = await Permission.notification.status;
+
+                          if (!status.isGranted) {
+                            status = await Permission.notification.request();
+                          }
+
+                          if (status.isGranted) {
+                            await prefs.setBool(
+                              'spending_alerts_user_enabled',
+                              true,
+                            );
+                            setState(() => _spendingAlerts = true);
+                          } else {
+                            setState(() => _spendingAlerts = false);
+                          }
+                        } else {
+                          await prefs.setBool(
+                            'spending_alerts_user_enabled',
+                            false,
+                          );
+                          setState(() => _spendingAlerts = false);
                         }
                       },
                     ),
@@ -1882,17 +2040,17 @@ class _AccountScreenState extends State<AccountScreen> {
                       PhosphorIconsRegular.lockKey,
                       "Deactivate Account",
                       "Temporarily disable account",
-                      onPop: () => _showConfirmationDialog(
-                        title: "Deactivate Account",
-                        message:
-                            "You can come back anytime by logging in again.",
-                        confirmText: "Yes, Deactivate",
-                        icon: PhosphorIconsRegular.lockKey,
-                        onConfirm: () async {
-                          final user =
-                              Supabase.instance.client.auth.currentUser;
-                          if (user == null) return;
-                          try {
+                      onTap: () async {
+                        final confirmed = await _showConfirmationDialog(
+                          title: "Deactivate Account",
+                          message:
+                              "You can come back anytime by logging in again.",
+                          confirmText: "Yes, Deactivate",
+                          icon: PhosphorIconsRegular.lockKey,
+                          onConfirm: () async {
+                            final user =
+                                Supabase.instance.client.auth.currentUser;
+                            if (user == null) throw Exception("Not signed in");
                             await Supabase.instance.client
                                 .from('users')
                                 .update({
@@ -1901,56 +2059,66 @@ class _AccountScreenState extends State<AccountScreen> {
                                       .toUtc()
                                       .toIso8601String(),
                                 })
-                                .eq('id', user.id);
+                                .eq('id', user.id)
+                                .timeout(const Duration(seconds: 10));
                             await Supabase.instance.client.auth.signOut();
-                            if (mounted) {
-                              Navigator.pushAndRemoveUntil(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      const AuthLandingScreen(),
-                                ),
-                                (route) => false,
-                              );
-                            }
-                          } catch (e) {
-                            debugPrint("Deactivation failed: $e");
-                          }
-                        },
-                      ),
+                          },
+                        );
+                        if (confirmed == true && mounted) {
+                          Navigator.pushAndRemoveUntil(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const AuthLandingScreen(),
+                            ),
+                            (route) => false,
+                          );
+                        }
+                      },
                     ),
                     _buildActionTile(
                       PhosphorIconsRegular.trash,
                       "Delete My Account",
                       "Delete your account permanently",
-                      onPop: () => _showConfirmationDialog(
-                        title: "Delete Account",
-                        message: "All your data will be removed permanently.",
-                        confirmText: "Yes, Delete",
-                        icon: PhosphorIconsRegular.trash,
-                        onConfirm: () async {
-                          try {
-                            await Supabase.instance.client.functions.invoke(
-                              'delete-account',
-                            );
+                      onTap: () async {
+                        final confirmed = await _showConfirmationDialog(
+                          title: "Delete Account",
+                          message: "All your data will be removed permanently.",
+                          confirmText: "Yes, Delete",
+                          icon: PhosphorIconsRegular.trash,
+                          onConfirm: () async {
+                            final response = await Supabase
+                                .instance
+                                .client
+                                .functions
+                                .invoke('delete-account')
+                                .timeout(const Duration(seconds: 15));
+
+                            if (response.status != 200) {
+                              final err = (response.data is Map)
+                                  ? response.data['error']
+                                  : null;
+                              throw Exception(
+                                err ??
+                                    "Account deletion failed. Please try again.",
+                              );
+                            }
+
                             await Supabase.instance.client.auth.signOut();
                             final prefs = await SharedPreferences.getInstance();
                             await prefs.clear();
-                            if (mounted) {
-                              Navigator.pushAndRemoveUntil(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      const SplashOnboardingScreen(),
-                                ),
-                                (route) => false,
-                              );
-                            }
-                          } catch (e) {
-                            debugPrint("Account deletion failed: $e");
-                          }
-                        },
-                      ),
+                          },
+                        );
+                        if (confirmed == true && mounted) {
+                          Navigator.pushAndRemoveUntil(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  const SplashOnboardingScreen(),
+                            ),
+                            (route) => false,
+                          );
+                        }
+                      },
                     ),
 
                     const SizedBox(height: 48),
@@ -2169,6 +2337,16 @@ class _AccountScreenState extends State<AccountScreen> {
                         keyboardType: label == "Email"
                             ? TextInputType.emailAddress
                             : TextInputType.text,
+                        inputFormatters: label == "Name"
+                            ? [
+                                FilteringTextInputFormatter.allow(
+                                  RegExp(
+                                    r'[a-zA-Z\s\u00C0-\u017F\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]',
+                                    unicode: true,
+                                  ),
+                                ),
+                              ]
+                            : null,
                         style: GoogleFonts.poppins(
                           fontSize: 14,
                           color: AppColors.colblack,
@@ -2216,7 +2394,7 @@ class _AccountScreenState extends State<AccountScreen> {
           Padding(
             padding: const EdgeInsets.only(top: 6.0, left: 4.0),
             child: Text(
-              _emailInfo!,
+              errorMsg,
               style: GoogleFonts.poppins(
                 fontSize: 12,
                 color: AppColors.destructiveRed,
@@ -2518,111 +2696,165 @@ class _AccountScreenState extends State<AccountScreen> {
     );
   }
 
-  Future<void> _showConfirmationDialog({
+  Future<bool?> _showConfirmationDialog({
     required String title,
     required String message,
     required String confirmText,
     required IconData icon,
-    required VoidCallback onConfirm,
+    required Future<void> Function() onConfirm,
   }) async {
-    return showDialog(
+    return showDialog<bool>(
       context: context,
       barrierDismissible: true,
       builder: (context) {
-        return BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Dialog(
-            backgroundColor: Colors.transparent,
-            insetPadding: const EdgeInsets.symmetric(horizontal: 40),
-            child: Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: AppColors.bgWhite,
-                borderRadius: BorderRadius.circular(28),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: const BoxDecoration(
-                      color: AppColors.destructiveRed,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(icon, color: AppColors.colwhite, size: 32),
+        String? dialogError;
+        bool isProcessing = false;
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: Dialog(
+                backgroundColor: Colors.transparent,
+                insetPadding: const EdgeInsets.symmetric(horizontal: 40),
+                child: Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: AppColors.bgWhite,
+                    borderRadius: BorderRadius.circular(28),
                   ),
-                  const SizedBox(height: 20),
-                  Text(
-                    title,
-                    style: GoogleFonts.poppins(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.colblack,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    message,
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w400,
-                      color: AppColors.desctext,
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 54,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        onConfirm();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.destructiveRed,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                      child: Text(
-                        confirmText,
-                        style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.colwhite,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 54,
-                    child: ElevatedButton(
-                      onPressed: () => Navigator.pop(context),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.inputFill,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                      child: Text(
-                        "Cancel",
-                        style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: const BoxDecoration(
                           color: AppColors.destructiveRed,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(icon, color: AppColors.colwhite, size: 32),
+                      ),
+                      const SizedBox(height: 20),
+                      Text(
+                        title,
+                        style: GoogleFonts.poppins(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.colblack,
                         ),
                       ),
-                    ),
+                      const SizedBox(height: 8),
+                      Text(
+                        message,
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w400,
+                          color: AppColors.desctext,
+                        ),
+                      ),
+                      if (dialogError != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 12.0),
+                          child: Text(
+                            dialogError!,
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.poppins(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.errorRed,
+                            ),
+                          ),
+                        ),
+                      const SizedBox(height: 32),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 54,
+                        child: ElevatedButton(
+                          onPressed: isProcessing
+                              ? null
+                              : () async {
+                                  final hasInternet =
+                                      await checkInternetConnection();
+                                  if (!hasInternet) {
+                                    setDialogState(
+                                      () => dialogError =
+                                          "No internet connection. Please check your network and try again.",
+                                    );
+                                    return;
+                                  }
+                                  setDialogState(() {
+                                    isProcessing = true;
+                                    dialogError = null;
+                                  });
+                                  try {
+                                    await onConfirm();
+                                    if (context.mounted)
+                                      Navigator.pop(context, true);
+                                  } catch (e) {
+                                    setDialogState(() {
+                                      isProcessing = false;
+                                      dialogError =
+                                          "Something went wrong. Please try again.";
+                                    });
+                                  }
+                                },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.destructiveRed,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                          child: isProcessing
+                              ? SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    color: AppColors.colwhite,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : Text(
+                                  confirmText,
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.colwhite,
+                                  ),
+                                ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 54,
+                        child: ElevatedButton(
+                          onPressed: isProcessing
+                              ? null
+                              : () => Navigator.pop(context, false),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.inputFill,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                          child: Text(
+                            "Cancel",
+                            style: GoogleFonts.poppins(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.destructiveRed,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
-            ),
-          ),
+            );
+          },
         );
       },
     );

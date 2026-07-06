@@ -70,10 +70,18 @@ class _LoadingScreenState extends State<LoadingScreen>
       final prefs = await SharedPreferences.getInstance();
       final pendingSync = prefs.getBool('questionnaire_sync_pending') ?? false;
 
-      final Map<String, dynamic> payload = {
-        'id': user.id,
-        'name': user.userMetadata?['full_name'] ?? 'New User',
-      };
+      final existing = await Supabase.instance.client
+          .from('users')
+          .select('id, name')
+          .eq('id', user.id)
+          .maybeSingle();
+
+      final Map<String, dynamic> payload = {'id': user.id};
+
+      final existingName = existing?['name'] as String?;
+      if (existingName == null || existingName.trim().isEmpty) {
+        payload['name'] = user.userMetadata?['full_name'] ?? 'New User';
+      }
 
       // Only push questionnaire answers if they were captured this session
       // and haven't been synced yet — prevents overwriting a returning

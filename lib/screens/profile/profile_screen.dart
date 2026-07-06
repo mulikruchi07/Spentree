@@ -7,6 +7,7 @@ import 'package:spentree/core/app_style.dart';
 import 'package:spentree/core/biometric_service.dart';
 import 'package:spentree/screens/auth/sign_in_screen.dart';
 import 'package:spentree/screens/profile/account_screen.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'about_screen.dart';
 import 'contact_screen.dart';
 import 'data_privacy_screen.dart';
@@ -237,7 +238,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     )
                                   : Center(
                                       child: Icon(
-                                        PhosphorIconsRegular.user, // Unfilled icon as requested
+                                        PhosphorIconsRegular
+                                            .user, // Unfilled icon as requested
                                         size: 35,
                                         color: AppColors.grey600,
                                       ),
@@ -318,8 +320,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         confirmText: "Yes, Logout",
                         icon: PhosphorIconsRegular.signOut,
                         onConfirm: () async {
+                          await Supabase.instance.client.auth.signOut();
                           final prefs = await SharedPreferences.getInstance();
-                          await prefs.setBool('isLoggedIn', false);
+                          final keepOnboardingFlag =
+                              prefs.getBool('has_completed_onboarding') ?? true;
+                          await prefs.clear();
+                          await prefs.setBool(
+                            'has_completed_onboarding',
+                            keepOnboardingFlag,
+                          );
                           if (mounted) {
                             Navigator.pushAndRemoveUntil(
                               context,

@@ -749,6 +749,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // Added for weekly limit check
 import 'package:spentree/core/database/local_transaction.dart';
+import 'package:spentree/core/error_helper.dart';
 import 'package:spentree/core/user_profile.dart';
 import 'package:spentree/screens/analytics/analytics_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -1826,6 +1827,13 @@ class _ChangeLimitPopupState extends State<_ChangeLimitPopup>
       _triggerError("Please agree to the condition");
       return;
     }
+    final hasInternet = await checkInternetConnection();
+    if (!hasInternet) {
+      _triggerError(
+        "No internet connection. Please check your network and try again.",
+      );
+      return;
+    }
 
     final user = Supabase.instance.client.auth.currentUser;
     if (user == null) {
@@ -1838,7 +1846,8 @@ class _ChangeLimitPopupState extends State<_ChangeLimitPopup>
           .from('users')
           .select('last_limit_change')
           .eq('id', user.id)
-          .maybeSingle();
+          .maybeSingle()
+          .timeout(const Duration(seconds: 8));
       if (row != null && row['last_limit_change'] != null) {
         final lastChange = DateTime.parse(row['last_limit_change']);
         final daysSince = DateTime.now().toUtc().difference(lastChange).inDays;
@@ -1852,7 +1861,8 @@ class _ChangeLimitPopupState extends State<_ChangeLimitPopup>
       await Supabase.instance.client
           .from('users')
           .update({'daily_limit': val, 'last_limit_change': nowIso})
-          .eq('id', user.id);
+          .eq('id', user.id)
+          .timeout(const Duration(seconds: 8));
 
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt('daily_expense_limit', val);

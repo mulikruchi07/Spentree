@@ -1,10 +1,13 @@
 import 'dart:ui';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:spentree/core/error_helper.dart';
+import 'package:spentree/core/transaction_service.dart';
 import 'package:spentree/screens/profile/hide_transactions_screen.dart';
 import 'delete_transactions_screen.dart';
 import 'privacy_screen.dart';
@@ -470,66 +473,41 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
   }
 
   Future<_ExportResult> _performExport(DateTime start, DateTime? endRaw) async {
-    final end = endRaw ?? start;
-    final user = Supabase.instance.client.auth.currentUser;
-    if (user == null) return _ExportResult.failed;
+  final end = endRaw ?? start;
+  final startDay = DateTime(start.year, start.month, start.day);
+  final endDay = DateTime(end.year, end.month, end.day, 23, 59, 59);
 
-    final startIso = DateTime(
-      start.year,
-      start.month,
-      start.day,
-    ).toUtc().toIso8601String();
-    final endIso = DateTime(
-      end.year,
-      end.month,
-      end.day,
-      23,
-      59,
-      59,
-    ).toUtc().toIso8601String();
-    try {
-      final rows = await Supabase.instance.client
-          .from('transactions')
-          .select('receiver_name, category, amount, date_time')
-          .eq('user_id', user.id)
-          .eq('is_hidden', false)
-          .gte('date_time', startIso)
-          .lte('date_time', endIso)
-          .order('date_time');
+  final rows = TransactionService().allTransactions.where((tx) =>
+      !tx.isHidden &&
+      !tx.isDeleted &&
+      !tx.dateTime.isBefore(startDay) &&
+      !tx.dateTime.isAfter(endDay)).toList()
+    ..sort((a, b) => a.dateTime.compareTo(b.dateTime));
 
-      if ((rows as List).isEmpty) return _ExportResult.empty;
+  if (rows.isEmpty) return _ExportResult.empty;
 
-      final buffer = StringBuffer();
-      buffer.writeln('Sr. No.,Receiver Name,Category,Amount,Date,Time');
-      int i = 1;
-      for (final row in rows) {
-        final dt = DateTime.parse(row['date_time']).toLocal();
-        final date = DateFormat('dd-MM-yyyy').format(dt);
-        final time = DateFormat('hh:mm a').format(dt);
-        final name = (row['receiver_name'] ?? '').toString().replaceAll(
-          ',',
-          ' ',
-        );
-        buffer.writeln(
-          '$i,$name,${row['category']},${row['amount']},$date,$time',
-        );
-        i++;
-      }
-
-      final dir = await getTemporaryDirectory();
-      final file = File(
-        '${dir.path}/spentree_export_${DateTime.now().millisecondsSinceEpoch}.csv',
-      );
-      await file.writeAsString(buffer.toString());
-      await Share.shareXFiles([
-        XFile(file.path),
-      ], text: 'Your Spentree transaction export');
-      return _ExportResult.success;
-    } catch (e) {
-      debugPrint("Export error: $e");
-      return _ExportResult.failed;
-    }
+  final buffer = StringBuffer();
+  buffer.writeln('Sr. No.,Receiver Name,Category,Amount,Date,Time');
+  int i = 1;
+  for (final tx in rows) {
+    final date = DateFormat('dd-MM-yyyy').format(tx.dateTime);
+    final time = DateFormat('hh:mm a').format(tx.dateTime);
+    final name = tx.receiverName.replaceAll(',', ' ');
+    buffer.writeln('$i,$name,${tx.category},${tx.amount},$date,$time');
+    i++;
   }
+
+  try {
+    final dir = await getTemporaryDirectory();
+    final file = File('${dir.path}/spentree_export_${DateTime.now().millisecondsSinceEpoch}.csv');
+    await file.writeAsString(buffer.toString());
+    await Share.shareXFiles([XFile(file.path)], text: 'Your Spentree transaction export');
+    return _ExportResult.success;
+  } catch (e) {
+    debugPrint("Export error: $e");
+    return _ExportResult.failed;
+  }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -576,7 +554,7 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
                   _buildTile(
                     PhosphorIconsRegular.trash,
                     "Hide Transactions",
-                    "Manage your transactions",
+                    "Exclude from active transactions",
                     () {
                       // SHOW CUSTOM LOGOUT DIALOG
                       _showConfirmationDialog(
@@ -1154,6 +1132,14 @@ class _ChangeLimitPopupState extends State<_ChangeLimitPopup>
       return;
     }
 
+    final hasInternet = await checkInternetConnection();
+    if (!hasInternet) {
+      _triggerError(
+        "No internet connection. Please check your network and try again.",
+      );
+      return;
+    }
+
     final user = Supabase.instance.client.auth.currentUser;
     if (user == null) {
       _triggerError("You're signed out. Please sign in again.");
@@ -1166,7 +1152,8 @@ class _ChangeLimitPopupState extends State<_ChangeLimitPopup>
           .from('users')
           .select('last_limit_change')
           .eq('id', user.id)
-          .maybeSingle();
+          .maybeSingle()
+          .timeout(const Duration(seconds: 8));
 
       if (row != null && row['last_limit_change'] != null) {
         final lastChange = DateTime.parse(row['last_limit_change']);
@@ -1185,7 +1172,8 @@ class _ChangeLimitPopupState extends State<_ChangeLimitPopup>
       await Supabase.instance.client
           .from('users')
           .update({'daily_limit': val, 'last_limit_change': nowIso})
-          .eq('id', user.id);
+          .eq('id', user.id)
+          .timeout(const Duration(seconds: 8));
 
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt('daily_expense_limit', val);

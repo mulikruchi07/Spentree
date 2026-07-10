@@ -1,3 +1,132 @@
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:home_widget/home_widget.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:spentree/core/notification_service.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:spentree/core/database/local_database_service.dart';
+import 'package:spentree/core/transaction_service.dart';
+import 'package:spentree/screens/main_wrapper.dart';
+import 'package:spentree/screens/onboarding/loading_screen.dart';
+import 'package:spentree/screens/onboarding/splash_onboarding_screen.dart';
+import 'package:spentree/screens/auth/sign_in_screen.dart';
+import 'app_lock.dart';
+import 'core/user_profile.dart';
+import 'core/app_style.dart';
+
+@pragma('vm:entry-point')
+Future<void> backgroundCallback(Uri? uri) async {
+  if (uri?.host == 'sms_received') {
+    await TransactionService().initService();
+  }
+}
+
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
+
+  await Supabase.initialize(
+    url: dotenv.env['SUPABASE_URL']!,
+    publishableKey: dotenv.env['SUPABASE_ANON_KEY']!,
+  );
+
+  Supabase.instance.client.auth.onAuthStateChange.listen((data) async {
+    final event = data.event;
+    final session = data.session;
+
+    if (event == AuthChangeEvent.signedIn && session != null) {
+      navigatorKey.currentState?.pushAndRemoveUntil(
+        MaterialPageRoute(
+          builder: (context) => const LoadingScreen(isAuthFlow: true),
+        ),
+        (route) => false,
+      );
+    }
+  });
+
+  await LocalDatabaseService.initialize();
+  await AppLockController.initialize();
+  await loadSavedTheme();
+  await userProfileNotifier.initialize();
+
+  if (!kIsWeb) {
+    HomeWidget.registerInteractivityCallback(backgroundCallback);
+    await TransactionService().initService();
+    const platform = MethodChannel('spentree_widget_channel');
+    platform.setMethodCallHandler((call) async {
+      if (call.method == "themeChanged") {
+        await TransactionService().syncWidget();
+      }
+    });
+  }
+
+  // Decide the start screen: signed in -> app; signed out but has used the
+  // app before -> sign in directly; brand new device -> onboarding/splash.
+  final session = Supabase.instance.client.auth.currentSession;
+  final prefs = await SharedPreferences.getInstance();
+  final hasCompletedOnboarding =
+      prefs.getBool('has_completed_onboarding') ?? false;
+
+  Widget startScreen;
+  if (session != null) {
+    startScreen = const MainWrapper();
+  } else if (hasCompletedOnboarding) {
+    startScreen = const SignInScreen();
+  } else {
+    startScreen = const SplashOnboardingScreen();
+  }
+  await NotificationService.initialize();
+  if (Platform.isAndroid) await Permission.notification.request();
+
+  runApp(MyApp(startScreen: startScreen));
+}
+
+class MyApp extends StatelessWidget {
+  final Widget startScreen;
+  const MyApp({super.key, required this.startScreen});
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: themeNotifier,
+      builder: (context, currentMode, child) {
+        return MaterialApp(
+          navigatorKey: navigatorKey,
+          debugShowCheckedModeBanner: false,
+          title: 'SpenTree',
+          themeMode: currentMode,
+          theme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: AppColors.primaryGreen,
+              brightness: Brightness.light,
+            ),
+            useMaterial3: true,
+            scaffoldBackgroundColor: AppColors.bgWhite,
+          ),
+          darkTheme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: AppColors.primaryGreen,
+              brightness: Brightness.dark,
+            ),
+            useMaterial3: true,
+            scaffoldBackgroundColor: const Color(0xFF121212),
+          ),
+          home: startScreen,
+          builder: (context, child) {
+            return AppLockWrapper(child: child ?? const SizedBox.shrink());
+          },
+        );
+      },
+    );
+  }
+}
+
 // import 'package:flutter/material.dart';
 // import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 // import 'package:shared_preferences/shared_preferences.dart';
@@ -547,119 +676,3 @@
 //     );
 //   }
 // }
-
-import 'dart:io' show Platform;
-import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:home_widget/home_widget.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:spentree/core/database/local_database_service.dart';
-import 'package:spentree/core/transaction_service.dart';
-import 'package:spentree/screens/main_wrapper.dart';
-import 'package:spentree/screens/onboarding/loading_screen.dart';
-import 'package:spentree/screens/onboarding/splash_onboarding_screen.dart';
-import 'package:spentree/screens/auth/sign_in_screen.dart';
-import 'app_lock.dart';
-import 'core/user_profile.dart';
-import 'core/app_style.dart';
-
-@pragma('vm:entry-point')
-Future<void> backgroundCallback(Uri? uri) async {
-  if (uri?.host == 'sms_received') {
-    await TransactionService().initService();
-  }
-}
-
-final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
-
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await dotenv.load(fileName: ".env");
-
-  await Supabase.initialize(
-    url: dotenv.env['SUPABASE_URL']!,
-    publishableKey: dotenv.env['SUPABASE_ANON_KEY']!,
-  );
-
-  Supabase.instance.client.auth.onAuthStateChange.listen((data) async {
-    final event = data.event;
-    final session = data.session;
-
-    if (event == AuthChangeEvent.signedIn && session != null) {
-      navigatorKey.currentState?.pushAndRemoveUntil(
-        MaterialPageRoute(builder: (context) => const LoadingScreen(isAuthFlow: true)),
-        (route) => false,
-      );
-    }
-  });
-
-  await LocalDatabaseService.initialize();
-  await AppLockController.initialize();
-  await loadSavedTheme();
-  await userProfileNotifier.initialize();
-
-  if (!kIsWeb) {
-    HomeWidget.registerInteractivityCallback(backgroundCallback);
-    await TransactionService().initService();
-    const platform = MethodChannel('spentree_widget_channel');
-    platform.setMethodCallHandler((call) async {
-      if (call.method == "themeChanged") {
-        await TransactionService().syncWidget();
-      }
-    });
-  }
-
-  // Decide the start screen: signed in -> app; signed out but has used the
-  // app before -> sign in directly; brand new device -> onboarding/splash.
-  final session = Supabase.instance.client.auth.currentSession;
-  final prefs = await SharedPreferences.getInstance();
-  final hasCompletedOnboarding = prefs.getBool('has_completed_onboarding') ?? false;
-
-  Widget startScreen;
-  if (session != null) {
-    startScreen = const MainWrapper();
-  } else if (hasCompletedOnboarding) {
-    startScreen = const SignInScreen();
-  } else {
-    startScreen = const SplashOnboardingScreen();
-  }
-
-  runApp(MyApp(startScreen: startScreen));
-}
-
-class MyApp extends StatelessWidget {
-  final Widget startScreen;
-  const MyApp({super.key, required this.startScreen});
-
-  @override
-  Widget build(BuildContext context) {
-    return ValueListenableBuilder<ThemeMode>(
-      valueListenable: themeNotifier,
-      builder: (context, currentMode, child) {
-        return MaterialApp(
-          navigatorKey: navigatorKey,
-          debugShowCheckedModeBanner: false,
-          title: 'SpenTree',
-          themeMode: currentMode,
-          theme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(seedColor: AppColors.primaryGreen, brightness: Brightness.light),
-            useMaterial3: true,
-            scaffoldBackgroundColor: AppColors.bgWhite,
-          ),
-          darkTheme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(seedColor: AppColors.primaryGreen, brightness: Brightness.dark),
-            useMaterial3: true,
-            scaffoldBackgroundColor: const Color(0xFF121212),
-          ),
-          home: startScreen,
-          builder: (context, child) {
-            return AppLockWrapper(child: child ?? const SizedBox.shrink());
-          },
-        );
-      },
-    );
-  }
-}

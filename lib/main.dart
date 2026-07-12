@@ -118,6 +118,9 @@ class MyApp extends StatelessWidget {
             scaffoldBackgroundColor: const Color(0xFF121212),
           ),
           home: startScreen,
+          onGenerateRoute: (settings) => null,
+          onUnknownRoute: (settings) =>
+              MaterialPageRoute(builder: (_) => startScreen),
           builder: (context, child) {
             return AppLockWrapper(child: child ?? const SizedBox.shrink());
           },

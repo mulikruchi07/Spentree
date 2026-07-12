@@ -155,7 +155,7 @@ class UserProfileNotifier extends ValueNotifier<UserProfile> {
         }
         final bytes = base64Decode(b64);
         await Supabase.instance.client.storage
-            .from('avatars')
+            .from('avatar')
             .uploadBinary(
               path,
               bytes,
@@ -166,7 +166,7 @@ class UserProfileNotifier extends ValueNotifier<UserProfile> {
             )
             .timeout(const Duration(seconds: 15));
         final url = Supabase.instance.client.storage
-            .from('avatars')
+            .from('avatar')
             .getPublicUrl(path);
         final bustedUrl =
             '$url?v=${DateTime.now().millisecondsSinceEpoch}'; // avoids stale CDN cache on other devices
@@ -178,7 +178,7 @@ class UserProfileNotifier extends ValueNotifier<UserProfile> {
       } else if (pending == 'delete') {
         try {
           await Supabase.instance.client.storage
-              .from('avatars')
+              .from('avatar')
               .remove([path])
               .timeout(const Duration(seconds: 10));
         } catch (_) {} // fine if it's already gone

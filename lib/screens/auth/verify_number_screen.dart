@@ -14,7 +14,7 @@ import '../auth/change_password_screen.dart';
 class VerifyEmailScreen extends StatefulWidget {
   final String email; // Accept the email from the sign-up screen
   final bool isRecovery; // Add this flag
-  final bool isEmailChange;  
+  final bool isEmailChange;
 
   const VerifyEmailScreen({
     super.key,
@@ -86,10 +86,13 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
         return;
       }
       await Supabase.instance.client.auth.verifyOTP(
-        type: widget.isRecovery ? OtpType.recovery : OtpType.signup,
-        token: otp,
         email: widget.email,
+        token: otp,
+        type: widget.isEmailChange
+            ? OtpType.emailChange
+            : (widget.isRecovery ? OtpType.recovery : OtpType.signup),
       );
+
       if (mounted) Navigator.pop(context, true);
     } on AuthException catch (e) {
       setState(() {
@@ -120,7 +123,9 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
         return;
       }
       await Supabase.instance.client.auth.resend(
-        type: OtpType.signup,
+        type: widget.isEmailChange
+            ? OtpType.emailChange
+            : (widget.isRecovery ? OtpType.recovery : OtpType.signup),
         email: widget.email,
       );
       if (mounted) {
@@ -131,21 +136,27 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
         _startCooldown(60);
       }
     } on AuthException catch (e) {
-      final seconds = RegExp(
-        r'(\d+) second',
-      ).firstMatch(mapAuthError(e))?.group(1);
-      setState(() {
-        _statusMessage = seconds != null
-            ? "You can request a new code after $seconds seconds for security reasons."
-            : mapAuthError(e);
-        _isError = true;
-      });
-      if (seconds != null) _startCooldown(int.parse(seconds));
-    } catch (e) {
-      setState(() {
-        _statusMessage = "Couldn't resend the code. Please try again.";
-        _isError = true;
-      });
+      final msg = e.message.toLowerCase();
+      final seconds = RegExp(r'(\d+) second').firstMatch(e.message)?.group(1);
+      if (seconds != null) {
+        setState(() {
+          _statusMessage =
+              "You can request a new code after $seconds seconds for security reasons.";
+          _isError = true;
+        });
+        _startCooldown(int.parse(seconds));
+      } else if (msg.contains('rate limit') || msg.contains('too many')) {
+        setState(() {
+          _statusMessage =
+              "Too many attempts. Please wait a few minutes and try again.";
+          _isError = true;
+        });
+      } else {
+        setState(() {
+          _statusMessage = e.message;
+          _isError = true;
+        });
+      }
     }
   }
 

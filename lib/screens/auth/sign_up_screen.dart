@@ -29,8 +29,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
-  bool _isChecked = false;
-  bool _showTermsError = false;
   bool _isLoading = false; // Added loading state
 
   // Errors
@@ -55,7 +53,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
       _passwordError = null;
       _confirmPasswordError = null;
       _offlineError = null;
-      _showTermsError = false;
     });
 
     bool isValid = true;
@@ -91,14 +88,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
       setState(() => _confirmPasswordError = "Passwords do not match");
       isValid = false;
     }
-    if (!_isChecked) {
-      setState(() => _showTermsError = true);
-      Future.delayed(const Duration(seconds: 3), () {
-        if (mounted) setState(() => _showTermsError = false);
-      });
-      isValid = false;
-    }
-
     if (isValid) {
       setState(() => _isLoading = true);
       try {
@@ -246,213 +235,136 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
                         SizedBox(height: inputTermsGap),
 
-                        // --- COMBINED STACK FOR TERMS AND BUTTON ---
-                        // This Stack ensures the Tooltip (defined last) paints ON TOP of the button.
-                        Stack(
-                          clipBehavior: Clip.none,
+                        // --- TERMS AND BUTTON ---
+                        Column(
                           children: [
-                            // LAYER 1: Content (Terms -> Gap -> Button)
-                            Column(
-                              children: [
-                                // Terms Row
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    GestureDetector(
-                                      onTap: () {
-                                        setState(() {
-                                          _isChecked = !_isChecked;
-                                          if (_isChecked)
-                                            _showTermsError = false;
-                                        });
-                                      },
-                                      child: AnimatedContainer(
-                                        duration: const Duration(
-                                          milliseconds: 200,
-                                        ),
-                                        width: 22,
-                                        height: 22,
-                                        margin: const EdgeInsets.only(top: 2),
-                                        decoration: BoxDecoration(
-                                          color: _isChecked
-                                              ? AppColors.primaryGreen
-                                              : AppColors.inputFill,
-                                          borderRadius: BorderRadius.circular(
-                                            6,
-                                          ),
-                                        ),
-                                        child: _isChecked
-                                            ? Icon(
-                                                Icons.check,
-                                                size: 16,
-                                                color: AppColors.colwhite,
-                                              )
-                                            : null,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: RichText(
-                                        text: TextSpan(
-                                          style: GoogleFonts.poppins(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w400,
-                                            color: AppColors.grey800,
-                                          ),
-                                          children: [
-                                            TextSpan(text: "I agree to the "),
-                                            TextSpan(
-                                              text: "terms and conditions",
-                                              style: const TextStyle(
-                                                color: AppColors.primaryGreen,
-                                              ),
-                                              recognizer: TapGestureRecognizer()
-                                                ..onTap = () {
-                                                  Navigator.push(
-                                                    context,
-                                                    MaterialPageRoute(
-                                                      builder: (context) =>
-                                                          const TermsScreen(),
-                                                    ),
-                                                  );
-                                                },
-                                            ),
-                                            TextSpan(text: " and "),
-                                            TextSpan(
-                                              text: "Privacy Policy",
-                                              style: const TextStyle(
-                                                color: AppColors.primaryGreen,
-                                              ),
-                                              recognizer: TapGestureRecognizer()
-                                                ..onTap = () {
-                                                  Navigator.push(
-                                                    context,
-                                                    MaterialPageRoute(
-                                                      builder: (context) =>
-                                                          const PrivacyScreen(),
-                                                    ),
-                                                  );
-                                                },
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                if (_offlineError != null)
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 8),
-                                    child: Align(
-                                      alignment: Alignment.centerLeft,
-                                      child: Text(
-                                        _offlineError!,
-                                        style: GoogleFonts.poppins(
-                                          color: AppColors.errorRed,
-                                          fontSize: 12,
-                                        ),
-                                      ),
-                                    ),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                              ),
+                              child: RichText(
+                                textAlign: TextAlign.center,
+                                text: TextSpan(
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w400,
+                                    color: AppColors.grey700,
+                                    height: 1.5,
                                   ),
-
-                                SizedBox(height: termsButtonGap),
-
-                                // Create Account Button
-                                SizedBox(
-                                  width: double.infinity,
-                                  height: componentHeight,
-                                  child: ElevatedButton(
-                                    onPressed: _validateAndSubmit,
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: AppColors.primaryGreen,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(
-                                          cornerRadius,
-                                        ),
-                                      ),
-                                      elevation: 0,
-                                    ),
-                                    child: _isLoading
-                                        ? SizedBox(
-                                            height: 24,
-                                            width: 24,
-                                            child: CircularProgressIndicator(
-                                              color: AppColors.colwhite,
-                                              strokeWidth: 2,
-                                            ),
-                                          )
-                                        : Text(
-                                            "Create Account",
-                                            style: GoogleFonts.poppins(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.w500,
-                                              color: AppColors.colwhite,
-                                            ),
-                                          ),
-                                  ),
-                                ),
-                              ],
-                            ),
-
-                            // LAYER 2: Tooltip (Floating on top)
-                            if (_showTermsError)
-                              Positioned(
-                                left: -5,
-                                top: 35, // Pushes it down over the button
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Padding(
-                                      padding: const EdgeInsets.only(left: 12),
-                                      child: CustomPaint(
-                                        size: const Size(12, 8),
-                                        painter: _ArrowPainter(),
-                                      ),
+                                    const TextSpan(
+                                      text:
+                                          "By creating an account, you agree to our ",
                                     ),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 12,
-                                        vertical: 8,
+                                    TextSpan(
+                                      text: "Terms of Service",
+                                      style: const TextStyle(
+                                        color: AppColors.primaryGreen,
+                                        fontWeight: FontWeight.w500,
                                       ),
-                                      decoration: BoxDecoration(
-                                        color: AppColors.colwhite,
-                                        borderRadius: BorderRadius.circular(8),
-                                        border: Border.all(
-                                          color: const Color(
-                                            0xFFFFAB40,
-                                          ).withOpacity(0.5),
-                                        ),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: AppColors.colblack
-                                                .withOpacity(0.1),
-                                            blurRadius: 10,
-                                            offset: const Offset(0, 4),
-                                          ),
-                                        ],
-                                      ),
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          const Icon(
-                                            Icons.info_outline,
-                                            size: 16,
-                                            color: Colors.orange,
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Text(
-                                            "Please check this box to proceed.",
-                                            style: GoogleFonts.poppins(
-                                              fontSize: 12,
-                                              color: AppColors.colblack,
+                                      recognizer: TapGestureRecognizer()
+                                        ..onTap = () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (_) =>
+                                                  const TermsScreen(),
                                             ),
-                                          ),
-                                        ],
-                                      ),
+                                          );
+                                        },
                                     ),
+                                    const TextSpan(text: ", "),
+                                    TextSpan(
+                                      text: "Privacy Policy",
+                                      style: const TextStyle(
+                                        color: AppColors.primaryGreen,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                      recognizer: TapGestureRecognizer()
+                                        ..onTap = () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (_) =>
+                                                  const PrivacyScreen(),
+                                            ),
+                                          );
+                                        },
+                                    ),
+                                    const TextSpan(text: ", and "),
+                                    TextSpan(
+                                      text: "End User License Agreement",
+                                      style: const TextStyle(
+                                        color: AppColors.primaryGreen,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                      recognizer: TapGestureRecognizer()
+                                        ..onTap = () {
+                                          // Temporarily open TermsScreen until EulaScreen is created.
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (_) =>
+                                                  const TermsScreen(),
+                                            ),
+                                          );
+                                        },
+                                    ),
+                                    const TextSpan(text: "."),
                                   ],
                                 ),
                               ),
+                            ),
+                            if (_offlineError != null)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 8),
+                                child: Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: Text(
+                                    _offlineError!,
+                                    style: GoogleFonts.poppins(
+                                      color: AppColors.errorRed,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ),
+                              ),
+
+                            SizedBox(height: termsButtonGap),
+
+                            SizedBox(
+                              width: double.infinity,
+                              height: componentHeight,
+                              child: ElevatedButton(
+                                onPressed: _validateAndSubmit,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.primaryGreen,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(
+                                      cornerRadius,
+                                    ),
+                                  ),
+                                  elevation: 0,
+                                ),
+                                child: _isLoading
+                                    ? SizedBox(
+                                        height: 24,
+                                        width: 24,
+                                        child: CircularProgressIndicator(
+                                          color: AppColors.colwhite,
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    : Text(
+                                        "Create Account",
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w500,
+                                          color: AppColors.colwhite,
+                                        ),
+                                      ),
+                              ),
+                            ),
                           ],
                         ),
 
@@ -544,7 +456,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       ),
                     ),
                   ]
-                  : null,
+                : null,
             style: GoogleFonts.poppins(
               fontSize: 15,
               color: AppColors.colblack,
@@ -593,40 +505,4 @@ class _SignUpScreenState extends State<SignUpScreen> {
       ],
     );
   }
-}
-
-class _ArrowPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = AppColors.colwhite
-      ..style = PaintingStyle.fill;
-
-    final borderPaint = Paint()
-      ..color = const Color(0xFFFFAB40).withOpacity(0.5)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1;
-
-    final path = Path();
-    path.moveTo(0, size.height);
-    path.lineTo(size.width / 2, 0);
-    path.lineTo(size.width, size.height);
-    path.close();
-
-    canvas.drawPath(path, paint);
-
-    canvas.drawLine(
-      Offset(0, size.height),
-      Offset(size.width / 2, 0),
-      borderPaint,
-    );
-    canvas.drawLine(
-      Offset(size.width / 2, 0),
-      Offset(size.width, size.height),
-      borderPaint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

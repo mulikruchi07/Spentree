@@ -4,6 +4,11 @@ import 'package:spentree/core/app_style.dart';
 import 'package:spentree/screens/auth/sign_in_screen.dart';
 import 'package:spentree/screens/auth/sign_up_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter/gestures.dart';
+import 'package:spentree/screens/profile/terms_screen.dart';
+import 'package:spentree/screens/profile/privacy_screen.dart';
+// Temporary until EulaScreen exists
+// import 'package:spentree/screens/legal/eula_screen.dart';
 
 class AuthLandingScreen extends StatelessWidget {
   const AuthLandingScreen({super.key});
@@ -90,7 +95,78 @@ class AuthLandingScreen extends StatelessWidget {
                     ],
                   ),
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 26),
+
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: RichText(
+                      textAlign: TextAlign.center,
+                      text: TextSpan(
+                        style: GoogleFonts.poppins(
+                          fontSize: 12.5,
+                          color: AppColors.grey700,
+                          height: 1.5,
+                        ),
+                        children: [
+                          const TextSpan(
+                            text: "By creating an account, you agree to our ",
+                          ),
+                          TextSpan(
+                            text: "Terms of Service",
+                            style: const TextStyle(
+                              color: AppColors.primaryGreen,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            recognizer: TapGestureRecognizer()
+                              ..onTap = () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const TermsScreen(),
+                                  ),
+                                );
+                              },
+                          ),
+                          const TextSpan(text: ", "),
+                          TextSpan(
+                            text: "Privacy Policy",
+                            style: const TextStyle(
+                              color: AppColors.primaryGreen,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            recognizer: TapGestureRecognizer()
+                              ..onTap = () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const PrivacyScreen(),
+                                  ),
+                                );
+                              },
+                          ),
+                          const TextSpan(text: ", and "),
+                          TextSpan(
+                            text: "End User License Agreement",
+                            style: const TextStyle(
+                              color: AppColors.primaryGreen,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            recognizer: TapGestureRecognizer()
+                              ..onTap = () {
+                                // Temporary until EulaScreen is created.
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const TermsScreen(),
+                                  ),
+                                );
+                              },
+                          ),
+                          const TextSpan(text: "."),
+                        ],
+                      ),
+                    ),
+                  ),
 
                   // SOCIAL BUTTONS
                   _buildSocialButton(
@@ -98,13 +174,13 @@ class AuthLandingScreen extends StatelessWidget {
                     label: "Continue using Google",
                     onTap: () => _signInWithOAuth(OAuthProvider.google),
                   ),
-                  const SizedBox(height: 16),
-                  _buildSocialButton(
-                    imagePath: 'assets/images/apple.png',
-                    label: "Continue using Apple",
-                    onTap: () => _signInWithOAuth(OAuthProvider.apple),
-                  ),
 
+                  // const SizedBox(height: 16),
+                  // _buildSocialButton(
+                  //   imagePath: 'assets/images/apple.png',
+                  //   label: "Continue using Apple",
+                  //   onTap: () => _signInWithOAuth(OAuthProvider.apple),
+                  // ),
                   const Spacer(flex: 2),
                 ],
               ),
@@ -177,14 +253,14 @@ class AuthLandingScreen extends StatelessWidget {
   }
 
   Future<void> _signInWithOAuth(OAuthProvider provider) async {
-  try {
-    await Supabase.instance.client.auth.signInWithOAuth(
-      provider,   // ← was hardcoded to OAuthProvider.google
-      redirectTo: 'spentree://login-callback',
-      authScreenLaunchMode: LaunchMode.inAppWebView,
-    );
-  } catch (e) {
-    debugPrint("Social Auth Error: $e");
+    try {
+      await Supabase.instance.client.auth.signInWithOAuth(
+        provider, // ← was hardcoded to OAuthProvider.google
+        redirectTo: 'spentree://login-callback',
+        authScreenLaunchMode: LaunchMode.inAppWebView,
+      );
+    } catch (e) {
+      debugPrint("Social Auth Error: $e");
+    }
   }
-}
 }

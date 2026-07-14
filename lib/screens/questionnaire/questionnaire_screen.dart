@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:spentree/screens/main_wrapper.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/app_style.dart';
 import 'package:flutter/services.dart';
 import '../onboarding/loading_screen.dart';
@@ -451,20 +450,9 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
                               RegExp(r'[^0-9]'),
                               '',
                             )
-                          : "5000";
+                          : "500";
 
-                      // 1. Save to Supabase
-                      final user = Supabase.instance.client.auth.currentUser;
-                      if (user != null) {
-                        await Supabase.instance.client.from('users').upsert({
-                          'id': user.id,
-                          'daily_limit': int.tryParse(limitValue) ?? 5000,
-                          'category_preference': _selectedCategory,
-                          'goal': _selectedGoal,
-                        });
-                      }
-
-                      // 2. Save locally
+                      // Save locally; authenticated sync happens later in LoadingScreen.
                       await UserData.saveQuestionnaireData(
                         dailyLimitValue: limitValue,
                         category: _selectedCategory ?? "",

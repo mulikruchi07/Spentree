@@ -13,6 +13,6 @@ class RedirectActivity : Activity() {
             flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
         }
         startActivity(forward)
-        finish()
+        finishAndRemoveTask()
     }
 }

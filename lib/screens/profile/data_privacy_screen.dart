@@ -8,6 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:spentree/core/error_helper.dart';
 import 'package:spentree/core/transaction_service.dart';
+import 'package:spentree/screens/onboarding/sms_permission_screen.dart';
 import 'package:spentree/screens/profile/hide_transactions_screen.dart';
 import 'delete_transactions_screen.dart';
 import 'privacy_screen.dart';
@@ -473,41 +474,50 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
   }
 
   Future<_ExportResult> _performExport(DateTime start, DateTime? endRaw) async {
-  final end = endRaw ?? start;
-  final startDay = DateTime(start.year, start.month, start.day);
-  final endDay = DateTime(end.year, end.month, end.day, 23, 59, 59);
+    final end = endRaw ?? start;
+    final startDay = DateTime(start.year, start.month, start.day);
+    final endDay = DateTime(end.year, end.month, end.day, 23, 59, 59);
 
-  final rows = TransactionService().allTransactions.where((tx) =>
-      !tx.isHidden &&
-      !tx.isDeleted &&
-      !tx.dateTime.isBefore(startDay) &&
-      !tx.dateTime.isAfter(endDay)).toList()
-    ..sort((a, b) => a.dateTime.compareTo(b.dateTime));
+    final rows =
+        TransactionService().allTransactions
+            .where(
+              (tx) =>
+                  !tx.isHidden &&
+                  !tx.isDeleted &&
+                  !tx.dateTime.isBefore(startDay) &&
+                  !tx.dateTime.isAfter(endDay),
+            )
+            .toList()
+          ..sort((a, b) => a.dateTime.compareTo(b.dateTime));
 
-  if (rows.isEmpty) return _ExportResult.empty;
+    if (rows.isEmpty) return _ExportResult.empty;
 
-  final buffer = StringBuffer();
-  buffer.writeln('Sr. No.,Receiver Name,Category,Amount,Date,Time');
-  int i = 1;
-  for (final tx in rows) {
-    final date = DateFormat('dd-MM-yyyy').format(tx.dateTime);
-    final time = DateFormat('hh:mm a').format(tx.dateTime);
-    final name = tx.receiverName.replaceAll(',', ' ');
-    buffer.writeln('$i,$name,${tx.category},${tx.amount},$date,$time');
-    i++;
+    final buffer = StringBuffer();
+    buffer.writeln('Sr. No.,Receiver Name,Category,Amount,Date,Time');
+    int i = 1;
+    for (final tx in rows) {
+      final date = DateFormat('dd-MM-yyyy').format(tx.dateTime);
+      final time = DateFormat('hh:mm a').format(tx.dateTime);
+      final name = tx.receiverName.replaceAll(',', ' ');
+      buffer.writeln('$i,$name,${tx.category},${tx.amount},$date,$time');
+      i++;
+    }
+
+    try {
+      final dir = await getTemporaryDirectory();
+      final file = File(
+        '${dir.path}/spentree_export_${DateTime.now().millisecondsSinceEpoch}.csv',
+      );
+      await file.writeAsString(buffer.toString());
+      await Share.shareXFiles([
+        XFile(file.path),
+      ], text: 'Your Spentree transaction export');
+      return _ExportResult.success;
+    } catch (e) {
+      debugPrint("Export error: $e");
+      return _ExportResult.failed;
+    }
   }
-
-  try {
-    final dir = await getTemporaryDirectory();
-    final file = File('${dir.path}/spentree_export_${DateTime.now().millisecondsSinceEpoch}.csv');
-    await file.writeAsString(buffer.toString());
-    await Share.shareXFiles([XFile(file.path)], text: 'Your Spentree transaction export');
-    return _ExportResult.success;
-  } catch (e) {
-    debugPrint("Export error: $e");
-    return _ExportResult.failed;
-  }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -604,6 +614,20 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
                     "Change Limit",
                     "Manage your transactions",
                     _handleChangeLimit,
+                  ),
+                  _buildTile(
+                    PhosphorIconsRegular.chatCircleText,
+                    "SMS Permission",
+                    "Manage automatic expense detection",
+                    () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              const SmsPermissionScreen(isOnboarding: false),
+                        ),
+                      );
+                    },
                   ),
                   _buildTile(
                     PhosphorIconsRegular.shieldCheck,

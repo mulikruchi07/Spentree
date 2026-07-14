@@ -730,9 +730,6 @@ class TransactionService extends ChangeNotifier {
     }
 
     var status = await Permission.sms.status;
-    if (!status.isGranted) {
-      await Permission.sms.request();
-    }
 
     await _loadFromLocal();
     await userProfileNotifier.retryPendingSync();
@@ -795,6 +792,16 @@ class TransactionService extends ChangeNotifier {
 
   /// 3. THE ULTIMATE SMS PARSER
   Future<void> _fetchAndParseSms() async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    final consent = prefs.getString('sms_permission_decision_${user.id}');
+    if (consent != 'granted')
+      return; // this account never consented — never fetch, regardless of OS state
+
+    final status = await Permission.sms.status;
+    if (!status.isGranted) return;
     try {
       final List<dynamic> result = await _channel.invokeMethod('getAllSms');
       final isar = LocalDatabaseService.isar;

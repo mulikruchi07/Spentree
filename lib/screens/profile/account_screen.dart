@@ -8,6 +8,7 @@ import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:spentree/app_lock.dart';
+import 'package:spentree/core/auth_helper.dart';
 import 'package:spentree/core/auth_landing_screen.dart';
 import 'package:spentree/core/error_helper.dart';
 import 'package:spentree/screens/auth/sign_in_screen.dart';
@@ -65,6 +66,8 @@ class _AccountScreenState extends State<AccountScreen>
 
   bool _isCheckingEmail = false;
 
+  String _plantingSince = "";
+
   @override
   void initState() {
     super.initState();
@@ -79,6 +82,7 @@ class _AccountScreenState extends State<AccountScreen>
     _loadSettings();
     _refreshNotificationToggleState();
     _loadNameFromDatabase();
+    _loadPlantingSince();
   }
 
   @override
@@ -95,6 +99,37 @@ class _AccountScreenState extends State<AccountScreen>
     if (state == AppLifecycleState.resumed) {
       _refreshNotificationToggleState();
     }
+  }
+
+  void _loadPlantingSince() {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) return;
+
+    final created = DateTime.parse(user.createdAt).toLocal();
+
+    setState(() {
+      _plantingSince =
+          "Planting since ${_monthName(created.month)} ${created.year}";
+    });
+  }
+
+  String _monthName(int month) {
+    const months = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ];
+
+    return months[month - 1];
   }
 
   Future<void> _loadNameFromDatabase() async {
@@ -217,22 +252,23 @@ class _AccountScreenState extends State<AccountScreen>
   }
 
   Future<void> _unlinkStaleGoogleIdentity() async {
-  try {
-    final identities = await Supabase.instance.client.auth.getUserIdentities();
-    UserIdentity? googleIdentity;
-    for (final identity in identities) {
-      if (identity.provider == 'google') {
-        googleIdentity = identity;
-        break;
+    try {
+      final identities = await Supabase.instance.client.auth
+          .getUserIdentities();
+      UserIdentity? googleIdentity;
+      for (final identity in identities) {
+        if (identity.provider == 'google') {
+          googleIdentity = identity;
+          break;
+        }
       }
+      if (googleIdentity != null) {
+        await Supabase.instance.client.auth.unlinkIdentity(googleIdentity);
+      }
+    } catch (e) {
+      debugPrint("Couldn't unlink stale Google identity: $e");
     }
-    if (googleIdentity != null) {
-      await Supabase.instance.client.auth.unlinkIdentity(googleIdentity);
-    }
-  } catch (e) {
-    debugPrint("Couldn't unlink stale Google identity: $e");
   }
-}
 
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
@@ -836,7 +872,7 @@ class _AccountScreenState extends State<AccountScreen>
                                 })
                                 .eq('id', user.id)
                                 .timeout(const Duration(seconds: 10));
-                            await Supabase.instance.client.auth.signOut();
+                            await AuthHelper.signOutEverywhere();
                           },
                         );
                         if (confirmed == true && mounted) {
@@ -878,7 +914,7 @@ class _AccountScreenState extends State<AccountScreen>
                               );
                             }
 
-                            await Supabase.instance.client.auth.signOut();
+                            await AuthHelper.signOutEverywhere();
                             final prefs = await SharedPreferences.getInstance();
                             await prefs.clear();
                           },
@@ -998,7 +1034,7 @@ class _AccountScreenState extends State<AccountScreen>
                 overflow: TextOverflow.ellipsis,
               ),
               Text(
-                "Planting since January 2025",
+                _plantingSince,
                 style: GoogleFonts.montserrat(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -1440,7 +1476,8 @@ class _AccountScreenState extends State<AccountScreen>
         ),
         const SizedBox(height: 4),
         GestureDetector(
-          onTap: () => _launchURL("www.linkedin.com/in/ruchi-mulik-816a2b295"),
+          onTap: () =>
+              _launchURL("https://in.linkedin.com/in/ruchi-mulik-816a2b295"),
           child: RichText(
             text: TextSpan(
               style: GoogleFonts.poppins(

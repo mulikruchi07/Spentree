@@ -16,6 +16,7 @@ class LocalDatabaseService {
     isar = await Isar.open(
       [LocalTransactionSchema],
       directory: dir.path,
+      inspector: false,
     );
     
     _isInitialized = true;

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/app_style.dart';
@@ -95,11 +95,11 @@ class _SmsPermissionScreenState extends State<SmsPermissionScreen>
   }
 
   Future<void> _persistDecision(bool granted) async {
-  final key = await _decisionKey();
-  final prefs = await SharedPreferences.getInstance();
-  await prefs.setString(key, granted ? 'granted' : 'manual');
-  await prefs.setBool('has_seen_sms_permission_screen', true);
-}
+    final key = await _decisionKey();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(key, granted ? 'granted' : 'manual');
+    await prefs.setBool('has_seen_sms_permission_screen', true);
+  }
 
   void _proceedIfOnboarding() {
     if (!widget.isOnboarding || !mounted) return;
@@ -241,7 +241,7 @@ class _SmsPermissionScreenState extends State<SmsPermissionScreen>
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
-                      Icons.settings_rounded,
+                      PhosphorIconsRegular.warning,
                       color: AppColors.colwhite,
                       size: 32,
                     ),
@@ -353,7 +353,7 @@ class _SmsPermissionScreenState extends State<SmsPermissionScreen>
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
-                      Icons.sms_failed_rounded,
+                      PhosphorIconsRegular.warning,
                       color: AppColors.colwhite,
                       size: 32,
                     ),
@@ -460,170 +460,153 @@ class _SmsPermissionScreenState extends State<SmsPermissionScreen>
       builder: (context, currentTheme, child) {
         final isDark = Theme.of(context).brightness == Brightness.dark;
 
-        return AnnotatedRegion<SystemUiOverlayStyle>(
-          value: SystemUiOverlayStyle(
-            statusBarColor: Colors.transparent,
-            statusBarIconBrightness: isDark
-                ? Brightness.light
-                : Brightness.dark,
-            statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
-            systemNavigationBarColor: AppColors.bgWhite,
-            systemNavigationBarDividerColor: AppColors.bgWhite,
-            systemNavigationBarIconBrightness: isDark
-                ? Brightness.light
-                : Brightness.dark,
-            systemNavigationBarContrastEnforced: true,
-          ),
-          child: PopScope(
-            canPop: !_isProcessing,
-            child: Scaffold(
-              backgroundColor: AppColors.bgWhite,
-              body: SafeArea(
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (widget.isOnboarding) const SizedBox(height: 24),
-                          Center(
-                            child: Text(
-                              "SMS Permission",
-                              style: GoogleFonts.poppins(
-                                fontSize: 30,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.primaryGreen,
-                              ),
+        return PopScope(
+          canPop: !_isProcessing,
+          child: Scaffold(
+            backgroundColor: AppColors.bgWhite,
+            body: SafeArea(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (widget.isOnboarding) const SizedBox(height: 24),
+                        Center(
+                          child: Text(
+                            "SMS Permission",
+                            style: GoogleFonts.poppins(
+                              fontSize: 30,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.primaryGreen,
                             ),
                           ),
-                          const SizedBox(height: 10),
-                          Center(
-                            child: Text(
-                              "Understand why we need SMS access\nbefore you decide.",
-                              textAlign: TextAlign.center,
-                              style: GoogleFonts.poppins(
-                                fontSize: 14,
-                                color: AppColors.grey700,
-                                height: 1.5,
-                              ),
+                        ),
+                        const SizedBox(height: 10),
+                        Center(
+                          child: Text(
+                            "Understand why we need SMS access\nbefore you decide.",
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.poppins(
+                              fontSize: 14,
+                              color: AppColors.grey700,
+                              height: 1.5,
                             ),
                           ),
-                          const SizedBox(height: 20),
+                        ),
+                        const SizedBox(height: 20),
 
-                          // --- SCROLLABLE CONTENT BOX (only this part scrolls) ---
-                          Expanded(
-                            child: Stack(
-                              children: [
-                                Positioned.fill(
-                                  child: SingleChildScrollView(
-                                    controller: _scrollController,
-                                    physics: const BouncingScrollPhysics(),
-                                    padding: const EdgeInsets.only(bottom: 20),
-                                    child: _buildScrollableContent(),
-                                  ),
+                        // --- SCROLLABLE CONTENT BOX (only this part scrolls) ---
+                        Expanded(
+                          child: Stack(
+                            children: [
+                              Positioned.fill(
+                                child: SingleChildScrollView(
+                                  controller: _scrollController,
+                                  physics: const BouncingScrollPhysics(),
+                                  padding: const EdgeInsets.only(bottom: 20),
+                                  child: _buildScrollableContent(),
                                 ),
-                                if (_showBottomFade)
-                                  Positioned(
-                                    left: 0,
-                                    right: 0,
-                                    bottom: 0,
-                                    child: IgnorePointer(
-                                      child: Container(
-                                        height: 36,
-                                        decoration: BoxDecoration(
-                                          gradient: LinearGradient(
-                                            begin: Alignment.bottomCenter,
-                                            end: Alignment.topCenter,
-                                            colors: [
-                                              AppColors.bgWhite,
-                                              AppColors.bgWhite.withOpacity(
-                                                0.0,
-                                              ),
-                                            ],
-                                          ),
+                              ),
+                              if (_showBottomFade)
+                                Positioned(
+                                  left: 0,
+                                  right: 0,
+                                  bottom: 0,
+                                  child: IgnorePointer(
+                                    child: Container(
+                                      height: 36,
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          begin: Alignment.bottomCenter,
+                                          end: Alignment.topCenter,
+                                          colors: [
+                                            AppColors.bgWhite,
+                                            AppColors.bgWhite.withOpacity(0.0),
+                                          ],
                                         ),
                                       ),
                                     ),
                                   ),
-                              ],
-                            ),
-                          ),
-
-                          const SizedBox(height: 12),
-
-                          // --- FIXED: consent checkbox / permission status ---
-                          _buildCheckboxRow(),
-
-                          const SizedBox(height: 16),
-
-                          // --- FIXED: buttons ---
-                          SizedBox(
-                            width: double.infinity,
-                            height: 56,
-                            child: ElevatedButton(
-                              onPressed: _isProcessing ? null : _handleAllowTap,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.primaryGreen,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14),
                                 ),
-                                elevation: 0,
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        // --- FIXED: consent checkbox / permission status ---
+                        _buildCheckboxRow(),
+
+                        const SizedBox(height: 16),
+
+                        // --- FIXED: buttons ---
+                        SizedBox(
+                          width: double.infinity,
+                          height: 56,
+                          child: ElevatedButton(
+                            onPressed: _isProcessing ? null : _handleAllowTap,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primaryGreen,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
                               ),
-                              child: _isProcessing
-                                  ? SizedBox(
-                                      height: 22,
-                                      width: 22,
-                                      child: CircularProgressIndicator(
-                                        color: AppColors.colwhite,
-                                        strokeWidth: 2,
-                                      ),
-                                    )
-                                  : Text(
-                                      "Allow SMS access",
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w500,
-                                        color: AppColors.colwhite,
-                                      ),
+                              elevation: 0,
+                            ),
+                            child: _isProcessing
+                                ? SizedBox(
+                                    height: 22,
+                                    width: 22,
+                                    child: CircularProgressIndicator(
+                                      color: AppColors.colwhite,
+                                      strokeWidth: 2,
                                     ),
+                                  )
+                                : Text(
+                                    "Allow SMS access",
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500,
+                                      color: AppColors.colwhite,
+                                    ),
+                                  ),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 56,
+                          child: ElevatedButton(
+                            onPressed: _isProcessing
+                                ? null
+                                : _handleManualEntryTap,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.inputFill,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              elevation: 0,
+                            ),
+                            child: Text(
+                              "Continue with Manual Entry",
+                              style: GoogleFonts.poppins(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                                color: AppColors.primaryGreen,
+                              ),
                             ),
                           ),
-                          const SizedBox(height: 12),
-                          SizedBox(
-                            width: double.infinity,
-                            height: 56,
-                            child: ElevatedButton(
-                              onPressed: _isProcessing
-                                  ? null
-                                  : _handleManualEntryTap,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.inputFill,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
-                                elevation: 0,
-                              ),
-                              child: Text(
-                                "Continue with Manual Entry",
-                                style: GoogleFonts.poppins(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w500,
-                                  color: AppColors.primaryGreen,
-                                ),
-                              ),
-                            ),
-                          ),
-                          SizedBox(
-                            height: MediaQuery.of(context).padding.bottom > 0
-                                ? 8
-                                : 16,
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
+                        ),
+                        SizedBox(
+                          height: MediaQuery.of(context).padding.bottom > 0
+                              ? 8
+                              : 16,
+                        ),
+                      ],
+                    ),
+                  );
+                },
               ),
             ),
           ),
@@ -682,7 +665,7 @@ class _SmsPermissionScreenState extends State<SmsPermissionScreen>
                 Text(
                   "Permission Required",
                   style: GoogleFonts.poppins(
-                    fontSize: 22,
+                    fontSize: 12,
                     fontWeight: FontWeight.w600,
                     color: AppColors.errorRed,
                   ),
@@ -691,7 +674,7 @@ class _SmsPermissionScreenState extends State<SmsPermissionScreen>
                 Text(
                   "SMS permission is disabled in Android Settings until access is given again.",
                   style: GoogleFonts.poppins(
-                    fontSize: 14,
+                    fontSize: 12,
                     fontWeight: FontWeight.w400,
                     color: AppColors.errorRed,
                     height: 1.4,

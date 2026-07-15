@@ -324,7 +324,7 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
                 SizedBox(width: 12 * scale),
                 _buildQuickButton("1000", scale),
                 SizedBox(width: 12 * scale),
-                _buildQuickButton("5000", scale),
+                _buildQuickButton("500", scale),
               ],
             ),
           ),
@@ -524,7 +524,11 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
     return Expanded(
       child: GestureDetector(
         onTap: () {
-          _amountController.text = amount;
+          final current = int.tryParse(_amountController.text.trim()) ?? 0;
+          final add = int.parse(amount);
+
+          _amountController.text = (current + add).toString();
+
           setState(() => _inlineError = null);
         },
         child: Container(
@@ -534,13 +538,20 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
             color: AppColors.inputFill,
             borderRadius: BorderRadius.circular(5),
           ),
-          child: Text(
-            "Rs. $amount",
-            style: GoogleFonts.montserrat(
-              fontWeight: FontWeight.w500,
-              color: AppColors.white600,
-              fontSize: 14 * scale,
-            ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.add, size: 16 * scale, color: AppColors.white600),
+              const SizedBox(width: 4),
+              Text(
+                "Rs. $amount",
+                style: GoogleFonts.montserrat(
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.white600,
+                  fontSize: 14 * scale,
+                ),
+              ),
+            ],
           ),
         ),
       ),

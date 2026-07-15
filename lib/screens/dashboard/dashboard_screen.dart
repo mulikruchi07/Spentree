@@ -37,7 +37,7 @@
 //     int? parsedLimit = int.tryParse(
 //       UserData.dailyLimit.replaceAll(RegExp(r'[^0-9]'), ''),
 //     );
-//     limit = parsedLimit ?? 5000;
+//     limit = parsedLimit ?? 500;
 //     pendingLimit = limit - todayExpense;
 //   }
 
@@ -747,6 +747,7 @@ import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // Added for weekly limit check
 import 'package:spentree/core/database/local_transaction.dart';
 import 'package:spentree/core/error_helper.dart';
@@ -838,6 +839,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
     super.initState();
     _today = DateTime.now();
     _focusedDate = _today;
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => _requestFirstTimePermissions(),
+    );
     _loadLimit();
     TransactionService().syncWidget(); // NEW
     TransactionService().addListener(_onDataChanged);
@@ -853,6 +857,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (mounted) setState(() {});
   }
 
+  Future<void> _requestFirstTimePermissions() async {
+    final prefs = await SharedPreferences.getInstance();
+    final hasAskedNotifications =
+        prefs.getBool('has_asked_notification_permission') ?? false;
+    if (!hasAskedNotifications) {
+      await Permission.notification.request();
+      await prefs.setBool('has_asked_notification_permission', true);
+    }
+  }
+
   // --- LIMIT MANAGEMENT ---
   Future<void> _loadLimit() async {
     final prefs = await SharedPreferences.getInstance();
@@ -865,7 +879,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         int? parsedLimit = int.tryParse(
           UserData.dailyLimit.replaceAll(RegExp(r'[^0-9]'), ''),
         );
-        limit = parsedLimit ?? 5000;
+        limit = parsedLimit ?? 500;
       }
     });
 

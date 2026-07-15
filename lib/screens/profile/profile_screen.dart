@@ -4,6 +4,7 @@ import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:spentree/core/app_style.dart';
+import 'package:spentree/core/auth_helper.dart';
 import 'package:spentree/core/biometric_service.dart';
 import 'package:spentree/screens/auth/sign_in_screen.dart';
 import 'package:spentree/screens/profile/account_screen.dart';
@@ -22,9 +23,43 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  String _plantingSince = "";
+
   @override
   void initState() {
     super.initState();
+    _loadPlantingSince();
+  }
+
+  void _loadPlantingSince() {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) return;
+
+    final created = DateTime.parse(user.createdAt).toLocal();
+
+    setState(() {
+      _plantingSince =
+          "Planting since ${_monthName(created.month)} ${created.year}";
+    });
+  }
+
+  String _monthName(int month) {
+    const months = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ];
+
+    return months[month - 1];
   }
 
   Future<void> _showConfirmationDialog({
@@ -265,7 +300,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
-                                    "Planting since January 2025",
+                                    _plantingSince,
                                     style: GoogleFonts.montserrat(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600,
@@ -320,7 +355,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         confirmText: "Yes, Logout",
                         icon: PhosphorIconsRegular.signOut,
                         onConfirm: () async {
-                          await Supabase.instance.client.auth.signOut();
+                          await AuthHelper.signOutEverywhere();
                           final prefs = await SharedPreferences.getInstance();
                           final keepOnboardingFlag =
                               prefs.getBool('has_completed_onboarding') ?? true;

@@ -62,8 +62,8 @@ class MonthlyInsightsService {
         // The wrap is for the PREVIOUS completed month.
         eligibleMonth = DateTime(now.year, now.month - 1, 1);
       }
-    } else if (now.day > 1 && now.day <= 23) {
-      // It is between the 2nd and 25th of the month.
+    } else if (now.day > 1 && now.day <= 7) {
+      // It is between the 2nd and 7th of the month.
       // The wrap is for the PREVIOUS completed month.
       eligibleMonth = DateTime(now.year, now.month - 1, 1);
     }

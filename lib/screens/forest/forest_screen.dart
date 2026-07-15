@@ -137,7 +137,7 @@ class _ForestScreenState extends State<ForestScreen> {
   final double boxHeight = 76.0;
 
   // NEW: daily limit, loaded from SharedPreferences (same key as Dashboard)
-  int _dailyLimit = 5000;
+  int _dailyLimit = 500;
 
   // Dynamic Palette (Darkest to Lightest)
   final List<Color> _greenPalette = [
@@ -225,7 +225,7 @@ class _ForestScreenState extends State<ForestScreen> {
         int? parsedLimit = int.tryParse(
           UserData.dailyLimit.replaceAll(RegExp(r'[^0-9]'), ''),
         );
-        _dailyLimit = parsedLimit ?? 5000;
+        _dailyLimit = parsedLimit ?? 500;
       }
     });
   }
@@ -616,11 +616,7 @@ class _ForestScreenState extends State<ForestScreen> {
           ],
         ),
         // Gesture logic removed. Trophy is strictly aesthetic now.
-        Icon(
-          PhosphorIconsRegular.trophy,
-          size: 32,
-          color: AppColors.colblack,
-        ),
+        Icon(PhosphorIconsRegular.trophy, size: 32, color: AppColors.colblack),
       ],
     );
   }
@@ -1151,7 +1147,11 @@ class _ForestScreenState extends State<ForestScreen> {
                         ),
                       ],
                     ),
-                    child: Icon(TransactionService().getIconForCategory(tx.category), size: 28, color: AppColors.colblack),
+                    child: Icon(
+                      TransactionService().getIconForCategory(tx.category),
+                      size: 28,
+                      color: AppColors.colblack,
+                    ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(

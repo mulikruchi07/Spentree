@@ -6,6 +6,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:home_widget/home_widget.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:spentree/core/device_identity.dart';
 import 'package:spentree/core/notification_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:spentree/core/database/local_database_service.dart';
@@ -17,6 +18,7 @@ import 'package:spentree/screens/auth/sign_in_screen.dart';
 import 'app_lock.dart';
 import 'core/user_profile.dart';
 import 'core/app_style.dart';
+import 'package:spentree/screens/onboarding/sms_permission_screen.dart';
 
 @pragma('vm:entry-point')
 Future<void> backgroundCallback(Uri? uri) async {
@@ -26,6 +28,14 @@ Future<void> backgroundCallback(Uri? uri) async {
 }
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
+String _smsPermissionDecisionKey(String userId) {
+  return 'sms_permission_decision_$userId';
+}
+
+String _onboardingSyncCompleteKey(String userId) {
+  return 'onboarding_sync_complete_$userId';
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -41,13 +51,33 @@ void main() async {
     final session = data.session;
 
     if (event == AuthChangeEvent.signedIn && session != null) {
+      final myDeviceId = await DeviceIdentity.getDeviceId();
+    _watchForRemoteLogout(session.user.id, myDeviceId);
+      final userId = session.user.id;
+      final prefs = await SharedPreferences.getInstance();
+      final hasDecidedSms =
+          prefs.containsKey(_smsPermissionDecisionKey(userId));
+      final hasCompletedSync =
+          prefs.getBool(_onboardingSyncCompleteKey(userId)) ?? false;
+
       navigatorKey.currentState?.pushAndRemoveUntil(
         MaterialPageRoute(
-          builder: (context) => const LoadingScreen(isAuthFlow: true),
+          builder: (context) {
+            if (!hasDecidedSms) {
+              return const SmsPermissionScreen(isOnboarding: true);
+            }
+            if (!hasCompletedSync) {
+              return const LoadingScreen(isAuthFlow: true);
+            }
+            return const MainWrapper();
+          },
         ),
         (route) => false,
       );
-    }
+    } else if (event == AuthChangeEvent.signedOut) {
+    _deviceWatchChannel?.unsubscribe();
+    _deviceWatchChannel = null;
+  }
   });
 
   await LocalDatabaseService.initialize();
@@ -75,16 +105,50 @@ void main() async {
 
   Widget startScreen;
   if (session != null) {
-    startScreen = const MainWrapper();
+    final userId = session.user.id;
+    final hasDecidedSms = prefs.containsKey(_smsPermissionDecisionKey(userId));
+    final hasCompletedSync =
+        prefs.getBool(_onboardingSyncCompleteKey(userId)) ?? false;
+
+    if (!hasDecidedSms) {
+      startScreen = const SmsPermissionScreen(isOnboarding: true);
+    } else if (!hasCompletedSync) {
+      startScreen = const LoadingScreen(isAuthFlow: true);
+    } else {
+      startScreen = const MainWrapper();
+    }
   } else if (hasCompletedOnboarding) {
     startScreen = const SignInScreen();
   } else {
     startScreen = const SplashOnboardingScreen();
   }
   await NotificationService.initialize();
-  if (Platform.isAndroid) await Permission.notification.request();
 
   runApp(MyApp(startScreen: startScreen));
+}
+RealtimeChannel? _deviceWatchChannel;
+
+void _watchForRemoteLogout(String userId, String myDeviceId) {
+  _deviceWatchChannel?.unsubscribe();
+  _deviceWatchChannel = Supabase.instance.client
+      .channel('user-device-$userId')
+      .onPostgresChanges(
+        event: PostgresChangeEvent.update,
+        schema: 'public',
+        table: 'users',
+        filter: PostgresChangeFilter(type: PostgresChangeFilterType.eq, column: 'id', value: userId),
+        callback: (payload) async {
+          final newDeviceId = payload.newRecord['active_device_id'] as String?;
+          if (newDeviceId != null && newDeviceId != myDeviceId) {
+            await Supabase.instance.client.auth.signOut(scope: SignOutScope.local);
+            navigatorKey.currentState?.pushAndRemoveUntil(
+              MaterialPageRoute(builder: (context) => const SignInScreen()),
+              (route) => false,
+            );
+          }
+        },
+      )
+      .subscribe();
 }
 
 class MyApp extends StatelessWidget {

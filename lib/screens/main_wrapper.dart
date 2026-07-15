@@ -47,7 +47,7 @@ class _MainWrapperState extends State<MainWrapper> with WidgetsBindingObserver {
     _selectedIndex = widget.initialIndex;
     _pageController = PageController(initialPage: _selectedIndex);
     WidgetsBinding.instance.addObserver(this);
-  WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       final user = Supabase.instance.client.auth.currentUser;
       if (user == null) {
         Navigator.pushReplacement(
@@ -141,18 +141,26 @@ class _MainWrapperState extends State<MainWrapper> with WidgetsBindingObserver {
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: themeNotifier,
       builder: (context, _, __) {
-        return Scaffold(
-          backgroundColor: AppColors.bgWhite,
-          // In _MainWrapperState.build(), change the PageView:
-          body: PageView(
-            controller: _pageController,
-            physics:
-                // const _ClampingPagePhysics(), // ← fixes overscroll; swiping disabled
-                const ClampingScrollPhysics(),
-            onPageChanged: (i) => setState(() => _selectedIndex = i),
-            children: _pages,
+        return PopScope(
+          canPop: false,
+          onPopInvokedWithResult: (didPop, result) {
+            if (!didPop) {
+              SystemNavigator.pop();
+            }
+          },
+          child: Scaffold(
+            backgroundColor: AppColors.bgWhite,
+            // In _MainWrapperState.build(), change the PageView:
+            body: PageView(
+              controller: _pageController,
+              physics:
+                  // const _ClampingPagePhysics(), // ← fixes overscroll; swiping disabled
+                  const ClampingScrollPhysics(),
+              onPageChanged: (i) => setState(() => _selectedIndex = i),
+              children: _pages,
+            ),
+            bottomNavigationBar: _buildNavbar(),
           ),
-          bottomNavigationBar: _buildNavbar(),
         );
       },
     );
@@ -191,11 +199,7 @@ class _MainWrapperState extends State<MainWrapper> with WidgetsBindingObserver {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _navItem(
-            0,
-            PhosphorIconsRegular.house,
-            PhosphorIconsFill.house,
-          ),
+          _navItem(0, PhosphorIconsRegular.house, PhosphorIconsFill.house),
           _navItem(
             1,
             PhosphorIconsRegular.chartPieSlice,
@@ -206,16 +210,8 @@ class _MainWrapperState extends State<MainWrapper> with WidgetsBindingObserver {
             PhosphorIconsRegular.treeEvergreen,
             PhosphorIconsFill.treeEvergreen,
           ),
-          _navItem(
-            3,
-            PhosphorIconsRegular.trophy,
-            PhosphorIconsFill.trophy,
-          ),
-          _navItem(
-            4,
-            PhosphorIconsRegular.user,
-            PhosphorIconsFill.user,
-          ),
+          _navItem(3, PhosphorIconsRegular.trophy, PhosphorIconsFill.trophy),
+          _navItem(4, PhosphorIconsRegular.user, PhosphorIconsFill.user),
         ],
       ),
     );

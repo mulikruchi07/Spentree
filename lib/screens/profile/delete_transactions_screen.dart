@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:flutter/cupertino.dart';
@@ -105,6 +107,130 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
     for (final id in ids) {
       await service.deleteTransaction(id);
     }
+  }
+
+  Future<void> _showDeleteConfirmation() async {
+    if (_selectedIds.isEmpty) return;
+
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) {
+        return BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10), // Background Blur
+          child: Dialog(
+            backgroundColor: Colors.transparent,
+            insetPadding: const EdgeInsets.symmetric(horizontal: 40),
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: AppColors.bgWhite,
+                borderRadius: BorderRadius.circular(
+                  28,
+                ), // Floating rounded look
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Red Circular Icon at Top
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: const BoxDecoration(
+                      color: AppColors.destructiveRed, // Design Red
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      PhosphorIconsRegular.trash,
+                      color: isDarkMode
+                          ? AppColors.colwhite
+                          : AppColors.colwhite,
+                      size: 32,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Title
+                  Text(
+                    "Delete Transactions",
+                    style: GoogleFonts.poppins(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.colblack,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Subtitle Message
+                  Text(
+                    "Are you sure you want to delete all transactions?",
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.desctext,
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+
+                  // Confirm Button (Red)
+                  SizedBox(
+                    width: double.infinity,
+                    height: 54,
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        Navigator.pop(context);
+                        await _deleteSelected();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.destructiveRed,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      child: Text(
+                        "Confirm",
+                        style: GoogleFonts.poppins(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.colwhite,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Cancel Button (Grey)
+                  SizedBox(
+                    width: double.infinity,
+                    height: 54,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.inputFill,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      child: Text(
+                        "Cancel",
+                        style: GoogleFonts.poppins(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color:
+                              AppColors.destructiveRed, // Red text for cancel
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 
   Future<void> _launchURL(String url) async {
@@ -276,7 +402,7 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
 
   Widget _buildDeleteButton() {
     return GestureDetector(
-      onTap: _deleteSelected,
+      onTap: _showDeleteConfirmation,
       child: Container(
         height: 56,
         decoration: BoxDecoration(
@@ -306,9 +432,15 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
 
   Widget _buildTransactionCard(LocalTransaction tx) {
     final bool isSelected = _selectedIds.contains(tx.id);
-    final hour = TimeOfDay.fromDateTime(tx.dateTime).hourOfPeriod == 0 ? 12 : TimeOfDay.fromDateTime(tx.dateTime).hourOfPeriod;
-    final minute = TimeOfDay.fromDateTime(tx.dateTime).minute.toString().padLeft(2, '0');
-    final period = TimeOfDay.fromDateTime(tx.dateTime).period == DayPeriod.am ? "AM" : "PM";
+    final hour = TimeOfDay.fromDateTime(tx.dateTime).hourOfPeriod == 0
+        ? 12
+        : TimeOfDay.fromDateTime(tx.dateTime).hourOfPeriod;
+    final minute = TimeOfDay.fromDateTime(
+      tx.dateTime,
+    ).minute.toString().padLeft(2, '0');
+    final period = TimeOfDay.fromDateTime(tx.dateTime).period == DayPeriod.am
+        ? "AM"
+        : "PM";
     final timeStr = "$hour:$minute $period";
 
     return GestureDetector(
@@ -343,7 +475,11 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
                   ),
                 ],
               ),
-              child: Icon(TransactionService().getIconForCategory(tx.category), color: AppColors.colblack, size: 28),
+              child: Icon(
+                TransactionService().getIconForCategory(tx.category),
+                color: AppColors.colblack,
+                size: 28,
+              ),
             ),
             const SizedBox(width: 16),
             Expanded(

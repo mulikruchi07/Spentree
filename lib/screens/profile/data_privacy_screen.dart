@@ -10,6 +10,7 @@ import 'package:spentree/core/error_helper.dart';
 import 'package:spentree/core/transaction_service.dart';
 import 'package:spentree/screens/onboarding/sms_permission_screen.dart';
 import 'package:spentree/screens/profile/hide_transactions_screen.dart';
+import 'package:spentree/screens/profile/legal_documents_screen.dart';
 import 'delete_transactions_screen.dart';
 import 'privacy_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -567,21 +568,27 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
                     "Exclude from active transactions",
                     () {
                       // SHOW CUSTOM LOGOUT DIALOG
-                      _showConfirmationDialog(
-                        title: "Hide Transactions",
-                        message:
-                            "Are you sure you want to hide all transactions?",
-                        confirmText: "Yes, Hide",
-                        icon: PhosphorIconsRegular.trash,
-                        onConfirm: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  const HideTransactionsScreen(),
-                            ),
-                          );
-                        },
+                      // _showConfirmationDialog(
+                      //   title: "Hide Transactions",
+                      //   message:
+                      //       "Are you sure you want to hide all transactions?",
+                      //   confirmText: "Yes, Hide",
+                      //   icon: PhosphorIconsRegular.trash,
+                      //   onConfirm: () {
+                      //     Navigator.push(
+                      //       context,
+                      //       MaterialPageRoute(
+                      //         builder: (context) =>
+                      //             const HideTransactionsScreen(),
+                      //       ),
+                      //     );
+                      //   },
+                      // );
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const HideTransactionsScreen(),
+                        ),
                       );
                     },
                   ),
@@ -591,21 +598,27 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
                     "Remove your transactions",
                     () {
                       // SHOW CUSTOM LOGOUT DIALOG
-                      _showConfirmationDialog(
-                        title: "Delete Transactions",
-                        message:
-                            "Are you sure you want to delete all transactions?",
-                        confirmText: "Yes, Delete",
-                        icon: PhosphorIconsRegular.trash,
-                        onConfirm: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  const DeleteTransactionsScreen(),
-                            ),
-                          );
-                        },
+                      // _showConfirmationDialog(
+                      //   title: "Delete Transactions",
+                      //   message:
+                      //       "Are you sure you want to delete all transactions?",
+                      //   confirmText: "Yes, Delete",
+                      //   icon: PhosphorIconsRegular.trash,
+                      //   onConfirm: () {
+                      //     Navigator.push(
+                      //       context,
+                      //       MaterialPageRoute(
+                      //         builder: (context) =>
+                      //             const DeleteTransactionsScreen(),
+                      //       ),
+                      //     );
+                      //   },
+                      // );
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const DeleteTransactionsScreen(),
+                        ),
                       );
                     },
                   ),
@@ -630,14 +643,14 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
                     },
                   ),
                   _buildTile(
-                    PhosphorIconsRegular.shieldCheck,
-                    "Privacy Policy",
-                    "Further secure your account for safety",
+                    PhosphorIconsRegular.scales,
+                    "Legal Documents",
+                    "Terms, policies and licenses",
                     () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const PrivacyScreen(),
+                          builder: (context) => const LegalDocumentsScreen(),
                         ),
                       );
                     },
@@ -700,7 +713,8 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
         const SizedBox(height: 4),
 
         GestureDetector(
-          onTap: () => _launchURL("www.linkedin.com/in/ruchi-mulik-816a2b295"),
+          onTap: () =>
+              _launchURL("https://in.linkedin.com/in/ruchi-mulik-816a2b295"),
           child: RichText(
             text: TextSpan(
               style: GoogleFonts.poppins(

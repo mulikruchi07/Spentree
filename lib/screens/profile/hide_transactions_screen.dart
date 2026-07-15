@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:flutter/cupertino.dart';
@@ -50,13 +52,139 @@ class _HideTransactionsScreenState extends State<HideTransactionsScreen> {
     // Must use getAllTransactionsForDay (not getTransactionsForDay) because
     // getTransactionsForDay already strips hidden — the hidden tab would always
     // be empty if we used it.
-    final allForDay = TransactionService().getAllTransactionsForDay(_focusedDate);
+    final allForDay = TransactionService().getAllTransactionsForDay(
+      _focusedDate,
+    );
     return allForDay.where((tx) => tx.isHidden == _viewingHidden).toList();
   }
 
   Future<void> _launchURL(String url) async {
     final Uri uri = Uri.parse(url);
     if (!await launchUrl(uri)) throw 'Could not launch $url';
+  }
+
+  Future<void> _showHideConfirmation() async {
+    if (_selectedIndices.isEmpty) return;
+
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) {
+        return BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10), // Background Blur
+          child: Dialog(
+            backgroundColor: Colors.transparent,
+            insetPadding: const EdgeInsets.symmetric(horizontal: 40),
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: AppColors.bgWhite,
+                borderRadius: BorderRadius.circular(
+                  28,
+                ), // Floating rounded look
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Red Circular Icon at Top
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: const BoxDecoration(
+                      color: AppColors.destructiveRed, // Design Red
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      PhosphorIconsRegular.trash,
+                      color: isDarkMode
+                          ? AppColors.colwhite
+                          : AppColors.colwhite,
+                      size: 32,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Title
+                  Text(
+                    "Hide Transactions",
+                    style: GoogleFonts.poppins(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.colblack,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Subtitle Message
+                  Text(
+                    "Are you sure you want to hide all transactions?",
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                      color: AppColors.desctext,
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+
+                  // Confirm Button (Red)
+                  SizedBox(
+                    width: double.infinity,
+                    height: 54,
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        Navigator.pop(context);
+                        _processSelected();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.destructiveRed,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      child: Text(
+                        "Confirm",
+                        style: GoogleFonts.poppins(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.colwhite,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Cancel Button (Grey)
+                  SizedBox(
+                    width: double.infinity,
+                    height: 54,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.inputFill,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      child: Text(
+                        "Cancel",
+                        style: GoogleFonts.poppins(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color:
+                              AppColors.destructiveRed, // Red text for cancel
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 
   void _moveWeek(int days) {
@@ -344,7 +472,7 @@ class _HideTransactionsScreenState extends State<HideTransactionsScreen> {
         : AppColors.destructiveRed;
 
     return GestureDetector(
-      onTap: _processSelected,
+      onTap: _showHideConfirmation,
       child: Container(
         height: 56,
         decoration: BoxDecoration(
@@ -411,7 +539,11 @@ class _HideTransactionsScreenState extends State<HideTransactionsScreen> {
                   ),
                 ],
               ),
-              child: Icon(TransactionService().getIconForCategory(tx.category), color: AppColors.colblack, size: 28),
+              child: Icon(
+                TransactionService().getIconForCategory(tx.category),
+                color: AppColors.colblack,
+                size: 28,
+              ),
             ),
             const SizedBox(width: 16),
             Expanded(

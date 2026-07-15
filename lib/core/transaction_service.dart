@@ -599,7 +599,7 @@
 //     try {
 //       final prefs = await SharedPreferences.getInstance();
 
-//       int limit = prefs.getInt('daily_expense_limit') ?? 5000;
+//       int limit = prefs.getInt('daily_expense_limit') ?? 500;
 //       await HomeWidget.saveWidgetData<int>('daily_expense_limit', limit);
 
 //       final now = DateTime.now();
@@ -1287,7 +1287,7 @@ class TransactionService extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     if (!(prefs.getBool('spending_alerts_user_enabled') ?? true)) return;
 
-    final limit = prefs.getInt('daily_expense_limit') ?? 5000;
+    final limit = prefs.getInt('daily_expense_limit') ?? 500;
     final todayTotal = getTransactionsForDay(
       DateTime.now(),
     ).fold(0.0, (sum, tx) => sum + tx.amount);
@@ -1420,7 +1420,7 @@ class TransactionService extends ChangeNotifier {
 
     try {
       final prefs = await SharedPreferences.getInstance();
-      int limit = prefs.getInt('daily_expense_limit') ?? 5000;
+      int limit = prefs.getInt('daily_expense_limit') ?? 500;
       await HomeWidget.saveWidgetData<int>('daily_expense_limit', limit);
 
       final now = DateTime.now();

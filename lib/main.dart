@@ -52,11 +52,12 @@ void main() async {
 
     if (event == AuthChangeEvent.signedIn && session != null) {
       final myDeviceId = await DeviceIdentity.getDeviceId();
-    _watchForRemoteLogout(session.user.id, myDeviceId);
+      _watchForRemoteLogout(session.user.id, myDeviceId);
       final userId = session.user.id;
       final prefs = await SharedPreferences.getInstance();
-      final hasDecidedSms =
-          prefs.containsKey(_smsPermissionDecisionKey(userId));
+      final hasDecidedSms = prefs.containsKey(
+        _smsPermissionDecisionKey(userId),
+      );
       final hasCompletedSync =
           prefs.getBool(_onboardingSyncCompleteKey(userId)) ?? false;
 
@@ -75,9 +76,9 @@ void main() async {
         (route) => false,
       );
     } else if (event == AuthChangeEvent.signedOut) {
-    _deviceWatchChannel?.unsubscribe();
-    _deviceWatchChannel = null;
-  }
+      _deviceWatchChannel?.unsubscribe();
+      _deviceWatchChannel = null;
+    }
   });
 
   await LocalDatabaseService.initialize();
@@ -126,6 +127,7 @@ void main() async {
 
   runApp(MyApp(startScreen: startScreen));
 }
+
 RealtimeChannel? _deviceWatchChannel;
 
 void _watchForRemoteLogout(String userId, String myDeviceId) {
@@ -136,11 +138,17 @@ void _watchForRemoteLogout(String userId, String myDeviceId) {
         event: PostgresChangeEvent.update,
         schema: 'public',
         table: 'users',
-        filter: PostgresChangeFilter(type: PostgresChangeFilterType.eq, column: 'id', value: userId),
+        filter: PostgresChangeFilter(
+          type: PostgresChangeFilterType.eq,
+          column: 'id',
+          value: userId,
+        ),
         callback: (payload) async {
           final newDeviceId = payload.newRecord['active_device_id'] as String?;
           if (newDeviceId != null && newDeviceId != myDeviceId) {
-            await Supabase.instance.client.auth.signOut(scope: SignOutScope.local);
+            await Supabase.instance.client.auth.signOut(
+              scope: SignOutScope.local,
+            );
             navigatorKey.currentState?.pushAndRemoveUntil(
               MaterialPageRoute(builder: (context) => const SignInScreen()),
               (route) => false,
@@ -400,7 +408,7 @@ class MyApp extends StatelessWidget {
 //         body: Center(
 //           child: TodaysTreeCard(
 //             todayExpense: 1000,
-//             dailyLimit: 5000,
+//             dailyLimit: 500,
 //             onGoToDashboard: () {},
 //           ),
 //         ),
@@ -428,7 +436,7 @@ class MyApp extends StatelessWidget {
 //             width: 168,
 //             child: MiniTreeCard(
 //               todayExpense: 4000.0,
-//               dailyLimit: 5000,
+//               dailyLimit: 500,
 //             ),
 //           ),
 //         ),
@@ -571,7 +579,7 @@ class MyApp extends StatelessWidget {
 //             child: GreetingSummaryCard(
 //               userName: 'Ruchi',
 //               todayExpense: 1050.0,
-//               dailyLimit: 5000,
+//               dailyLimit: 500,
 //               onArrowTap: () {
 //                 debugPrint('Arrow tapped');
 //               },
@@ -617,7 +625,7 @@ class MyApp extends StatelessWidget {
 //           padding: const EdgeInsets.all(0),
 //           child: showCalendar
 //               ? DynamicCalendarCard(
-//                   dailyLimit: 5000,
+//                   dailyLimit: 500,
 //                   onSwapTap: () {
 //                     setState(() {
 //                       showCalendar = false;

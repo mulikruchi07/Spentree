@@ -21,7 +21,7 @@ class CalendarWidgetProvider : HomeWidgetProvider() {
         val today = Calendar.getInstance()
         
         // 1. Get the dynamic limit set by the user
-        val dailyLimit = widgetData.getInt("daily_expense_limit", 5000).toDouble()
+        val dailyLimit = widgetData.getInt("daily_expense_limit", 500).toDouble()
         val expensesJson = widgetData.getString("transactions_json", "{}") ?: "{}"
         
         val monthYearStr = SimpleDateFormat("MMMM yyyy", Locale.getDefault()).format(cal.time)

@@ -98,8 +98,8 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
   // late List<Map<String, dynamic>> _sortedCategories;
   // final List<Map<String, dynamic>> _rawCategoryData = [
   //   {"name": "Food & Beverages", "amount": 30000},
-  //   {"name": "Shopping", "amount": 15000},
-  //   {"name": "To People", "amount": 15000},
+  //   {"name": "Shopping", "amount": 1500},
+  //   {"name": "To People", "amount": 1500},
   //   {"name": "Fuel", "amount": 7000},
   //   {"name": "Recharge", "amount": 6000},
   //   {"name": "Other", "amount": 2000},
@@ -698,7 +698,8 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                                             shape: BoxShape.circle,
                                           ),
                                           child: Icon(
-                                            PhosphorIconsRegular.presentationChart,
+                                            PhosphorIconsRegular
+                                                .presentationChart,
                                             color: AppColors.colwhite,
                                             size: screenWidth * 0.1,
                                           ),
@@ -1382,7 +1383,10 @@ class _SpentWrapScreenState extends State<SpentWrapScreen>
                                                   DateFormat(
                                                     'E, d MMMM yyyy',
                                                   ).format(tx.dateTime),
-                                                  TransactionService().getIconForCategory(tx.category),
+                                                  TransactionService()
+                                                      .getIconForCategory(
+                                                        tx.category,
+                                                      ),
                                                   screenWidth,
                                                   screenHeight,
                                                 ),

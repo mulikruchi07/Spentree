@@ -472,7 +472,15 @@ class _HideTransactionsScreenState extends State<HideTransactionsScreen> {
         : AppColors.destructiveRed;
 
     return GestureDetector(
-      onTap: _showHideConfirmation,
+      onTap: () {
+        if (_viewingHidden) {
+          // Instantly unhide without the popup
+          _processSelected();
+        } else {
+          // Show the popup when trying to hide
+          _showHideConfirmation();
+        }
+      },
       child: Container(
         height: 56,
         decoration: BoxDecoration(

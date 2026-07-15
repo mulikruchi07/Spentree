@@ -13,7 +13,7 @@ import java.util.Locale
 class TreeWidgetProvider : HomeWidgetProvider() {
     override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray, widgetData: SharedPreferences) {
         val todayExpense = widgetData.getString("widget_expense_str", "0.0")?.toDoubleOrNull() ?: 0.0
-        val dailyLimit = widgetData.getString("widget_limit_str", "5000")?.toIntOrNull() ?: 5000
+        val dailyLimit = widgetData.getString("widget_limit_str", "500")?.toIntOrNull() ?: 500
         val pendingLimit = (dailyLimit - todayExpense).coerceIn(0.0, dailyLimit.toDouble())
         val percentage = if (dailyLimit > 0) (pendingLimit / dailyLimit).coerceIn(0.0, 1.0) else 0.0
 

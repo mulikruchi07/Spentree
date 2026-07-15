@@ -3,7 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'user_profile.dart';
 
 class UserData {
-  static String dailyLimit = "5000";
+  static String dailyLimit = "500";
   static String spendingCategory = "";
   static String spendingGoal = "";
 
@@ -25,7 +25,7 @@ class UserData {
     await prefs.setString('daily_limit_raw', dailyLimitValue);
     await prefs.setInt(
       'daily_expense_limit',
-      int.tryParse(dailyLimitValue) ?? 5000,
+      int.tryParse(dailyLimitValue) ?? 500,
     ); // FIX 4: same key Dashboard already reads
     await prefs.setString('spending_category', category);
     await prefs.setString('spending_goal', goal);

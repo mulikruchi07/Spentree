@@ -5,6 +5,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:spentree/core/auth_helper.dart';
 import 'package:spentree/core/device_identity.dart';
 import 'package:spentree/core/transaction_service.dart';
 import 'package:spentree/core/user_profile.dart';
@@ -38,128 +39,181 @@ class _LoadingScreenState extends State<LoadingScreen>
   ];
 
   @override
-void initState() {
-  super.initState();
-  _rotationController = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 2000),
-  )..repeat();
-  _initFlow();
-}
-
-Future<void> _initFlow() async {
-  if (widget.isAuthFlow) {
-    final canProceed = await _checkSingleDeviceSession();
-    if (!canProceed) return; // dialog cancelled — already navigated to SignInScreen
+  void initState() {
+    super.initState();
+    _rotationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2000),
+    )..repeat();
+    _initFlow();
   }
-  _startLoadingSequence();
-  _syncData();
-}
 
-Future<bool> _checkSingleDeviceSession() async {
-  final user = Supabase.instance.client.auth.currentUser;
-  if (user == null) return true;
-  final deviceId = await DeviceIdentity.getDeviceId();
-
-  try {
-    final row = await Supabase.instance.client
-        .from('users').select('active_device_id').eq('id', user.id).maybeSingle()
-        .timeout(const Duration(seconds: 8));
-    final existingDeviceId = row?['active_device_id'] as String?;
-
-    if (existingDeviceId != null && existingDeviceId != deviceId) {
-      if (!mounted) return false;
-      final shouldContinue = await showDialog<bool>(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => _buildSingleDeviceDialog(),
-      );
-
-      if (shouldContinue != true) {
-        await Supabase.instance.client.auth.signOut();
-        if (mounted) {
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (context) => const SignInScreen()),
-            (route) => false,
-          );
-        }
-        return false;
-      }
-      await Supabase.instance.client.auth
-          .signOut(scope: SignOutScope.others)
-          .timeout(const Duration(seconds: 10));
+  Future<void> _initFlow() async {
+    if (widget.isAuthFlow) {
+      final canProceed = await _checkSingleDeviceSession();
+      if (!canProceed)
+        return; // dialog cancelled — already navigated to SignInScreen
     }
-
-    await Supabase.instance.client.from('users').update({
-      'active_device_id': deviceId,
-      'active_device_updated_at': DateTime.now().toUtc().toIso8601String(),
-    }).eq('id', user.id).timeout(const Duration(seconds: 8));
-
-    return true;
-  } catch (e) {
-    debugPrint("Single-device check skipped (offline?): $e");
-    return true; // fail open — never block a legitimate login just because of a network hiccup
+    _startLoadingSequence();
+    _syncData();
   }
-}
 
-Widget _buildSingleDeviceDialog() {
-  return BackdropFilter(
-    filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-    child: Dialog(
-      backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 32),
-      child: Container(
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(color: AppColors.bgWhite, borderRadius: BorderRadius.circular(24)),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: const BoxDecoration(color: AppColors.primaryGreen, shape: BoxShape.circle),
-              child: const Icon(Icons.devices, color: Colors.white, size: 28),
-            ),
-            const SizedBox(height: 18),
-            Text("Signed In Elsewhere", style: GoogleFonts.poppins(fontSize: 19, fontWeight: FontWeight.w600, color: AppColors.colblack)),
-            const SizedBox(height: 8),
-            Text(
-              "Your account is currently signed in on another device.\n\nContinuing will sign you out from that device.",
-              textAlign: TextAlign.center,
-              style: GoogleFonts.poppins(fontSize: 13.5, color: AppColors.grey700, height: 1.5),
-            ),
-            const SizedBox(height: 26),
-            Row(
-              children: [
-                Expanded(
-                  child: SizedBox(
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: () => Navigator.pop(context, false),
-                      style: ElevatedButton.styleFrom(backgroundColor: AppColors.inputFill, elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                      child: Text("Cancel", style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.destructiveRed)),
+  Future<bool> _checkSingleDeviceSession() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) return true;
+    final deviceId = await DeviceIdentity.getDeviceId();
+
+    try {
+      final row = await Supabase.instance.client
+          .from('users')
+          .select('active_device_id')
+          .eq('id', user.id)
+          .maybeSingle()
+          .timeout(const Duration(seconds: 8));
+      final existingDeviceId = row?['active_device_id'] as String?;
+
+      if (existingDeviceId != null && existingDeviceId != deviceId) {
+        if (!mounted) return false;
+        final shouldContinue = await showDialog<bool>(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => _buildSingleDeviceDialog(),
+        );
+
+        if (shouldContinue != true) {
+          await AuthHelper.signOutEverywhere();
+          if (mounted) {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => const SignInScreen()),
+              (route) => false,
+            );
+          }
+          return false;
+        }
+        await Supabase.instance.client.auth
+            .signOut(scope: SignOutScope.others)
+            .timeout(const Duration(seconds: 10));
+      }
+
+      await Supabase.instance.client
+          .from('users')
+          .update({
+            'active_device_id': deviceId,
+            'active_device_updated_at': DateTime.now()
+                .toUtc()
+                .toIso8601String(),
+          })
+          .eq('id', user.id)
+          .timeout(const Duration(seconds: 8));
+
+      return true;
+    } catch (e) {
+      debugPrint("Single-device check skipped (offline?): $e");
+      return true; // fail open — never block a legitimate login just because of a network hiccup
+    }
+  }
+
+  Widget _buildSingleDeviceDialog() {
+    return BackdropFilter(
+      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+      child: Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 32),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: AppColors.bgWhite,
+            borderRadius: BorderRadius.circular(24),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: const BoxDecoration(
+                  color: AppColors.primaryGreen,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.devices, color: Colors.white, size: 28),
+              ),
+              const SizedBox(height: 18),
+              Text(
+                "Signed In Elsewhere",
+                style: GoogleFonts.poppins(
+                  fontSize: 19,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.colblack,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                "Your account is currently signed in on another device.\n\nContinuing will sign you out from that device.",
+                textAlign: TextAlign.center,
+                style: GoogleFonts.poppins(
+                  fontSize: 13.5,
+                  color: AppColors.grey700,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 26),
+              Row(
+                children: [
+                  Expanded(
+                    child: SizedBox(
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.inputFill,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          "Cancel",
+                          style: GoogleFonts.poppins(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.destructiveRed,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: SizedBox(
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: () => Navigator.pop(context, true),
-                      style: ElevatedButton.styleFrom(backgroundColor: AppColors.primaryGreen, elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                      child: Text("Continue", style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.colwhite)),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: SizedBox(
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primaryGreen,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          "Continue",
+                          style: GoogleFonts.poppins(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.colwhite,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
-                ),
-              ],
-            ),
-          ],
+                ],
+              ),
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Future<void> _syncData() async {
     // 1. If this is an auth flow, ensure the user row exists
@@ -203,8 +257,7 @@ Widget _buildSingleDeviceDialog() {
       final existingConsent = existing?['legal_consent'] as bool?;
       if (existingConsent != true) {
         payload['legal_consent'] = true;
-        payload['legal_consent_at'] =
-            DateTime.now().toUtc().toIso8601String();
+        payload['legal_consent_at'] = DateTime.now().toUtc().toIso8601String();
         payload['legal_version'] = 'v1.0';
       }
 
@@ -212,7 +265,7 @@ Widget _buildSingleDeviceDialog() {
       // and haven't been synced yet — prevents overwriting a returning
       // user's real data with local defaults on a fresh install/device.
       if (pendingSync) {
-        payload['daily_limit'] = int.tryParse(UserData.dailyLimit) ?? 5000;
+        payload['daily_limit'] = int.tryParse(UserData.dailyLimit) ?? 500;
         payload['category_preference'] = UserData.spendingCategory;
         payload['goal'] = UserData.spendingGoal;
       }

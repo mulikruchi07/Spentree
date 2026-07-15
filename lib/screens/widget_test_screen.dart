@@ -62,7 +62,7 @@ class _WidgetTestScreenState extends State<WidgetTestScreen> {
           case 0:
             card = TodaysTreeCard(
               todayExpense: 2000,
-              dailyLimit: 5000,
+              dailyLimit: 500,
               treeBytes: _treeBytes!, // Pass the loaded tree image bytes
               onGoToDashboard: () {},
               onSwapTap: nextCard,
@@ -79,7 +79,7 @@ class _WidgetTestScreenState extends State<WidgetTestScreen> {
 
           default:
             card = DynamicCalendarCard(
-              dailyLimit: 5000,
+              dailyLimit: 500,
               treeBytes: _treeBytes!,
               onSwapTap: nextCard,
             );

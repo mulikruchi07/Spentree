@@ -18,7 +18,7 @@ class GreetingWidgetProvider : HomeWidgetProvider() {
 
     override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray, widgetData: SharedPreferences) {
         val todayExpense = widgetData.getString("widget_expense_str", "0.0")?.toDoubleOrNull() ?: 0.0
-        val dailyLimit = widgetData.getString("widget_limit_str", "5000")?.toIntOrNull() ?: 5000
+        val dailyLimit = widgetData.getString("widget_limit_str", "500")?.toIntOrNull() ?: 500
         val userName = widgetData.getString("widget_user_name", "Ruchi")
         val base64Image = widgetData.getString("profile_image", null)
         

@@ -8,8 +8,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/gestures.dart';
 import 'package:spentree/screens/profile/terms_screen.dart';
 import 'package:spentree/screens/profile/privacy_screen.dart';
+import 'package:spentree/core/auth_helper.dart';
 // Temporary until EulaScreen exists
-// import 'package:spentree/screens/legal/eula_screen.dart';
+import 'package:spentree/screens/profile/eula_screen.dart';
 
 class AuthLandingScreen extends StatelessWidget {
   const AuthLandingScreen({super.key});
@@ -100,7 +101,7 @@ class AuthLandingScreen extends StatelessWidget {
                   _buildSocialButton(
                     imagePath: 'assets/images/google.png',
                     label: "Continue using Google",
-                    onTap: () => _signInWithOAuth(OAuthProvider.google),
+                   onTap: AuthHelper.signInWithGoogle,
                   ),
 
                   const SizedBox(height: 26),
@@ -161,7 +162,6 @@ class AuthLandingScreen extends StatelessWidget {
                             ),
                             recognizer: TapGestureRecognizer()
                               ..onTap = () {
-                                // Temporary until EulaScreen is created.
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
@@ -252,15 +252,15 @@ class AuthLandingScreen extends StatelessWidget {
     );
   }
 
-  Future<void> _signInWithOAuth(OAuthProvider provider) async {
-    try {
-      await Supabase.instance.client.auth.signInWithOAuth(
-        provider, // ← was hardcoded to OAuthProvider.google
-        redirectTo: 'spentree://login-callback',
-        authScreenLaunchMode: LaunchMode.inAppWebView,
-      );
-    } catch (e) {
-      debugPrint("Social Auth Error: $e");
-    }
-  }
+  // Future<void> _signInWithOAuth(OAuthProvider provider) async {
+  //   try {
+  //     await Supabase.instance.client.auth.signInWithOAuth(
+  //       provider, // ← was hardcoded to OAuthProvider.google
+  //       redirectTo: 'spentree://login-callback',
+  //       authScreenLaunchMode: LaunchMode.inAppWebView,
+  //     );
+  //   } catch (e) {
+  //     debugPrint("Social Auth Error: $e");
+  //   }
+  // }
 }

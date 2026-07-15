@@ -209,7 +209,7 @@ class AboutScreen extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         GestureDetector(
-          onTap: () => _launchURL("www.linkedin.com/in/ruchi-mulik-816a2b295"),
+          onTap: () => _launchURL("https://in.linkedin.com/in/ruchi-mulik-816a2b295"),
           child: RichText(
             text: TextSpan(
               style: GoogleFonts.poppins(

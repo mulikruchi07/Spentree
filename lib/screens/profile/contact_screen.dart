@@ -63,7 +63,7 @@ class ContactScreen extends StatelessWidget {
                       "Having trouble with the app? Not sure how something works?\nReach out and we'll do our best to help you quickly.",
                     ),
                     Text(
-                      "Email: support@spentree.app",
+                      "Email: team.spentree@gmail.com",
                       style: GoogleFonts.poppins(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
@@ -182,7 +182,8 @@ class ContactScreen extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         GestureDetector(
-          onTap: () => _launchURL("www.linkedin.com/in/ruchi-mulik-816a2b295"),
+          onTap: () =>
+              _launchURL("https://in.linkedin.com/in/ruchi-mulik-816a2b295"),
           child: RichText(
             text: TextSpan(
               style: GoogleFonts.poppins(

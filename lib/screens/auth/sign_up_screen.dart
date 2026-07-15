@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:spentree/core/error_helper.dart';
 import 'package:spentree/screens/auth/verify_number_screen.dart';
+import 'package:spentree/screens/profile/eula_screen.dart';
 import 'package:spentree/screens/profile/privacy_screen.dart';
 import 'package:spentree/screens/profile/terms_screen.dart';
 import '../../core/app_style.dart';
@@ -44,7 +45,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final double cornerRadius = 14.0;
   final double inputGap = 16.0;
   final double inputTermsGap = 26.0;
-  final double termsButtonGap = 32.0;
+  final double termsButtonGap = 33.0;
 
   Future<void> _validateAndSubmit() async {
     setState(() {
@@ -240,10 +241,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           children: [
                             Padding(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 20,
+                                horizontal: 8,
                               ),
                               child: RichText(
-                                textAlign: TextAlign.center,
+                                textAlign: TextAlign.left,
                                 text: TextSpan(
                                   style: GoogleFonts.poppins(
                                     fontSize: 12.5,
@@ -305,12 +306,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                             context,
                                             MaterialPageRoute(
                                               builder: (_) =>
-                                                  const TermsScreen(),
+                                                  const EulaScreen(),
                                             ),
                                           );
                                         },
                                     ),
-                                    const TextSpan(text: "."),
                                   ],
                                 ),
                               ),

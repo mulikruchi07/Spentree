@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:spentree/core/app_style.dart';
 import 'package:spentree/screens/auth/sign_in_screen.dart';
 import 'package:spentree/screens/auth/sign_up_screen.dart';
+import 'package:spentree/screens/profile/eula_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/gestures.dart';
 import 'package:spentree/screens/profile/terms_screen.dart';
@@ -94,13 +95,20 @@ class AuthLandingScreen extends StatelessWidget {
                       Expanded(child: Divider(color: AppColors.inactiveGrey)),
                     ],
                   ),
+                  const SizedBox(height: 20),
+
+                  _buildSocialButton(
+                    imagePath: 'assets/images/google.png',
+                    label: "Continue using Google",
+                    onTap: () => _signInWithOAuth(OAuthProvider.google),
+                  ),
 
                   const SizedBox(height: 26),
 
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
                     child: RichText(
-                      textAlign: TextAlign.center,
+                      textAlign: TextAlign.left,
                       text: TextSpan(
                         style: GoogleFonts.poppins(
                           fontSize: 12.5,
@@ -157,22 +165,14 @@ class AuthLandingScreen extends StatelessWidget {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (_) => const TermsScreen(),
+                                    builder: (_) => const EulaScreen(),
                                   ),
                                 );
                               },
                           ),
-                          const TextSpan(text: "."),
                         ],
                       ),
                     ),
-                  ),
-
-                  // SOCIAL BUTTONS
-                  _buildSocialButton(
-                    imagePath: 'assets/images/google.png',
-                    label: "Continue using Google",
-                    onTap: () => _signInWithOAuth(OAuthProvider.google),
                   ),
 
                   // const SizedBox(height: 16),

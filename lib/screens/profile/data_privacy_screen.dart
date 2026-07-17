@@ -563,7 +563,7 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
                     _handleExportFlow,
                   ),
                   _buildTile(
-                    PhosphorIconsRegular.trash,
+                    PhosphorIconsRegular.eyeSlash,
                     "Hide Transactions",
                     "Exclude from active transactions",
                     () {

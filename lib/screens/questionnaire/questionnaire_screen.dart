@@ -324,7 +324,7 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
                 SizedBox(width: 12 * scale),
                 _buildQuickButton("1000", scale),
                 SizedBox(width: 12 * scale),
-                _buildQuickButton("500", scale),
+                _buildQuickButton("5000", scale),
               ],
             ),
           ),

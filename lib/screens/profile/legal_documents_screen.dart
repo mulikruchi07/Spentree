@@ -76,7 +76,7 @@ class LegalDocumentsScreen extends StatelessWidget {
                   ),
                   _buildTile(
                     PhosphorIconsRegular.certificate,
-                    "End-User License Agreement",
+                    "EULA",
                     "Your license to use the app",
                     () {
                       Navigator.push(

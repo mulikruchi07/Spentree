@@ -1,20 +1,13 @@
-import 'dart:ui';
-
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:spentree/core/auth_helper.dart';
-import 'package:spentree/core/device_identity.dart';
 import 'package:spentree/core/transaction_service.dart';
 import 'package:spentree/core/user_profile.dart';
-import 'package:spentree/screens/auth/sign_in_screen.dart';
 import 'package:spentree/screens/main_wrapper.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/app_style.dart';
 import 'package:spentree/core/user_data.dart';
-import '../auth/sign_up_screen.dart';
 
 class LoadingScreen extends StatefulWidget {
   final bool isAuthFlow;
@@ -49,171 +42,9 @@ class _LoadingScreenState extends State<LoadingScreen>
   }
 
   Future<void> _initFlow() async {
-    if (widget.isAuthFlow) {
-      final canProceed = await _checkSingleDeviceSession();
-      if (!canProceed)
-        return; // dialog cancelled — already navigated to SignInScreen
-    }
-    _startLoadingSequence();
-    _syncData();
-  }
-
-  Future<bool> _checkSingleDeviceSession() async {
-    final user = Supabase.instance.client.auth.currentUser;
-    if (user == null) return true;
-    final deviceId = await DeviceIdentity.getDeviceId();
-
-    try {
-      final row = await Supabase.instance.client
-          .from('users')
-          .select('active_device_id')
-          .eq('id', user.id)
-          .maybeSingle()
-          .timeout(const Duration(seconds: 8));
-      final existingDeviceId = row?['active_device_id'] as String?;
-
-      if (existingDeviceId != null && existingDeviceId != deviceId) {
-        if (!mounted) return false;
-        final shouldContinue = await showDialog<bool>(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) => _buildSingleDeviceDialog(),
-        );
-
-        if (shouldContinue != true) {
-          await AuthHelper.signOutEverywhere();
-          if (mounted) {
-            Navigator.pushAndRemoveUntil(
-              context,
-              MaterialPageRoute(builder: (context) => const SignInScreen()),
-              (route) => false,
-            );
-          }
-          return false;
-        }
-        await Supabase.instance.client.auth
-            .signOut(scope: SignOutScope.others)
-            .timeout(const Duration(seconds: 10));
-      }
-
-      await Supabase.instance.client
-          .from('users')
-          .update({
-            'active_device_id': deviceId,
-            'active_device_updated_at': DateTime.now()
-                .toUtc()
-                .toIso8601String(),
-          })
-          .eq('id', user.id)
-          .timeout(const Duration(seconds: 8));
-
-      return true;
-    } catch (e) {
-      debugPrint("Single-device check skipped (offline?): $e");
-      return true; // fail open — never block a legitimate login just because of a network hiccup
-    }
-  }
-
-  Widget _buildSingleDeviceDialog() {
-    return BackdropFilter(
-      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-      child: Dialog(
-        backgroundColor: Colors.transparent,
-        insetPadding: const EdgeInsets.symmetric(horizontal: 32),
-        child: Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: AppColors.bgWhite,
-            borderRadius: BorderRadius.circular(24),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: const BoxDecoration(
-                  color: AppColors.primaryGreen,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.devices, color: Colors.white, size: 28),
-              ),
-              const SizedBox(height: 18),
-              Text(
-                "Signed In Elsewhere",
-                style: GoogleFonts.poppins(
-                  fontSize: 19,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.colblack,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                "Your account is currently signed in on another device.\n\nContinuing will sign you out from that device.",
-                textAlign: TextAlign.center,
-                style: GoogleFonts.poppins(
-                  fontSize: 13.5,
-                  color: AppColors.grey700,
-                  height: 1.5,
-                ),
-              ),
-              const SizedBox(height: 26),
-              Row(
-                children: [
-                  Expanded(
-                    child: SizedBox(
-                      height: 50,
-                      child: ElevatedButton(
-                        onPressed: () => Navigator.pop(context, false),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.inputFill,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: Text(
-                          "Cancel",
-                          style: GoogleFonts.poppins(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.destructiveRed,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: SizedBox(
-                      height: 50,
-                      child: ElevatedButton(
-                        onPressed: () => Navigator.pop(context, true),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primaryGreen,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: Text(
-                          "Continue",
-                          style: GoogleFonts.poppins(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.colwhite,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+  _startLoadingSequence();
+  _syncData();
+}
 
   Future<void> _syncData() async {
     // 1. If this is an auth flow, ensure the user row exists

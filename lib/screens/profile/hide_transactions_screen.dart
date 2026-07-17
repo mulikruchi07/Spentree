@@ -94,7 +94,7 @@ class _HideTransactionsScreenState extends State<HideTransactionsScreen> {
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
-                      PhosphorIconsRegular.trash,
+                      PhosphorIconsRegular.eyeSlash,
                       color: isDarkMode
                           ? AppColors.colwhite
                           : AppColors.colwhite,

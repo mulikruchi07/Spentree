@@ -2,6 +2,8 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:spentree/core/auth_helper.dart';
 import 'package:spentree/core/auth_landing_screen.dart';
 import 'package:spentree/core/error_helper.dart';
 import 'package:spentree/core/transaction_service.dart';
@@ -72,6 +74,8 @@ class _SignInScreenState extends State<SignInScreen> {
         password: _passwordController.text,
       );
 
+      TextInput.finishAutofillContext();
+
       // Reactivation check — runs AFTER a successful sign-in, when a session actually exists
       final user = Supabase.instance.client.auth.currentUser;
       if (user != null) {
@@ -98,14 +102,21 @@ class _SignInScreenState extends State<SignInScreen> {
       final msg = e.message.toLowerCase();
       if (msg.contains('invalid login credentials')) {
         try {
+          final prefs = await SharedPreferences.getInstance();
+          final knownHasPassword =
+              prefs.getBool('has_password_for_email_${email.toLowerCase()}') ??
+              false;
+
           final res = await Supabase.instance.client.functions
               .invoke('check-signin-method', body: {'email': email})
               .timeout(const Duration(seconds: 5));
           final data = res.data as Map;
-          if (data['found'] == true && data['hasPassword'] == false) {
+          if (data['found'] == true &&
+              data['hasPassword'] == false &&
+              !knownHasPassword) {
             setState(
               () => _generalError =
-                  "This email is linked to Google sign-in. Try 'Continue with Google' instead.",
+                  "This account is linked to Google. Try 'Continue with Google' instead.",
             );
           } else if (data['found'] == true) {
             setState(
@@ -177,23 +188,34 @@ class _SignInScreenState extends State<SignInScreen> {
                         const SizedBox(height: 32),
 
                         // --- INPUTS ---
-                        _buildTextField(
-                          _emailController,
-                          "Email Address",
-                          isEmail: true,
-                          errorText: _emailError,
-                        ),
-                        SizedBox(height: inputGap),
-
-                        _buildTextField(
-                          _passwordController,
-                          "Password",
-                          isPassword: true,
-                          isVisible: _isPasswordVisible,
-                          onVisibilityChanged: () => setState(
-                            () => _isPasswordVisible = !_isPasswordVisible,
+                        AutofillGroup(
+                          child: Column(
+                            children: [
+                              _buildTextField(
+                                _emailController,
+                                "Email Address",
+                                isEmail: true,
+                                autofillHints: const [
+                                  AutofillHints.username,
+                                  AutofillHints.email,
+                                ],
+                                errorText: _emailError,
+                              ),
+                              SizedBox(height: inputGap),
+                              _buildTextField(
+                                _passwordController,
+                                "Password",
+                                isPassword: true,
+                                autofillHints: const [AutofillHints.password],
+                                isVisible: _isPasswordVisible,
+                                onVisibilityChanged: () => setState(
+                                  () =>
+                                      _isPasswordVisible = !_isPasswordVisible,
+                                ),
+                                errorText: _passwordError,
+                              ),
+                            ],
                           ),
-                          errorText: _passwordError,
                         ),
 
                         // --- Forgot Password ---
@@ -313,6 +335,67 @@ class _SignInScreenState extends State<SignInScreen> {
                             ),
                           ),
                         ),
+                        const SizedBox(height: 24),
+
+                        // DIVIDER
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Divider(color: AppColors.inactiveGrey),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                              ),
+                              child: Text(
+                                "Or",
+                                style: GoogleFonts.poppins(
+                                  color: AppColors.textGrey,
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              child: Divider(color: AppColors.inactiveGrey),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+
+                        SizedBox(
+                          width: double.infinity,
+                          height: componentHeight,
+                          child: ElevatedButton(
+                            onPressed: AuthHelper.signInWithGoogle,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.inputFill,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
+                                  cornerRadius,
+                                ),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Image.asset(
+                                  'assets/images/google.png',
+                                  height: 24,
+                                  width: 24,
+                                ),
+                                const SizedBox(width: 12),
+                                Text(
+                                  "Continue with Google",
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w500,
+                                    color: AppColors.grey800,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
 
                         const Spacer(flex: 3),
                         const SizedBox(height: 20),
@@ -333,6 +416,7 @@ class _SignInScreenState extends State<SignInScreen> {
     String hint, {
     bool isPassword = false,
     bool isEmail = false, // Changed from isPhone
+    List<String>? autofillHints,
     bool? isVisible,
     VoidCallback? onVisibilityChanged,
     String? errorText,
@@ -352,6 +436,7 @@ class _SignInScreenState extends State<SignInScreen> {
           ),
           child: TextField(
             controller: controller,
+            autofillHints: autofillHints,
             obscureText: isPassword && !(isVisible ?? false),
             // Use email keyboard layout if it's an email field
             keyboardType: isEmail

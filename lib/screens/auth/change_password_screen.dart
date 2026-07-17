@@ -1,10 +1,13 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:spentree/core/error_helper.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/app_style.dart';
-import '../main_wrapper.dart';
+import 'package:spentree/core/auth_helper.dart';
+import '../auth/sign_in_screen.dart';
 
 class ChangePasswordScreen extends StatefulWidget {
   const ChangePasswordScreen({super.key});
@@ -84,17 +87,27 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
         UserAttributes(password: newPassword),
       );
 
-      setState(() => _successMessage = "Password changed successfully!");
+      final currentUser = Supabase.instance.client.auth.currentUser;
+      final currentEmail = currentUser?.email?.toLowerCase();
+      if (currentEmail != null && currentEmail.isNotEmpty) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('has_password_for_email_$currentEmail', true);
+      }
 
-      Timer(const Duration(milliseconds: 1200), () {
-        if (mounted) {
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (context) => const MainWrapper()),
-            (route) => false,
-          );
-        }
-      });
+      TextInput.finishAutofillContext();
+
+      setState(() => _successMessage = "Password changed successfully! Please sign in again.");
+
+Timer(const Duration(milliseconds: 1500), () async {
+  await AuthHelper.signOutEverywhere();
+  if (mounted) {
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const SignInScreen()),
+      (route) => false,
+    );
+  }
+});
     } on AuthException catch (e) {
       final msg = e.message.toLowerCase();
       if (msg.contains('password')) {
@@ -161,6 +174,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                           _newPasswordController,
                           "New Password",
                           isPassword: true,
+                          autofillHints: const [AutofillHints.newPassword],
                           isVisible: _isNewPasswordVisible,
                           onVisibilityChanged: () => setState(
                             () =>
@@ -175,6 +189,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                           _confirmPasswordController,
                           "Confirm Password",
                           isPassword: true,
+                          autofillHints: const [AutofillHints.newPassword],
                           isVisible: _isConfirmPasswordVisible,
                           onVisibilityChanged: () => setState(
                             () => _isConfirmPasswordVisible =
@@ -296,6 +311,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     TextEditingController controller,
     String hint, {
     bool isPassword = false,
+    List<String>? autofillHints,
     bool? isVisible,
     VoidCallback? onVisibilityChanged,
     String? errorText,
@@ -315,6 +331,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
           ),
           child: TextField(
             controller: controller,
+            autofillHints: autofillHints,
             obscureText: isPassword && !(isVisible ?? false),
             textAlignVertical: TextAlignVertical.center,
             style: GoogleFonts.poppins(

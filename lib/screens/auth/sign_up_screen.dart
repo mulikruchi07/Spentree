@@ -14,6 +14,7 @@ import '../../core/user_data.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:spentree/screens/main_wrapper.dart';
 import 'package:spentree/core/transaction_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -119,6 +120,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
         if (user != null) {
           UserData.userName = _nameController.text.trim();
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setBool(
+            'has_password_for_email_${email.toLowerCase()}',
+            true,
+          );
+          TextInput.finishAutofillContext();
           if (mounted) {
             Navigator.push(
               context,
@@ -201,24 +208,36 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         ),
                         SizedBox(height: inputGap),
 
-                        _buildTextField(
-                          _emailController,
-                          "Email Address",
-                          isEmail:
-                              true, // You'll need to add an 'isEmail' boolean to your _buildTextField signature to change keyboardType to TextInputType.emailAddress
-                          errorText: _emailError,
-                        ),
-                        SizedBox(height: inputGap),
-
-                        _buildTextField(
-                          _passwordController,
-                          "New Password",
-                          isPassword: true,
-                          isVisible: _isPasswordVisible,
-                          onVisibilityChanged: () => setState(
-                            () => _isPasswordVisible = !_isPasswordVisible,
+                        AutofillGroup(
+                          child: Column(
+                            children: [
+                              _buildTextField(
+                                _emailController,
+                                "Email Address",
+                                isEmail: true,
+                                autofillHints: const [
+                                  AutofillHints.username,
+                                  AutofillHints.email,
+                                ],
+                                errorText: _emailError,
+                              ),
+                              SizedBox(height: inputGap),
+                              _buildTextField(
+                                _passwordController,
+                                "New Password",
+                                isPassword: true,
+                                autofillHints: const [
+                                  AutofillHints.newPassword,
+                                ],
+                                isVisible: _isPasswordVisible,
+                                onVisibilityChanged: () => setState(
+                                  () =>
+                                      _isPasswordVisible = !_isPasswordVisible,
+                                ),
+                                errorText: _passwordError,
+                              ),
+                            ],
                           ),
-                          errorText: _passwordError,
                         ),
                         SizedBox(height: inputGap),
 
@@ -423,6 +442,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     String hint, {
     bool isPassword = false,
     bool isEmail = false,
+    List<String>? autofillHints,
     bool? isVisible,
     VoidCallback? onVisibilityChanged,
     String? errorText,
@@ -442,6 +462,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
           ),
           child: TextField(
             controller: controller,
+            autofillHints: autofillHints,
             obscureText: isPassword && !(isVisible ?? false),
             // Open the Email keyboard layout if it's an email field
             keyboardType: isEmail

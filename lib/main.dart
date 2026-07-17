@@ -1,11 +1,14 @@
 import 'dart:io' show Platform;
+import 'dart:ui';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:home_widget/home_widget.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:spentree/core/auth_helper.dart';
 import 'package:spentree/core/device_identity.dart';
 import 'package:spentree/core/notification_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -51,27 +54,21 @@ void main() async {
     final session = data.session;
 
     if (event == AuthChangeEvent.signedIn && session != null) {
+      final canProceed = await _checkSingleDeviceSession(null);
+      if (!canProceed)
+        return; // dialog declined — already routed to SignInScreen
+
       final myDeviceId = await DeviceIdentity.getDeviceId();
       _watchForRemoteLogout(session.user.id, myDeviceId);
-      final userId = session.user.id;
-      final prefs = await SharedPreferences.getInstance();
-      final hasDecidedSms = prefs.containsKey(
-        _smsPermissionDecisionKey(userId),
-      );
-      final hasCompletedSync =
-          prefs.getBool(_onboardingSyncCompleteKey(userId)) ?? false;
 
+      final prefs = await SharedPreferences.getInstance();
+      final hasDecidedSms =
+          prefs.getBool('has_seen_sms_permission_screen') ?? false;
       navigatorKey.currentState?.pushAndRemoveUntil(
         MaterialPageRoute(
-          builder: (context) {
-            if (!hasDecidedSms) {
-              return const SmsPermissionScreen(isOnboarding: true);
-            }
-            if (!hasCompletedSync) {
-              return const LoadingScreen(isAuthFlow: true);
-            }
-            return const MainWrapper();
-          },
+          builder: (context) => hasDecidedSms
+              ? const LoadingScreen(isAuthFlow: true)
+              : const SmsPermissionScreen(isOnboarding: true),
         ),
         (route) => false,
       );
@@ -157,6 +154,156 @@ void _watchForRemoteLogout(String userId, String myDeviceId) {
         },
       )
       .subscribe();
+}
+
+Future<bool> _checkSingleDeviceSession(BuildContext? navContext) async {
+  final user = Supabase.instance.client.auth.currentUser;
+  if (user == null) return true;
+  final deviceId = await DeviceIdentity.getDeviceId();
+
+  try {
+    final row = await Supabase.instance.client
+        .from('users')
+        .select('active_device_id')
+        .eq('id', user.id)
+        .maybeSingle()
+        .timeout(const Duration(seconds: 8));
+    final existingDeviceId = row?['active_device_id'] as String?;
+
+    if (existingDeviceId != null && existingDeviceId != deviceId) {
+      final context = navContext ?? navigatorKey.currentContext;
+      if (context == null) return true;
+      final shouldContinue = await showDialog<bool>(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => _buildSingleDeviceDialog(context),
+      );
+      if (shouldContinue != true) {
+        await AuthHelper.signOutEverywhere();
+        navigatorKey.currentState?.pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const SignInScreen()),
+          (route) => false,
+        );
+        return false;
+      }
+      await Supabase.instance.client.auth.signOut(scope: SignOutScope.others);
+    }
+
+    await Supabase.instance.client
+        .from('users')
+        .upsert({
+          'id': user.id,
+          'active_device_id': deviceId,
+          'active_device_updated_at': DateTime.now().toUtc().toIso8601String(),
+        })
+        .timeout(const Duration(seconds: 8));
+
+    return true;
+  } catch (e) {
+    debugPrint("Single-device check skipped (offline?): $e");
+    return true;
+  }
+}
+
+Widget _buildSingleDeviceDialog(BuildContext context) {
+  return BackdropFilter(
+    filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+    child: Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 32),
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: AppColors.bgWhite,
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: const BoxDecoration(
+                color: AppColors.primaryGreen,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.devices, color: AppColors.colwhite, size: 28),
+            ),
+            const SizedBox(height: 18),
+            Text(
+              "Signed In Elsewhere",
+              style: GoogleFonts.poppins(
+                fontSize: 19,
+                fontWeight: FontWeight.w600,
+                color: AppColors.colblack,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              "Your account is currently signed in on another device.\n\nContinuing will sign you out from that device.",
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(
+                fontSize: 13.5,
+                color: AppColors.grey700,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 26),
+            Row(
+              children: [
+                Expanded(
+                  child: SizedBox(
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.inputFill,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        "Cancel",
+                        style: GoogleFonts.poppins(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.destructiveRed,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: SizedBox(
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primaryGreen,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        "Continue",
+                        style: GoogleFonts.poppins(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.colwhite,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {

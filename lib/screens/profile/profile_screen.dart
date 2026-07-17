@@ -359,11 +359,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           final prefs = await SharedPreferences.getInstance();
                           final keepOnboardingFlag =
                               prefs.getBool('has_completed_onboarding') ?? true;
+                          final deviceId = prefs.getString(
+                            'device_id',
+                          ); // preserve before wipe
                           await prefs.clear();
                           await prefs.setBool(
                             'has_completed_onboarding',
                             keepOnboardingFlag,
                           );
+                          if (deviceId != null)
+                            await prefs.setString('device_id', deviceId);
                           if (mounted) {
                             Navigator.pushAndRemoveUntil(
                               context,

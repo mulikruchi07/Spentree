@@ -11,6 +11,7 @@ import 'package:spentree/screens/profile/privacy_screen.dart';
 import 'package:spentree/core/auth_helper.dart';
 // Temporary until EulaScreen exists
 import 'package:spentree/screens/profile/eula_screen.dart';
+import 'package:spentree/core/auth_helper.dart';
 
 class AuthLandingScreen extends StatelessWidget {
   const AuthLandingScreen({super.key});

@@ -16,7 +16,8 @@ class AuthHelper {
   static Future<void> signInWithGoogle() async {
     try {
       final googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) return; // user dismissed the picker — not an error
+      if (googleUser == null)
+        return; // user dismissed the picker — not an error
 
       final googleAuth = await googleUser.authentication;
       final idToken = googleAuth.idToken;
@@ -45,11 +46,26 @@ class AuthHelper {
   /// Without clearing the native Google session too, a Google-linked
   /// account can silently auto-reselect on the next "Continue with
   /// Google" tap instead of showing the picker again.
-  static Future<void> signOutEverywhere({SignOutScope scope = SignOutScope.local}) async {
+  static Future<void> _clearActiveDevice() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) return;
     try {
-      if (await _googleSignIn.isSignedIn()) {
-        await _googleSignIn.signOut();
-      }
+      await Supabase.instance.client
+          .from('users')
+          .update({'active_device_id': null, 'active_device_updated_at': null})
+          .eq('id', user.id)
+          .timeout(const Duration(seconds: 8));
+    } catch (e) {
+      debugPrint("Couldn't clear active device on logout: $e");
+    }
+  }
+
+  static Future<void> signOutEverywhere({
+    SignOutScope scope = SignOutScope.local,
+  }) async {
+    await _clearActiveDevice(); // must run BEFORE signOut, while we still have a valid session/uid
+    try {
+      if (await _googleSignIn.isSignedIn()) await _googleSignIn.signOut();
     } catch (e) {
       debugPrint("Google native sign-out skipped: $e");
     }

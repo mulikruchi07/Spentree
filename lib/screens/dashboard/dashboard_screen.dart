@@ -749,6 +749,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // Added for weekly limit check
+import 'package:spentree/core/auth_helper.dart';
 import 'package:spentree/core/database/local_transaction.dart';
 import 'package:spentree/core/error_helper.dart';
 import 'package:spentree/core/user_profile.dart';
@@ -883,21 +884,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
       }
     });
 
-    final user = Supabase.instance.client.auth.currentUser;
-    if (user == null) return;
-    try {
-      final row = await Supabase.instance.client
-          .from('users')
-          .select('daily_limit')
-          .eq('id', user.id)
-          .maybeSingle();
-      if (row != null && row['daily_limit'] != null && mounted) {
-        final dbLimit = (row['daily_limit'] as num).toInt();
+    final fields = await AuthHelper.fetchDecryptedUserFields();
+    if (fields != null && fields['daily_limit'] != null && mounted) {
+      final dbLimit = int.tryParse(fields['daily_limit'] as String);
+      if (dbLimit != null) {
         setState(() => limit = dbLimit);
         await prefs.setInt('daily_expense_limit', dbLimit);
       }
-    } catch (e) {
-      debugPrint("Couldn't refresh limit from DB: $e");
     }
   }
 
@@ -1874,9 +1867,13 @@ class _ChangeLimitPopupState extends State<_ChangeLimitPopup>
       final nowIso = DateTime.now().toUtc().toIso8601String();
       await Supabase.instance.client
           .from('users')
-          .update({'daily_limit': val, 'last_limit_change': nowIso})
+          .update({'last_limit_change': nowIso})
           .eq('id', user.id)
           .timeout(const Duration(seconds: 8));
+
+      await AuthHelper.syncEncryptedUserFields({
+        'daily_limit': val.toString(),
+      }).timeout(const Duration(seconds: 8));
 
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt('daily_expense_limit', val);

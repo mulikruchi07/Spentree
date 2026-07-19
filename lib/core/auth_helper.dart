@@ -1,6 +1,7 @@
 // lib/core/auth_helper.dart
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:spentree/core/error_helper.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
@@ -13,34 +14,31 @@ class AuthHelper {
   );
 
   /// Triggers the native OS account picker — no browser involved at all.
-  static Future<void> signInWithGoogle() async {
-    try {
-      final googleUser = await _googleSignIn.signIn();
-      if (googleUser == null)
-        return; // user dismissed the picker — not an error
-
-      final googleAuth = await googleUser.authentication;
-      final idToken = googleAuth.idToken;
-      final accessToken = googleAuth.accessToken;
-
-      if (idToken == null) {
-        debugPrint("Google Sign-In: no ID token returned");
-        return;
-      }
-
-      await Supabase.instance.client.auth.signInWithIdToken(
-        provider: OAuthProvider.google,
-        idToken: idToken,
-        accessToken: accessToken,
-      );
-      // No manual navigation here — your existing onAuthStateChange
-      // listener in main.dart handles routing exactly like every other
-      // sign-in method already does (SMS screen → Loading → Dashboard,
-      // single-device check, everything stays intact).
-    } catch (e) {
-      debugPrint("Native Google Sign-In error: $e");
-    }
+  static Future<String?> signInWithGoogle() async {
+  final hasInternet = await checkInternetConnection();
+  if (!hasInternet) {
+    return "No internet connection. Please check your network and try again.";
   }
+  try {
+    final googleUser = await _googleSignIn.signIn();
+    if (googleUser == null) return null; // user dismissed the picker — not an error
+
+    final googleAuth = await googleUser.authentication;
+    final idToken = googleAuth.idToken;
+    if (idToken == null) {
+      return "Something went wrong signing in with Google. Please try again.";
+    }
+    await Supabase.instance.client.auth.signInWithIdToken(
+      provider: OAuthProvider.google,
+      idToken: idToken,
+      accessToken: googleAuth.accessToken,
+    );
+    return null;
+  } catch (e) {
+    debugPrint("Native Google Sign-In error: $e");
+    return "Something went wrong signing in with Google. Please try again.";
+  }
+}
 
   /// Use this everywhere instead of calling Supabase's signOut() directly.
   /// Without clearing the native Google session too, a Google-linked
@@ -71,4 +69,26 @@ class AuthHelper {
     }
     await Supabase.instance.client.auth.signOut(scope: scope);
   }
+
+  static Future<void> syncEncryptedUserFields(Map<String, dynamic> fields) async {
+  try {
+    await Supabase.instance.client.functions
+        .invoke('encrypt-user-fields', body: fields)
+        .timeout(const Duration(seconds: 10));
+  } catch (e) {
+    debugPrint("Encrypted user field sync deferred (offline?): $e");
+  }
+}
+
+static Future<Map<String, dynamic>?> fetchDecryptedUserFields() async {
+  try {
+    final response = await Supabase.instance.client.functions
+        .invoke('decrypt-user-fields', body: {})
+        .timeout(const Duration(seconds: 10));
+    if (response.status == 200) return response.data as Map<String, dynamic>;
+  } catch (e) {
+    debugPrint("Couldn't fetch decrypted user fields: $e");
+  }
+  return null;
+}
 }

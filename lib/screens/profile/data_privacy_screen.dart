@@ -6,6 +6,7 @@ import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:spentree/core/auth_helper.dart';
 import 'package:spentree/core/error_helper.dart';
 import 'package:spentree/core/transaction_service.dart';
 import 'package:spentree/screens/onboarding/sms_permission_screen.dart';
@@ -1209,9 +1210,13 @@ class _ChangeLimitPopupState extends State<_ChangeLimitPopup>
       final nowIso = DateTime.now().toUtc().toIso8601String();
       await Supabase.instance.client
           .from('users')
-          .update({'daily_limit': val, 'last_limit_change': nowIso})
+          .update({'last_limit_change': nowIso})
           .eq('id', user.id)
           .timeout(const Duration(seconds: 8));
+
+      await AuthHelper.syncEncryptedUserFields({
+        'daily_limit': val.toString(),
+      }).timeout(const Duration(seconds: 8));
 
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt('daily_expense_limit', val);

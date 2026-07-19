@@ -334,11 +334,9 @@ class _AccountScreenState extends State<AccountScreen>
     final user = Supabase.instance.client.auth.currentUser;
     if (user == null) return;
     try {
-      await Supabase.instance.client
-          .from('users')
-          .update({'profile_image_url': null})
-          .eq('id', user.id)
-          .timeout(const Duration(seconds: 5));
+      await AuthHelper.syncEncryptedUserFields({
+        'profile_image_url': null,
+      }).timeout(const Duration(seconds: 8));
       await Supabase.instance.client.storage.from('avatar').remove([
         '${user.id}/profile.jpg',
       ]);
@@ -546,10 +544,9 @@ class _AccountScreenState extends State<AccountScreen>
       final url = Supabase.instance.client.storage
           .from('avatar')
           .getPublicUrl(path);
-      await Supabase.instance.client
-          .from('users')
-          .update({'profile_image_url': url})
-          .eq('id', user.id);
+      await AuthHelper.syncEncryptedUserFields({
+        'profile_image_url': url,
+      }).timeout(const Duration(seconds: 8));
     } catch (e, stack) {
       debugPrint("UPLOAD ERROR:");
       debugPrint(e.toString());

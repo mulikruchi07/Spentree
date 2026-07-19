@@ -1176,16 +1176,18 @@ class TransactionService extends ChangeNotifier {
   }
 
   Future<void> _pullFromSupabase() async {
-    final user = _supabase.auth.currentUser;
-    if (user == null) return;
-    try {
-      final rows = await _supabase
-          .from('transactions')
-          .select()
-          .eq('user_id', user.id);
-      final isar = LocalDatabaseService.isar;
+  final user = _supabase.auth.currentUser;
+  if (user == null) return;
+  try {
+    final response = await _supabase.functions
+        .invoke('decrypt-transaction', body: {'user_id': user.id})
+        .timeout(const Duration(seconds: 15));
+    if (response.status != 200) return;
 
-      for (final row in (rows as List)) {
+    final rows = (response.data as List);
+    final isar = LocalDatabaseService.isar;
+
+    for (final row in rows) {
         final cloudId = row['id'].toString();
         final existing = await isar.localTransactions
             .filter()
@@ -1226,51 +1228,38 @@ class TransactionService extends ChangeNotifier {
   }
 
   Future<void> _pushToSupabase(LocalTransaction tx) async {
-    try {
-      final user = _supabase.auth.currentUser;
-      if (user == null) return;
+  try {
+    final user = _supabase.auth.currentUser;
+    if (user == null) return;
 
-      if (tx.cloudId == null) {
-        // INSERT
-        final response = await _supabase
-            .from('transactions')
-            .insert({
-              'user_id': user.id,
-              'amount': tx.amount,
-              'receiver_name': tx.receiverName,
-              'category': tx.category,
-              'type': tx.type,
-              'date_time': tx.dateTime.toIso8601String(),
-              'is_hidden': tx.isHidden,
-              'sms_hash': tx.smsHash,
-            })
-            .select('id')
-            .single();
+    final payload = {
+      'action': tx.cloudId == null ? 'insert' : 'update',
+      'cloud_id': tx.cloudId,
+      'user_id': user.id,
+      'amount': tx.amount,
+      'receiver_name': tx.receiverName,
+      'category': tx.category,
+      'type': tx.type,
+      'date_time': tx.dateTime.toIso8601String(),
+      'is_hidden': tx.isHidden,
+      'sms_hash': tx.smsHash,
+    };
 
-        tx.cloudId = response['id'];
-      } else {
-        // UPDATE
-        await _supabase
-            .from('transactions')
-            .update({
-              'amount': tx.amount,
-              'receiver_name': tx.receiverName,
-              'category': tx.category,
-              'date_time': tx.dateTime.toIso8601String(),
-              'is_hidden': tx.isHidden,
-            })
-            .eq('id', tx.cloudId!);
-      }
+    final response = await _supabase.functions
+        .invoke('encrypt-transaction', body: payload)
+        .timeout(const Duration(seconds: 10));
 
-      tx.isSynced = true;
-      final isar = LocalDatabaseService.isar;
-      await isar.writeTxn(() async {
-        await isar.localTransactions.put(tx);
-      });
-    } catch (e) {
-      debugPrint("Supabase sync failed: $e");
-    }
+    if (response.status != 200) throw Exception('Encrypt sync failed');
+    final data = response.data as Map;
+    if (tx.cloudId == null) tx.cloudId = data['id'];
+
+    tx.isSynced = true;
+    final isar = LocalDatabaseService.isar;
+    await isar.writeTxn(() async => await isar.localTransactions.put(tx));
+  } catch (e) {
+    debugPrint("Supabase sync failed: $e");
   }
+}
 
   Future<void> resetForNewUser() async {
     _isInitialized = false;

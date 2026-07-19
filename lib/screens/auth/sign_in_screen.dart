@@ -365,7 +365,11 @@ class _SignInScreenState extends State<SignInScreen> {
                           width: double.infinity,
                           height: componentHeight,
                           child: ElevatedButton(
-                            onPressed: AuthHelper.signInWithGoogle,
+                            onPressed: () async {
+                              final error = await AuthHelper.signInWithGoogle();
+                              if (error != null && mounted)
+                                setState(() => _generalError = error);
+                            },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.inputFill,
                               elevation: 0,

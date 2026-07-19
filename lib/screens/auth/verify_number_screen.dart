@@ -86,12 +86,20 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
         return;
       }
       await Supabase.instance.client.auth.verifyOTP(
-        email: widget.email,
-        token: otp,
         type: widget.isEmailChange
             ? OtpType.emailChange
             : (widget.isRecovery ? OtpType.recovery : OtpType.signup),
+        token: otp,
+        email: widget.email,
       );
+
+      if (widget.isEmailChange && mounted) {
+        Navigator.pop(
+          context,
+          true,
+        ); // only email-change needs to return a result
+      }
+      // signup/recovery: no pop — the global auth listener owns navigation exclusively
 
       if (mounted) Navigator.pop(context, true);
     } on AuthException catch (e) {

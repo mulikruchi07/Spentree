@@ -13,8 +13,14 @@ import 'package:spentree/core/auth_helper.dart';
 import 'package:spentree/screens/profile/eula_screen.dart';
 import 'package:spentree/core/auth_helper.dart';
 
-class AuthLandingScreen extends StatelessWidget {
+class AuthLandingScreen extends StatefulWidget {
   const AuthLandingScreen({super.key});
+  @override
+  State<AuthLandingScreen> createState() => _AuthLandingScreenState();
+}
+
+class _AuthLandingScreenState extends State<AuthLandingScreen> {
+  String? _googleError;
 
   // Matching SignUpScreen dimensions for consistency
   final double horizontalPadding = 24.0;
@@ -102,8 +108,24 @@ class AuthLandingScreen extends StatelessWidget {
                   _buildSocialButton(
                     imagePath: 'assets/images/google.png',
                     label: "Continue using Google",
-                   onTap: AuthHelper.signInWithGoogle,
+                    onTap: () async {
+                      final error = await AuthHelper.signInWithGoogle();
+                      if (error != null && mounted)
+                        setState(() => _googleError = error);
+                    },
                   ),
+                  if (_googleError != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: Text(
+                        _googleError!,
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.poppins(
+                          color: AppColors.errorRed,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
 
                   const SizedBox(height: 26),
 

@@ -722,35 +722,34 @@ class TransactionService extends ChangeNotifier {
   /// 1. INITIALIZE SERVICE
   Future<void> initService() async {
     if (_isInitialized) return;
-
     if (kIsWeb) {
       isLoading = false;
       notifyListeners();
       return;
     }
 
-    var status = await Permission.sms.status;
-
     await _loadFromLocal();
     await userProfileNotifier.retryPendingSync();
     await userProfileNotifier.retryPendingImageSync();
-
     await _migrateOrphanedLocalRows();
     await _fetchAndParseSms();
 
     _isInitialized = true;
-    _pullFromSupabase()
-        .timeout(
-          const Duration(seconds: 8),
-          onTimeout: () {
-            debugPrint("Pull timed out — likely offline");
-          },
-        )
-        .catchError((e) => debugPrint("Pull failed: $e"))
-        .then(
-          (_) => _loadFromLocal(),
-        ); // refresh UI once pull finishes, if it does
 
+    // Await this one — it's the thing LoadingScreen needs to have finished
+    // before Dashboard renders, for both new-device restoration and correctness.
+    await _pullFromSupabase()
+        .timeout(
+          const Duration(seconds: 15),
+          onTimeout: () => debugPrint(
+            "Pull timed out — likely offline, proceeding with local data",
+          ),
+        )
+        .catchError((e) => debugPrint("Pull failed: $e"));
+    await _loadFromLocal();
+
+    // This one can stay fire-and-forget — it's uploading local changes,
+    // not something the UI needs to block on to display correctly.
     _syncOfflineTransactions();
   }
 
@@ -1161,8 +1160,16 @@ class TransactionService extends ChangeNotifier {
         .isSyncedEqualTo(false)
         .isDeletedEqualTo(false)
         .findAll();
-    for (var tx in pendingUpdates) {
-      await _pushToSupabase(tx);
+
+    // Bounded concurrency — fast, but doesn't open unlimited simultaneous
+    // Edge Function calls. Each item's isSynced flag is durably written to
+    // Isar the moment IT succeeds — so if the app is killed mid-batch,
+    // whatever already succeeded stays synced, and next launch only retries
+    // what's left. This is what makes it resumable without extra bookkeeping.
+    const batchSize = 5;
+    for (var i = 0; i < pendingUpdates.length; i += batchSize) {
+      final batch = pendingUpdates.skip(i).take(batchSize);
+      await Future.wait(batch.map((tx) => _pushToSupabase(tx)));
     }
 
     final pendingDeletes = await isar.localTransactions
@@ -1170,30 +1177,35 @@ class TransactionService extends ChangeNotifier {
         .isSyncedEqualTo(false)
         .isDeletedEqualTo(true)
         .findAll();
-    for (var tx in pendingDeletes) {
-      await _deleteFromSupabase(tx);
+    for (var i = 0; i < pendingDeletes.length; i += batchSize) {
+      final batch = pendingDeletes.skip(i).take(batchSize);
+      await Future.wait(batch.map((tx) => _deleteFromSupabase(tx)));
     }
   }
 
   Future<void> _pullFromSupabase() async {
-  final user = _supabase.auth.currentUser;
-  if (user == null) return;
-  try {
-    final response = await _supabase.functions
-        .invoke('decrypt-transaction', body: {'user_id': user.id})
-        .timeout(const Duration(seconds: 15));
-    if (response.status != 200) return;
+    final user = _supabase.auth.currentUser;
+    if (user == null) return;
+    try {
+      final response = await _supabase.functions
+          .invoke('decrypt-transaction', body: {})
+          .timeout(const Duration(seconds: 20));
 
-    final rows = (response.data as List);
-    final isar = LocalDatabaseService.isar;
+      if (response.status != 200) {
+        debugPrint("Pull from Supabase failed: status ${response.status}");
+        return;
+      }
 
-    for (final row in rows) {
+      final rows = response.data as List;
+      final isar = LocalDatabaseService.isar;
+
+      for (final row in rows) {
         final cloudId = row['id'].toString();
         final existing = await isar.localTransactions
             .filter()
             .cloudIdEqualTo(cloudId)
             .findFirst();
-        if (existing != null) continue; // already have it locally
+        if (existing != null) continue;
 
         final smsHash = row['sms_hash'] as String?;
         if (smsHash != null) {
@@ -1201,26 +1213,25 @@ class TransactionService extends ChangeNotifier {
               .filter()
               .smsHashEqualTo(smsHash)
               .findFirst();
-          if (byHash != null)
-            continue; // matched by hash instead — already have it
+          if (byHash != null) continue;
         }
 
         final pulled = LocalTransaction()
           ..cloudId = cloudId
           ..userId = user.id
-          ..amount = (row['amount'] as num).toDouble()
-          ..receiverName = row['receiver_name'] ?? ''
-          ..category = row['category'] ?? 'Other'
-          ..dateTime = DateTime.parse(row['date_time']).toLocal()
-          ..type = row['type'] ?? 'Bank'
-          ..isHidden = row['is_hidden'] ?? false
+          ..amount = double.parse(row['amount'] as String)
+          ..receiverName = row['receiver_name'] as String
+          ..category = row['category'] as String
+          ..dateTime = DateTime.parse(row['date_time'] as String).toLocal()
+          ..type = row['type'] as String
+          ..isHidden = row['is_hidden'] as bool? ?? false
           ..isDeleted = false
           ..isSynced = true
           ..smsHash = smsHash;
 
-        await isar.writeTxn(() async {
-          await isar.localTransactions.put(pulled);
-        });
+        await isar.writeTxn(
+          () async => await isar.localTransactions.put(pulled),
+        );
       }
     } catch (e) {
       debugPrint("Pull from Supabase failed: $e");
@@ -1228,38 +1239,38 @@ class TransactionService extends ChangeNotifier {
   }
 
   Future<void> _pushToSupabase(LocalTransaction tx) async {
-  try {
-    final user = _supabase.auth.currentUser;
-    if (user == null) return;
+    try {
+      final user = _supabase.auth.currentUser;
+      if (user == null) return;
 
-    final payload = {
-      'action': tx.cloudId == null ? 'insert' : 'update',
-      'cloud_id': tx.cloudId,
-      'user_id': user.id,
-      'amount': tx.amount,
-      'receiver_name': tx.receiverName,
-      'category': tx.category,
-      'type': tx.type,
-      'date_time': tx.dateTime.toIso8601String(),
-      'is_hidden': tx.isHidden,
-      'sms_hash': tx.smsHash,
-    };
+      final payload = {
+        'action': tx.cloudId == null ? 'insert' : 'update',
+        'cloud_id': tx.cloudId,
+        'user_id': user.id,
+        'amount': tx.amount,
+        'receiver_name': tx.receiverName,
+        'category': tx.category,
+        'type': tx.type,
+        'date_time': tx.dateTime.toIso8601String(),
+        'is_hidden': tx.isHidden,
+        'sms_hash': tx.smsHash,
+      };
 
-    final response = await _supabase.functions
-        .invoke('encrypt-transaction', body: payload)
-        .timeout(const Duration(seconds: 10));
+      final response = await _supabase.functions
+          .invoke('encrypt-transaction', body: payload)
+          .timeout(const Duration(seconds: 10));
 
-    if (response.status != 200) throw Exception('Encrypt sync failed');
-    final data = response.data as Map;
-    if (tx.cloudId == null) tx.cloudId = data['id'];
+      if (response.status != 200) throw Exception('Encrypt sync failed');
+      final data = response.data as Map;
+      if (tx.cloudId == null) tx.cloudId = data['id'];
 
-    tx.isSynced = true;
-    final isar = LocalDatabaseService.isar;
-    await isar.writeTxn(() async => await isar.localTransactions.put(tx));
-  } catch (e) {
-    debugPrint("Supabase sync failed: $e");
+      tx.isSynced = true;
+      final isar = LocalDatabaseService.isar;
+      await isar.writeTxn(() async => await isar.localTransactions.put(tx));
+    } catch (e) {
+      debugPrint("Supabase sync failed: $e");
+    }
   }
-}
 
   Future<void> resetForNewUser() async {
     _isInitialized = false;

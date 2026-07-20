@@ -63,7 +63,8 @@ void main() async {
 
       final prefs = await SharedPreferences.getInstance();
       final hasDecidedSms =
-          prefs.getBool('has_seen_sms_permission_screen_${session.user.id}') ?? false;
+          prefs.getBool('has_seen_sms_permission_screen_${session.user.id}') ??
+          false;
       final nextAfterLimit = hasDecidedSms
           ? const LoadingScreen(isAuthFlow: true)
           : const SmsPermissionScreen(isOnboarding: true);
@@ -73,8 +74,8 @@ void main() async {
       navigatorKey.currentState?.pushAndRemoveUntil(
         needsLimit
             ? MaterialPageRoute(
-                builder: (context) => const SetDailyLimitScreen(),
-                settings: RouteSettings(arguments: nextAfterLimit),
+                builder: (context) =>
+                    SetDailyLimitScreen(nextScreen: nextAfterLimit),
               )
             : MaterialPageRoute(builder: (context) => nextAfterLimit),
         (route) => false,
@@ -114,8 +115,14 @@ void main() async {
     final hasDecidedSms = prefs.containsKey(_smsPermissionDecisionKey(userId));
     final hasCompletedSync =
         prefs.getBool(_onboardingSyncCompleteKey(userId)) ?? false;
+    final needsLimit = await _needsSetDailyLimit();
 
-    if (!hasDecidedSms) {
+    if (needsLimit) {
+      final nextAfterLimit = hasDecidedSms
+          ? const LoadingScreen(isAuthFlow: true)
+          : const SmsPermissionScreen(isOnboarding: true);
+      startScreen = SetDailyLimitScreen(nextScreen: nextAfterLimit);
+    } else if (!hasDecidedSms) {
       startScreen = const SmsPermissionScreen(isOnboarding: true);
     } else if (!hasCompletedSync) {
       startScreen = const LoadingScreen(isAuthFlow: true);
@@ -213,16 +220,25 @@ Future<bool> _checkSingleDeviceSession(BuildContext? navContext) async {
 }
 
 Future<bool> _needsSetDailyLimit() async {
-  // Purely account-scoped — never touches has_completed_onboarding.
+  final prefs = await SharedPreferences.getInstance();
+
+  // Flow 1 signal — questionnaire was just completed locally, this
+  // session, and hasn't synced to the cloud yet. This is authoritative:
+  // never show Set Daily Limit here, regardless of what the cloud
+  // currently has (it hasn't been written yet, by design).
+  final questionnairePending =
+      prefs.getBool('questionnaire_sync_pending') ?? false;
+  if (questionnairePending) return false;
+
+  // No pending local questionnaire — safe to check the cloud now.
   final fields = await AuthHelper.fetchDecryptedUserFields();
   final hasCloudLimit = fields != null && fields['daily_limit'] != null;
-  if (hasCloudLimit) return false; // real existing account with real cloud data
+  if (hasCloudLimit) return false;
 
-  final prefs = await SharedPreferences.getInstance();
   final user = Supabase.instance.client.auth.currentUser;
   if (user == null) return true;
-  // Per-user local flag — distinct from the global has_completed_onboarding.
-  final answeredLocally = prefs.getBool('questionnaire_answered_${user.id}') ?? false;
+  final answeredLocally =
+      prefs.getBool('questionnaire_answered_${user.id}') ?? false;
   return !answeredLocally;
 }
 

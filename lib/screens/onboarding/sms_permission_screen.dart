@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:spentree/core/transaction_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/app_style.dart';
 import 'loading_screen.dart';
@@ -98,7 +101,7 @@ class _SmsPermissionScreenState extends State<SmsPermissionScreen>
     final key = await _decisionKey();
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(key, granted ? 'granted' : 'manual');
-    await prefs.setBool('has_seen_sms_permission_screen', true);
+    await prefs.setBool(await _seenKey(), true);
   }
 
   void _proceedIfOnboarding() {
@@ -205,6 +208,11 @@ class _SmsPermissionScreenState extends State<SmsPermissionScreen>
     if (result.isGranted) {
       await _persistDecision(true);
       if (mounted) setState(() => _revokedExternally = false);
+      if (!widget.isOnboarding) {
+        // Granted from Settings, not onboarding — kick off SMS import right now,
+        // no app restart needed.
+        unawaited(TransactionService().resetForNewUser());
+      }
       _proceedIfOnboarding();
     } else if (result.isPermanentlyDenied) {
       if (!mounted) return;

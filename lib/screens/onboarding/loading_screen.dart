@@ -1,7 +1,9 @@
+import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:spentree/core/auth_helper.dart';
 import 'package:spentree/core/transaction_service.dart';
 import 'package:spentree/core/user_profile.dart';
 import 'package:spentree/screens/main_wrapper.dart';
@@ -42,9 +44,9 @@ class _LoadingScreenState extends State<LoadingScreen>
   }
 
   Future<void> _initFlow() async {
-  _startLoadingSequence();
-  _syncData();
-}
+    _startLoadingSequence();
+    _syncData();
+  }
 
   Future<void> _syncData() async {
     // 1. If this is an auth flow, ensure the user row exists
@@ -66,40 +68,80 @@ class _LoadingScreenState extends State<LoadingScreen>
   }
 
   Future<void> _ensureUserExistsInDatabase(User? user) async {
-    if (user == null) return;
-    try {
-      await UserData.loadQuestionnaireData();
-      final prefs = await SharedPreferences.getInstance();
-      final pendingSync = prefs.getBool('questionnaire_sync_pending') ?? false;
+  if (user == null) return;
+  try {
+    await UserData.loadQuestionnaireData();
+    final prefs = await SharedPreferences.getInstance();
+    final pendingSync = prefs.getBool('questionnaire_sync_pending') ?? false;
 
-      final existing = await Supabase.instance.client
-          .from('users')
-          .select('id, name')
-          .eq('id', user.id)
-          .maybeSingle();
+    final existing = await Supabase.instance.client
+        .from('users').select('id, name, legal_consent').eq('id', user.id).maybeSingle();
 
-      final Map<String, dynamic> payload = {'id': user.id};
+    final Map<String, dynamic> payload = {'id': user.id};
 
-      final existingName = existing?['name'] as String?;
-      if (existingName == null || existingName.trim().isEmpty) {
-        payload['name'] = user.userMetadata?['full_name'] ?? 'New User';
+    final existingName = existing?['name'] as String?;
+    if (existingName == null || existingName.trim().isEmpty) {
+      payload['name'] = user.userMetadata?['full_name'] ?? 'New User';
+    }
+
+    final existingConsent = existing?['legal_consent'] as bool?;
+    if (existingConsent != true) {
+      payload['legal_consent'] = true;
+      payload['legal_consent_at'] = DateTime.now().toUtc().toIso8601String();
+      payload['legal_version'] = 'v1.0';
+    }
+
+    await Supabase.instance.client.from('users').upsert(payload);
+
+    // --- NEW: restore encrypted profile fields from cloud, cloud always wins ---
+    final decryptedFields = await AuthHelper.fetchDecryptedUserFields();
+    final hasCloudProfile = decryptedFields != null &&
+        (decryptedFields['daily_limit'] != null ||
+         decryptedFields['goal'] != null ||
+         decryptedFields['category_preference'] != null);
+
+    if (hasCloudProfile) {
+      // Existing account — cloud is authoritative. Restore locally,
+      // skip pushing any locally-cached questionnaire/default values up.
+      final cloudLimit = decryptedFields['daily_limit'] as String?;
+      final cloudGoal = decryptedFields['goal'] as String?;
+      final cloudCategory = decryptedFields['category_preference'] as String?;
+
+      await UserData.saveQuestionnaireData(
+        dailyLimitValue: cloudLimit ?? UserData.dailyLimit,
+        category: cloudCategory ?? UserData.spendingCategory,
+        goal: cloudGoal ?? UserData.spendingGoal,
+      );
+      if (cloudLimit != null) {
+        final parsed = int.tryParse(cloudLimit);
+        if (parsed != null) await prefs.setInt('daily_expense_limit', parsed);
       }
+      await prefs.setBool('questionnaire_sync_pending', false); // never push local over cloud
 
-      final existingConsent = existing?['legal_consent'] as bool?;
-      if (existingConsent != true) {
-        payload['legal_consent'] = true;
-        payload['legal_consent_at'] = DateTime.now().toUtc().toIso8601String();
-        payload['legal_version'] = 'v1.0';
+      final imageUrl = decryptedFields['profile_image_url'] as String?;
+      if (imageUrl != null) {
+        try {
+          final response = await http.get(Uri.parse(imageUrl)).timeout(const Duration(seconds: 8));
+          if (response.statusCode == 200) {
+            await userProfileNotifier.updateImage(response.bodyBytes);
+          }
+        } catch (e) {
+          debugPrint("Couldn't restore profile image: $e");
+        }
       }
-
-      // Only push questionnaire answers if they were captured this session
-      // and haven't been synced yet — prevents overwriting a returning
-      // user's real data with local defaults on a fresh install/device.
-      if (pendingSync) {
-        payload['daily_limit'] = int.tryParse(UserData.dailyLimit) ?? 500;
-        payload['category_preference'] = UserData.spendingCategory;
-        payload['goal'] = UserData.spendingGoal;
+    } else if (pendingSync) {
+      // Genuinely brand-new — push local questionnaire answers up as before.
+      try {
+        await Supabase.instance.client.functions.invoke('encrypt-user-fields', body: {
+          'daily_limit': UserData.dailyLimit,
+          'category_preference': UserData.spendingCategory,
+          'goal': UserData.spendingGoal,
+        }).timeout(const Duration(seconds: 10));
+      } catch (e) {
+        debugPrint("Couldn't sync encrypted questionnaire fields: $e");
       }
+      await prefs.setBool('questionnaire_sync_pending', false);
+    }
 
       await Supabase.instance.client.from('users').upsert(payload);
       final userRow = await Supabase.instance.client

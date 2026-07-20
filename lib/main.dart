@@ -11,6 +11,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:spentree/core/auth_helper.dart';
 import 'package:spentree/core/device_identity.dart';
 import 'package:spentree/core/notification_service.dart';
+import 'package:spentree/screens/onboarding/set_daily_limit_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:spentree/core/database/local_database_service.dart';
 import 'package:spentree/core/transaction_service.dart';
@@ -55,21 +56,27 @@ void main() async {
 
     if (event == AuthChangeEvent.signedIn && session != null) {
       final canProceed = await _checkSingleDeviceSession(null);
-      if (!canProceed)
-        return; // dialog declined — already routed to SignInScreen
+      if (!canProceed) return;
 
       final myDeviceId = await DeviceIdentity.getDeviceId();
       _watchForRemoteLogout(session.user.id, myDeviceId);
 
       final prefs = await SharedPreferences.getInstance();
       final hasDecidedSms =
-          prefs.getBool('has_seen_sms_permission_screen') ?? false;
+          prefs.getBool('has_seen_sms_permission_screen_${session.user.id}') ?? false;
+      final nextAfterLimit = hasDecidedSms
+          ? const LoadingScreen(isAuthFlow: true)
+          : const SmsPermissionScreen(isOnboarding: true);
+
+      final needsLimit = await _needsSetDailyLimit();
+
       navigatorKey.currentState?.pushAndRemoveUntil(
-        MaterialPageRoute(
-          builder: (context) => hasDecidedSms
-              ? const LoadingScreen(isAuthFlow: true)
-              : const SmsPermissionScreen(isOnboarding: true),
-        ),
+        needsLimit
+            ? MaterialPageRoute(
+                builder: (context) => const SetDailyLimitScreen(),
+                settings: RouteSettings(arguments: nextAfterLimit),
+              )
+            : MaterialPageRoute(builder: (context) => nextAfterLimit),
         (route) => false,
       );
     } else if (event == AuthChangeEvent.signedOut) {
@@ -203,6 +210,20 @@ Future<bool> _checkSingleDeviceSession(BuildContext? navContext) async {
     debugPrint("Single-device check skipped (offline?): $e");
     return true;
   }
+}
+
+Future<bool> _needsSetDailyLimit() async {
+  // Purely account-scoped — never touches has_completed_onboarding.
+  final fields = await AuthHelper.fetchDecryptedUserFields();
+  final hasCloudLimit = fields != null && fields['daily_limit'] != null;
+  if (hasCloudLimit) return false; // real existing account with real cloud data
+
+  final prefs = await SharedPreferences.getInstance();
+  final user = Supabase.instance.client.auth.currentUser;
+  if (user == null) return true;
+  // Per-user local flag — distinct from the global has_completed_onboarding.
+  final answeredLocally = prefs.getBool('questionnaire_answered_${user.id}') ?? false;
+  return !answeredLocally;
 }
 
 Widget _buildSingleDeviceDialog(BuildContext context) {

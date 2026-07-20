@@ -7,6 +7,7 @@ import '../../core/app_style.dart';
 import 'package:flutter/services.dart';
 import '../onboarding/loading_screen.dart';
 import '../../core/user_data.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/auth_landing_screen.dart';
 
 class QuestionnaireScreen extends StatefulWidget {
@@ -459,6 +460,14 @@ class _QuestionnaireScreenState extends State<QuestionnaireScreen> {
                         goal: _selectedGoal ?? "",
                       );
                       final prefs = await SharedPreferences.getInstance();
+                      final user = Supabase.instance.client.auth.currentUser;
+
+                      if (user != null) {
+                        await prefs.setBool(
+                          'questionnaire_answered_${user.id}',
+                          true,
+                        );
+                      }
                       await prefs.setBool('has_completed_onboarding', true);
 
                       if (mounted) {

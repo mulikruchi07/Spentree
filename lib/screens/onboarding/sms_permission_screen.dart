@@ -319,7 +319,7 @@ class _SmsPermissionScreenState extends State<SmsPermissionScreen>
                       child: Text(
                         "Continue with Manual Entry",
                         style: GoogleFonts.poppins(
-                          fontSize: 16,
+                          fontSize: 14,
                           fontWeight: FontWeight.w600,
                           color: AppColors.destructiveRed,
                         ),
@@ -431,7 +431,7 @@ class _SmsPermissionScreenState extends State<SmsPermissionScreen>
                       child: Text(
                         "Continue with Manual Entry",
                         style: GoogleFonts.poppins(
-                          fontSize: 16,
+                          fontSize: 14,
                           fontWeight: FontWeight.w600,
                           color: AppColors.destructiveRed,
                         ),
@@ -480,7 +480,7 @@ class _SmsPermissionScreenState extends State<SmsPermissionScreen>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        if (widget.isOnboarding) const SizedBox(height: 24),
+                        const SizedBox(height: 24),
                         Center(
                           child: Text(
                             "SMS Permission",

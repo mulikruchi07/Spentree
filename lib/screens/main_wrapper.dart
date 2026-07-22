@@ -128,7 +128,7 @@ class _MainWrapperState extends State<MainWrapper> with WidgetsBindingObserver {
     const DashboardScreen(),
     AnalyticsScreen(startWithAddExpense: widget.openAddExpenseForm),
     const ForestScreen(),
-    const AchievementsScreen(),
+    // const AchievementsScreen(),
     const ProfileScreen(),
   ];
 
@@ -210,8 +210,8 @@ class _MainWrapperState extends State<MainWrapper> with WidgetsBindingObserver {
             PhosphorIconsRegular.treeEvergreen,
             PhosphorIconsFill.treeEvergreen,
           ),
-          _navItem(3, PhosphorIconsRegular.trophy, PhosphorIconsFill.trophy),
-          _navItem(4, PhosphorIconsRegular.user, PhosphorIconsFill.user),
+          // _navItem(3, PhosphorIconsRegular.trophy, PhosphorIconsFill.trophy),
+          _navItem(3, PhosphorIconsRegular.user, PhosphorIconsFill.user),
         ],
       ),
     );

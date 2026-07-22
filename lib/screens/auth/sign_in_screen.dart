@@ -7,6 +7,7 @@ import 'package:spentree/core/auth_helper.dart';
 import 'package:spentree/core/auth_landing_screen.dart';
 import 'package:spentree/core/error_helper.dart';
 import 'package:spentree/core/transaction_service.dart';
+import 'package:spentree/screens/auth/toast_helper.dart';
 import 'package:spentree/screens/main_wrapper.dart';
 import '../../core/app_style.dart';
 import 'sign_up_screen.dart';
@@ -111,8 +112,9 @@ class _SignInScreenState extends State<SignInScreen> {
               .invoke('check-signin-method', body: {'email': email})
               .timeout(const Duration(seconds: 5));
           final data = res.data as Map;
+          debugPrint("Edge Function Response: $data");
           if (data['found'] == true &&
-              data['hasPassword'] == false &&
+              data['has_password'] == false &&
               !knownHasPassword) {
             setState(
               () => _generalError =
@@ -250,7 +252,7 @@ class _SignInScreenState extends State<SignInScreen> {
                         ),
                         if (_generalError != null)
                           Padding(
-                            padding: const EdgeInsets.only(top: 8),
+                            padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
                             child: Align(
                               alignment: Alignment.centerLeft,
                               child: Text(
@@ -303,35 +305,38 @@ class _SignInScreenState extends State<SignInScreen> {
                         const SizedBox(height: 20),
 
                         // --- Sign Up Link ---
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: RichText(
-                            text: TextSpan(
-                              style: GoogleFonts.poppins(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w400,
-                                color: AppColors.grey800,
-                              ),
-                              children: [
-                                TextSpan(text: "Don't have an account? "),
-                                TextSpan(
-                                  text: "Sign Up",
-                                  style: const TextStyle(
-                                    color: AppColors.primaryGreen,
-                                    fontWeight: FontWeight.w400,
-                                  ),
-                                  recognizer: TapGestureRecognizer()
-                                    ..onTap = () {
-                                      Navigator.pushReplacement(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              const AuthLandingScreen(),
-                                        ),
-                                      );
-                                    },
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: RichText(
+                              text: TextSpan(
+                                style: GoogleFonts.poppins(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w400,
+                                  color: AppColors.grey800,
                                 ),
-                              ],
+                                children: [
+                                  TextSpan(text: "Don't have an account? "),
+                                  TextSpan(
+                                    text: "Sign Up",
+                                    style: const TextStyle(
+                                      color: AppColors.primaryGreen,
+                                      fontWeight: FontWeight.w400,
+                                    ),
+                                    recognizer: TapGestureRecognizer()
+                                      ..onTap = () {
+                                        Navigator.pushReplacement(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                const AuthLandingScreen(),
+                                          ),
+                                        );
+                                      },
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
@@ -367,8 +372,12 @@ class _SignInScreenState extends State<SignInScreen> {
                           child: ElevatedButton(
                             onPressed: () async {
                               final error = await AuthHelper.signInWithGoogle();
-                              if (error != null && mounted)
+                              if (error == null || !mounted) return;
+                              if (error.contains("No internet connection")) {
+                                showNoInternetToast();
+                              } else {
                                 setState(() => _generalError = error);
+                              }
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.inputFill,

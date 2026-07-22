@@ -2126,7 +2126,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                       ),
                     ),
                   ),
-                  const SizedBox(height: 120),
+                  const SizedBox(height: 30),
                 ],
               ),
             ),
@@ -2160,7 +2160,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
             ),
           ],
         ),
-        Icon(PhosphorIconsRegular.trophy, size: 32, color: AppColors.colblack),
+        // Icon(PhosphorIconsRegular.trophy, size: 32, color: AppColors.colblack),
       ],
     );
   }

@@ -222,11 +222,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       Padding(
                         padding: const EdgeInsets.only(bottom: 8.0),
-                        child: Icon(
-                          PhosphorIconsRegular.trophy,
-                          size: 32,
-                          color: AppColors.colblack,
-                        ),
+                        // child: Icon(
+                        //   PhosphorIconsRegular.trophy,
+                        //   size: 32,
+                        //   color: AppColors.colblack,
+                        // ),
                       ),
                     ],
                   ),
@@ -438,7 +438,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
 
-                  const SizedBox(height: 120),
+                  const SizedBox(height: 30),
                 ],
               ),
             ),

@@ -1305,7 +1305,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 120),
+                            const SizedBox(height: 30),
                           ],
                         ),
                       ),
@@ -1359,7 +1359,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         const SizedBox(
           width: 12,
         ), // ADDED: guarantees breathing room before the icon, even at max truncation width
-        Icon(PhosphorIconsRegular.trophy, size: 32, color: AppColors.colblack),
+        // Icon(PhosphorIconsRegular.trophy, size: 32, color: AppColors.colblack),
       ],
     );
   }

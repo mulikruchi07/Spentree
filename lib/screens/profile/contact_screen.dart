@@ -76,7 +76,7 @@ class ContactScreen extends StatelessWidget {
                       "Have a feature idea? Found something we can improve?\nSpentree grows with your input.",
                     ),
                     Text(
-                      "Feedback: feedback@spentree.app",
+                      "Feedback: team.spentree@gmail.com",
                       style: GoogleFonts.poppins(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,

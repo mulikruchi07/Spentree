@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:spentree/core/app_style.dart';
 import 'package:spentree/screens/auth/sign_in_screen.dart';
 import 'package:spentree/screens/auth/sign_up_screen.dart';
+import 'package:spentree/screens/auth/toast_helper.dart';
 import 'package:spentree/screens/profile/eula_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/gestures.dart';
@@ -26,6 +27,7 @@ class _AuthLandingScreenState extends State<AuthLandingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    MediaQuery.platformBrightnessOf(context);
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: themeNotifier,
       builder: (context, currentTheme, child) {
@@ -53,7 +55,7 @@ class _AuthLandingScreenState extends State<AuthLandingScreen> {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
                     child: Text(
-                      "Lorem ipsum dolor sit amet, consectetur adipiscing elit,",
+                      "Track your spending effortlessly, one message at a time",
                       textAlign: TextAlign.center,
                       style: GoogleFonts.poppins(
                         fontSize: 14,
@@ -107,8 +109,12 @@ class _AuthLandingScreenState extends State<AuthLandingScreen> {
                     label: "Continue using Google",
                     onTap: () async {
                       final error = await AuthHelper.signInWithGoogle();
-                      if (error != null && mounted)
+                      if (error == null || !mounted) return;
+                      if (error.contains("No internet connection")) {
+                        showNoInternetToast();
+                      } else {
                         setState(() => _googleError = error);
+                      }
                     },
                   ),
                   if (_googleError != null)

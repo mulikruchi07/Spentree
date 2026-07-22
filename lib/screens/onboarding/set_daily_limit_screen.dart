@@ -325,7 +325,9 @@ class _SetDailyLimitScreenState extends State<SetDailyLimitScreen> {
                         const SizedBox(height: 12),
                         
                         // Left-Aligned Note
-                        Align(
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: Align(
                           alignment: Alignment.centerLeft,
                           child: Text(
                             "Note: Limit can be changed only once a week.",
@@ -335,6 +337,7 @@ class _SetDailyLimitScreenState extends State<SetDailyLimitScreen> {
                               color: AppColors.grey700,
                             ),
                           ),
+                        ),
                         ),
 
                         const Spacer(flex: 3),

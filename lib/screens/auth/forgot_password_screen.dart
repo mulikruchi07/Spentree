@@ -223,7 +223,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
     bool isValid = true;
     final passwordPattern = RegExp(
-      r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#\$&*~^%()_\-+=]).{8,}$',
+      r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#\$&*~^%()_\-+=]).{8,64}$',
     );
 
     if (_newPasswordController.text.isEmpty) {
@@ -232,7 +232,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     } else if (!passwordPattern.hasMatch(_newPasswordController.text)) {
       setState(
         () => _newPasswordError =
-            "Password must be at least 8 characters and include an uppercase letter, a lowercase letter, a number, and a symbol.",
+            "Password must be 8–64 characters and include an uppercase letter, a lowercase letter, a number, and a symbol.",
       );
       isValid = false;
     }

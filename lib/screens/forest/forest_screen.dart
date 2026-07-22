@@ -575,7 +575,7 @@ class _ForestScreenState extends State<ForestScreen> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 120),
+                      const SizedBox(height: 30),
                     ],
                   ),
                 ),
@@ -616,7 +616,7 @@ class _ForestScreenState extends State<ForestScreen> {
           ],
         ),
         // Gesture logic removed. Trophy is strictly aesthetic now.
-        Icon(PhosphorIconsRegular.trophy, size: 32, color: AppColors.colblack),
+        // Icon(PhosphorIconsRegular.trophy, size: 32, color: AppColors.colblack),
       ],
     );
   }

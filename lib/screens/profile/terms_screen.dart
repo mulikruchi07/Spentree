@@ -43,7 +43,7 @@ class TermsScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  _dateText("Effective Date: 1st August 2026"),
+                  _dateText("Effective Date: 22nd July 2026"),
                   const SizedBox(height: 16),
                   _buildBodyText(
                     "Welcome to Spentree (\"we,\" \"our,\" or \"us\"). By accessing or using our mobile application, website, or services, you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use our services.",
@@ -214,7 +214,8 @@ class TermsScreen extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         GestureDetector(
-          onTap: () => _launchURL("https://in.linkedin.com/in/pranav-phanse-8b4bbb318"),
+          onTap: () =>
+              _launchURL("https://in.linkedin.com/in/pranav-phanse-8b4bbb318"),
           child: RichText(
             text: TextSpan(
               style: GoogleFonts.poppins(

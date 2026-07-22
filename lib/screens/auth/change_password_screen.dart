@@ -35,10 +35,10 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   final double inputGap = 16.0;
 
   static final _passwordPattern = RegExp(
-    r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#\$&*~^%()_\-+=]).{8,}$',
+    r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#\$&*~^%()_\-+=]).{8,64}$',
   );
   static const _passwordRuleMessage =
-      "Password must be at least 8 characters and include an uppercase letter, a lowercase letter, a number, and a symbol.";
+      "Password must be 8–64 characters and include an uppercase letter, a lowercase letter, a number, and a symbol.";
 
   @override
   void dispose() {
@@ -96,18 +96,21 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 
       TextInput.finishAutofillContext();
 
-      setState(() => _successMessage = "Password changed successfully! Please sign in again.");
+      setState(
+        () => _successMessage =
+            "Password changed successfully! Please sign in again.",
+      );
 
-Timer(const Duration(milliseconds: 1500), () async {
-  await AuthHelper.signOutEverywhere();
-  if (mounted) {
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (context) => const SignInScreen()),
-      (route) => false,
-    );
-  }
-});
+      Timer(const Duration(milliseconds: 1500), () async {
+        await AuthHelper.signOutEverywhere();
+        if (mounted) {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const SignInScreen()),
+            (route) => false,
+          );
+        }
+      });
     } on AuthException catch (e) {
       final msg = e.message.toLowerCase();
       if (msg.contains('password')) {

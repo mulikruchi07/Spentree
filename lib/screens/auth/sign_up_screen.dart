@@ -63,13 +63,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
     // Add this near your other validation in _validateAndSubmit(), before the Supabase call:
     final password = _passwordController.text;
     final passwordPattern = RegExp(
-      r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#\$&*~^%()_\-+=]).{8,}$',
+      r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#\$&*~^%()_\-+=]).{8,64}$',
     );
     if (_passwordController.text.isNotEmpty &&
         !passwordPattern.hasMatch(_passwordController.text)) {
       setState(
         () => _passwordError =
-            "Password must be at least 8 characters and include an uppercase letter, a lowercase letter, a number, and a symbol.",
+            "Password must be 8–64 characters and include an uppercase letter, a lowercase letter, a number, and a symbol.",
       );
       isValid = false;
     }
@@ -336,7 +336,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             ),
                             if (_offlineError != null)
                               Padding(
-                                padding: const EdgeInsets.only(top: 8),
+                                padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
                                 child: Align(
                                   alignment: Alignment.centerLeft,
                                   child: Text(
@@ -390,35 +390,40 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         const SizedBox(height: 20),
 
                         // --- SIGN IN LINK ---
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: RichText(
-                            text: TextSpan(
-                              style: GoogleFonts.poppins(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w400,
-                                color: AppColors.grey800,
-                              ),
-                              children: [
-                                TextSpan(text: "Do you have account? "),
-                                TextSpan(
-                                  text: "Sign In",
-                                  style: const TextStyle(
-                                    color: AppColors.primaryGreen,
-                                    fontWeight: FontWeight.w400,
-                                  ),
-                                  recognizer: TapGestureRecognizer()
-                                    ..onTap = () {
-                                      Navigator.pushReplacement(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              const SignInScreen(),
-                                        ),
-                                      );
-                                    },
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: RichText(
+                              text: TextSpan(
+                                style: GoogleFonts.poppins(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w400,
+                                  color: AppColors.grey800,
                                 ),
-                              ],
+                                children: [
+                                  const TextSpan(
+                                    text: "Do you have an account? ",
+                                  ),
+                                  TextSpan(
+                                    text: "Sign In",
+                                    style: const TextStyle(
+                                      color: AppColors.primaryGreen,
+                                      fontWeight: FontWeight.w400,
+                                    ),
+                                    recognizer: TapGestureRecognizer()
+                                      ..onTap = () {
+                                        Navigator.pushReplacement(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) =>
+                                                const SignInScreen(),
+                                          ),
+                                        );
+                                      },
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),

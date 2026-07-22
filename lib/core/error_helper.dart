@@ -13,7 +13,7 @@ String mapAuthError(Object e) {
       return "No account found with that email and password.";
     }
     if (msg.contains('password')) {
-      return "Password must be at least 8 characters and include an uppercase letter, a lowercase letter, a number, and a symbol.";
+      return "Password must be 8–64 characters and include an uppercase letter, a lowercase letter, a number, and a symbol.";
     }
     if (msg.contains('confirmation') ||
         msg.contains('sending') ||

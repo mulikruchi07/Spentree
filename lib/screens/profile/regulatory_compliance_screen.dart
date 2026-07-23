@@ -50,7 +50,7 @@ class RegulatoryComplianceScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  _buildBodyText("Company/App: Spentree"),
+                  _buildBodyText("App: Spentree"),
                   _buildBodyText("Applicable Jurisdiction: Republic of India"),
                   const SizedBox(height: 16),
                   _buildBodyText(
@@ -81,7 +81,7 @@ class RegulatoryComplianceScreen extends StatelessWidget {
                     "We only collect data that is strictly necessary for providing the gamified expense tracking experience.",
                   ),
                   _buildBodyText(
-                    "What we collect: Email address, Name, Profile Image, and hashed financial transaction logs (Amount, Receiver, Date, Time).",
+                    "What we collect: Email address, Name, Profile Image, and transaction data (Amount, Receiver, Date, Time) is encrypted before being stored in our cloud infrastructure and decrypted only for the authenticated user.",
                   ),
                   const SizedBox(height: 8),
                   _buildBodyText(
@@ -156,7 +156,7 @@ class RegulatoryComplianceScreen extends StatelessWidget {
                     "We recognize that the most vulnerable point for SPDI is the user's physical phone.",
                   ),
                   _buildBodyText(
-                    "App Lock / Biometrics: Spentree includes native biometric authentication (biometric_service.dart) utilizing Android's FaceID/Fingerprint APIs. This ensures that even if a user's phone is unlocked and handed to someone else, their financial dashboard remains locked and secure.",
+                    "App Lock / Biometrics: Spentree includes native biometric authentication utilizing Android's FaceID/Fingerprint APIs. This ensures that even if a user's phone is unlocked and handed to someone else, their financial dashboard remains locked and secure.",
                   ),
 
                   const SizedBox(height: 32),
@@ -232,7 +232,8 @@ class RegulatoryComplianceScreen extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         GestureDetector(
-          onTap: () => _launchURL("https://in.linkedin.com/in/pranav-phanse-8b4bbb318"),
+          onTap: () =>
+              _launchURL("https://in.linkedin.com/in/pranav-phanse-8b4bbb318"),
           child: RichText(
             text: TextSpan(
               style: GoogleFonts.poppins(

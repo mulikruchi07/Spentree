@@ -73,16 +73,8 @@ class HelpdeskScreen extends StatelessWidget {
                     "Yes. While Spentree can detect transaction SMS, you can always use the '+' button on the dashboard to log cash expenses or manual entries.",
                   ),
                   _buildExpansionRow(
-                    "How do I split an expense with friends?",
-                    "Tap on any transaction in your history and select the 'Split' option. You can enter the number of people to divide the cost and track your share accurately.",
-                  ),
-                  _buildExpansionRow(
-                    "Can I edit or delete a transaction?",
-                    "Absolutely. Swipe left on any transaction in your history to reveal the Edit and Delete options. This ensures your forest data remains accurate.",
-                  ),
-                  _buildExpansionRow(
                     "Why am I getting spending alerts?",
-                    "Spending alerts are designed to keep you mindful. You will receive notifications as you approach 80% and 100% of your daily limit.",
+                    "Spending alerts are designed to keep you mindful. You will receive notifications as you approach 100% of your daily limit.",
                   ),
                   _buildExpansionRow(
                     "Is my data safe?",
@@ -91,6 +83,10 @@ class HelpdeskScreen extends StatelessWidget {
                   _buildExpansionRow(
                     "I overspent today. What happens?",
                     "If you exceed your limit, your tree for the day will appear withered in your history. However, every day is a fresh start to try again!",
+                  ),
+                  _buildExpansionRow(
+                    "How is my data used by Spentree?",
+                    "SMS parsing is simply the process of reading a text message and automatically understanding what information it contains. Instead of asking the user to manually enter every expense, the app reads bank transaction SMS, identifies whether it is a real transaction, extracts important details such as the amount spent, the merchant or person's name, the date and time, and the payment method, and then saves it as an expense. It also ignores irrelevant messages like OTPs, promotional offers, payment requests, and failed transactions, ensuring that only genuine spending transactions are recorded automatically. This makes expense tracking fast, accurate, and effortless for the user.",
                   ),
                   const SizedBox(height: 16),
                   Text(

@@ -55,10 +55,10 @@ class EulaScreen extends StatelessWidget {
 
                   _buildSection(
                     "2. Intellectual Property Rights",
-                    "The Software, including all source code, design elements (such as the virtual ecosystem, tree/forest graphics, and UI), and branding, is the sole property of Spentree. You may not:",
+                    "The Software, including its source code, user interface, graphics, content, and other original materials, is owned by the Spentree development team and is protected by applicable intellectual property laws. Nothing in this Agreement transfers ownership of the Software or its content to you. You may not:",
                   ),
                   _buildBodyText(
-                    "• Copy, modify, or create derivative works of the Software.\n• Decompile, reverse-engineer, or attempt to extract the source code.\n• Use our trademarks, logos, or assets without our express written consent.",
+                    "• Copy, modify, or create derivative works of the Software.\n• Decompile, reverse-engineer, or attempt to extract the source code.\n• Use our name, logo, branding, or other assets without our prior written permission.",
                   ),
 
                   _buildSection(
@@ -70,7 +70,12 @@ class EulaScreen extends StatelessWidget {
                   ),
 
                   _buildSection(
-                    "4. Limitation of Liability",
+                    "4. Permission Management",
+                    "Certain features of Spentree require device permissions, such as SMS and notifications. You may decline or revoke these permissions at any time; however, some features may become unavailable or operate with limited functionality.",
+                  ),
+
+                  _buildSection(
+                    "5. Limitation of Liability",
                     "To the maximum extent permitted by applicable law, in no event shall the Spentree team be liable for any direct, indirect, special, incidental, or consequential damages arising out of:",
                   ),
                   _buildBodyText(
@@ -78,17 +83,17 @@ class EulaScreen extends StatelessWidget {
                   ),
 
                   _buildSection(
-                    "5. Termination",
-                    "This Agreement is effective until terminated by you or us. Your rights under this license will terminate automatically if you fail to comply with any of the terms of this Agreement. Upon termination, you must cease all use of the Software and delete all copies from your device.",
+                    "6. Termination",
+                    "This Agreement is effective until terminated by you or us. Your rights under this license will terminate automatically if you fail to comply with any of the terms of this Agreement. Upon termination, you must cease all use of the Software and upon termination, you must stop using the Software and uninstall it from your device.",
                   ),
 
                   _buildSection(
-                    "6. Disclaimer of Warranties",
+                    "7. Disclaimer of Warranties",
                     "We provide the software without any warranty of any kind, whether express or implied. We do not warrant that the software will be error-free, that the service will be uninterrupted, or that any defects will be corrected.",
                   ),
 
                   _buildSection(
-                    "7. Governing Law",
+                    "8. Governing Law",
                     "This Agreement is governed by and construed in accordance with the laws of India. Any legal action or proceeding arising under this Agreement shall be brought exclusively in the courts located in Mumbai, Maharashtra.",
                   ),
 

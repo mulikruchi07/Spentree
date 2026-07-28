@@ -1,16 +1,7 @@
-# Spentree
+## Copyright
 
-A new Flutter project.
+Copyright © 2026 Pranav Phanse and Ruchi Mulik. All Rights Reserved.
 
-## Getting Started
+Spentree and all associated source code, designs, documentation, branding, and intellectual property are owned by the above copyright holders.
 
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+No part of this repository may be copied, modified, redistributed, or used without prior written permission from the copyright holders.

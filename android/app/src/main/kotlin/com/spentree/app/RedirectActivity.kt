@@ -1,4 +1,4 @@
-package com.example.spentree   // ← replace with your real applicationId
+package com.spentree.app   // ← replace with your real applicationId
 
 import android.app.Activity
 import android.content.Intent

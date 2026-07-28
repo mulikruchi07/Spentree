@@ -1,4 +1,4 @@
-package com.example.spentree
+package com.spentree.app
 
 import android.app.PendingIntent
 import android.appwidget.AppWidgetManager

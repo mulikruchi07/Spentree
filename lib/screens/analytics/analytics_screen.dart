@@ -276,7 +276,14 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
                         : Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              _buildSectionHeader("Today's Analysis", "Filter"),
+                              Text(
+                                "Today's Analysis",
+                                style: GoogleFonts.poppins(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.colblack,
+                                ),
+                              ),
                               const SizedBox(height: 24),
                               Center(
                                 child: SizedBox(

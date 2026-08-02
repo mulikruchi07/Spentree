@@ -1,11 +1,8 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:spentree/screens/main_wrapper.dart';
 import '../../core/app_style.dart';
 import 'package:flutter/services.dart';
-import '../onboarding/loading_screen.dart';
 import '../../core/user_data.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/auth_landing_screen.dart';

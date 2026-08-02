@@ -83,6 +83,21 @@ void main() async {
     } else if (event == AuthChangeEvent.signedOut) {
       _deviceWatchChannel?.unsubscribe();
       _deviceWatchChannel = null;
+      
+      // ADDED: Route to SignInScreen if the user is logged out naturally or token is revoked
+      navigatorKey.currentState?.pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const SignInScreen()),
+        (route) => false,
+      );
+    } else if (event == AuthChangeEvent.userDeleted) {
+      _deviceWatchChannel?.unsubscribe();
+      _deviceWatchChannel = null;
+      
+      // ADDED: Route to SplashOnboardingScreen when the account is deleted
+      navigatorKey.currentState?.pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const SplashOnboardingScreen()),
+        (route) => false,
+      );
     }
   });
 
@@ -146,7 +161,7 @@ void _watchForRemoteLogout(String userId, String myDeviceId) {
   _deviceWatchChannel = Supabase.instance.client
       .channel('user-device-$userId')
       .onPostgresChanges(
-        event: PostgresChangeEvent.update,
+        event: PostgresChangeEvent.all, // Changed to ALL to catch both updates and deletes
         schema: 'public',
         table: 'users',
         filter: PostgresChangeFilter(
@@ -155,15 +170,32 @@ void _watchForRemoteLogout(String userId, String myDeviceId) {
           value: userId,
         ),
         callback: (payload) async {
-          final newDeviceId = payload.newRecord['active_device_id'] as String?;
-          if (newDeviceId != null && newDeviceId != myDeviceId) {
-            await Supabase.instance.client.auth.signOut(
-              scope: SignOutScope.local,
-            );
+          // 1. Handle Account Deletion (Route to Splash Screen)
+          if (payload.eventType == PostgresChangeEvent.delete) {
+            // Clear the onboarding flag so they are treated as a brand new user
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.setBool('has_completed_onboarding', false);
+            
+            await Supabase.instance.client.auth.signOut(scope: SignOutScope.local);
+            
             navigatorKey.currentState?.pushAndRemoveUntil(
-              MaterialPageRoute(builder: (context) => const SignInScreen()),
+              MaterialPageRoute(builder: (context) => const SplashOnboardingScreen()),
               (route) => false,
             );
+            return;
+          }
+
+          // 2. Handle Remote Logout / Password Reset (Route to Sign In)
+          if (payload.eventType == PostgresChangeEvent.update) {
+            final newDeviceId = payload.newRecord['active_device_id'] as String?;
+            if (newDeviceId != null && newDeviceId != myDeviceId) {
+              await Supabase.instance.client.auth.signOut(scope: SignOutScope.local);
+              
+              navigatorKey.currentState?.pushAndRemoveUntil(
+                MaterialPageRoute(builder: (context) => const SignInScreen()),
+                (route) => false,
+              );
+            }
           }
         },
       )

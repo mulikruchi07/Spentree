@@ -41,16 +41,26 @@ android {
 
     signingConfigs {
     create("release") {
-        storeFile = file(keystoreProperties["storeFile"] as String)
-        storePassword = keystoreProperties["storePassword"] as String
-        keyAlias = keystoreProperties["keyAlias"] as String
-        keyPassword = keystoreProperties["keyPassword"] as String
+            // Safely check if key.properties exists before building release
+            if (keystorePropertiesFile.exists()) {
+                storeFile = file(keystoreProperties["storeFile"] as String)
+                storePassword = keystoreProperties["storePassword"] as String
+                keyAlias = keystoreProperties["keyAlias"] as String
+                keyPassword = keystoreProperties["keyPassword"] as String
+            }
+        }
     }
-}
 
     buildTypes {
-        release {
+        getByName("debug") {
+            // Uses the auto-generated local debug key for USB testing
+            signingConfig = signingConfigs.getByName("debug")
+        }
+        getByName("release") {
+            // Uses your custom release keystore for Play Store builds
             signingConfig = signingConfigs.getByName("release")
+            isMinifyEnabled = true
+            isShrinkResources = true
         }
     }
 }

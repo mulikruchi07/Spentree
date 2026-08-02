@@ -11,6 +11,7 @@ import 'package:spentree/app_lock.dart';
 import 'package:spentree/core/auth_helper.dart';
 import 'package:spentree/core/auth_landing_screen.dart';
 import 'package:spentree/core/error_helper.dart';
+import 'package:spentree/screens/account/post_delete_feedback_screens.dart';
 import 'package:spentree/screens/auth/sign_in_screen.dart';
 import 'package:spentree/screens/auth/verify_number_screen.dart';
 import 'package:spentree/screens/onboarding/splash_onboarding_screen.dart';
@@ -921,7 +922,7 @@ class _AccountScreenState extends State<AccountScreen>
                             context,
                             MaterialPageRoute(
                               builder: (context) =>
-                                  const SplashOnboardingScreen(),
+                                  const PostDeleteNoteScreen(),
                             ),
                             (route) => false,
                           );

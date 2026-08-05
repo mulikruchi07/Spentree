@@ -9,8 +9,10 @@ import 'package:home_widget/home_widget.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:spentree/core/auth_helper.dart';
+import 'package:spentree/core/auth_landing_screen.dart';
 import 'package:spentree/core/device_identity.dart';
 import 'package:spentree/core/notification_service.dart';
+import 'package:spentree/screens/account/post_delete_feedback_screens.dart';
 import 'package:spentree/screens/onboarding/set_daily_limit_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:spentree/core/database/local_database_service.dart';
@@ -80,22 +82,56 @@ void main() async {
             : MaterialPageRoute(builder: (context) => nextAfterLimit),
         (route) => false,
       );
-    } else if (event == AuthChangeEvent.signedOut) {
+    } else if (event == AuthChangeEvent.signedOut ||
+        event == AuthChangeEvent.userDeleted) {
       _deviceWatchChannel?.unsubscribe();
       _deviceWatchChannel = null;
-      
-      // ADDED: Route to SignInScreen if the user is logged out naturally or token is revoked
+
+      final prefs = await SharedPreferences.getInstance();
+
+      // Check the flags set by AccountScreen
+      final isAccountDeleted = prefs.getBool('is_account_deleted') ?? false;
+      final isAccountDeactivated =
+          prefs.getBool('is_account_deactivated') ?? false;
+      final hasCompletedOnboarding =
+          prefs.getBool('has_completed_onboarding') ?? false;
+
+      // Determine the correct destination screen
+      Widget nextScreen;
+      if (isAccountDeleted) {
+        await prefs.remove('is_account_deleted'); // Clear the flag
+        nextScreen = const PostDeleteNoteScreen();
+      } else if (isAccountDeactivated) {
+        await prefs.remove('is_account_deactivated'); // Clear the flag
+        nextScreen = const AuthLandingScreen();
+      } else {
+        // Normal logout
+        nextScreen = hasCompletedOnboarding
+            ? const SignInScreen()
+            : const SplashOnboardingScreen();
+      }
+
+      // Navigate instantly
       navigatorKey.currentState?.pushAndRemoveUntil(
-        MaterialPageRoute(builder: (context) => const SignInScreen()),
+        PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) => nextScreen,
+          transitionDuration: Duration.zero,
+          reverseTransitionDuration: Duration.zero,
+        ),
         (route) => false,
       );
-    } else if (event == AuthChangeEvent.userDeleted) {
+    } else if (event == AuthChangeEvent.passwordRecovery) {
       _deviceWatchChannel?.unsubscribe();
       _deviceWatchChannel = null;
-      
-      // ADDED: Route to SplashOnboardingScreen when the account is deleted
+
+      // Use PageRouteBuilder with Duration.zero here as well
       navigatorKey.currentState?.pushAndRemoveUntil(
-        MaterialPageRoute(builder: (context) => const SplashOnboardingScreen()),
+        PageRouteBuilder(
+          pageBuilder: (context, animation, secondaryAnimation) =>
+              const SignInScreen(),
+          transitionDuration: Duration.zero,
+          reverseTransitionDuration: Duration.zero,
+        ),
         (route) => false,
       );
     }
@@ -117,15 +153,33 @@ void main() async {
     });
   }
 
-  // Decide the start screen: signed in -> app; signed out but has used the
-  // app before -> sign in directly; brand new device -> onboarding/splash.
   final session = Supabase.instance.client.auth.currentSession;
   final prefs = await SharedPreferences.getInstance();
   final hasCompletedOnboarding =
       prefs.getBool('has_completed_onboarding') ?? false;
 
   Widget startScreen;
+  bool isSessionValid = false;
+
   if (session != null) {
+    try {
+      // Catch bad tokens explicitly on app start (like after a password change)
+      await Supabase.instance.client.auth.getUser().timeout(
+        const Duration(seconds: 4),
+      );
+      isSessionValid = true;
+    } on AuthException catch (_) {
+      // Token is invalid/revoked. We sign out immediately so they bypass the Daily Limit check.
+      isSessionValid = false;
+      await Supabase.instance.client.auth.signOut(scope: SignOutScope.local);
+    } catch (_) {
+      // General network timeout, assume session is valid for offline mode
+      isSessionValid = true;
+    }
+  }
+
+  // Only proceed to check internal screens if the session is strictly valid
+  if (isSessionValid && session != null) {
     final userId = session.user.id;
     final hasDecidedSms = prefs.containsKey(_smsPermissionDecisionKey(userId));
     final hasCompletedSync =
@@ -161,7 +215,7 @@ void _watchForRemoteLogout(String userId, String myDeviceId) {
   _deviceWatchChannel = Supabase.instance.client
       .channel('user-device-$userId')
       .onPostgresChanges(
-        event: PostgresChangeEvent.all, // Changed to ALL to catch both updates and deletes
+        event: PostgresChangeEvent.all,
         schema: 'public',
         table: 'users',
         filter: PostgresChangeFilter(
@@ -170,30 +224,23 @@ void _watchForRemoteLogout(String userId, String myDeviceId) {
           value: userId,
         ),
         callback: (payload) async {
-          // 1. Handle Account Deletion (Route to Splash Screen)
           if (payload.eventType == PostgresChangeEvent.delete) {
-            // Clear the onboarding flag so they are treated as a brand new user
             final prefs = await SharedPreferences.getInstance();
             await prefs.setBool('has_completed_onboarding', false);
-            
-            await Supabase.instance.client.auth.signOut(scope: SignOutScope.local);
-            
-            navigatorKey.currentState?.pushAndRemoveUntil(
-              MaterialPageRoute(builder: (context) => const SplashOnboardingScreen()),
-              (route) => false,
+            // Just call signOut. The onAuthStateChange listener will handle the navigation!
+            await Supabase.instance.client.auth.signOut(
+              scope: SignOutScope.local,
             );
             return;
           }
 
-          // 2. Handle Remote Logout / Password Reset (Route to Sign In)
           if (payload.eventType == PostgresChangeEvent.update) {
-            final newDeviceId = payload.newRecord['active_device_id'] as String?;
+            final newDeviceId =
+                payload.newRecord['active_device_id'] as String?;
             if (newDeviceId != null && newDeviceId != myDeviceId) {
-              await Supabase.instance.client.auth.signOut(scope: SignOutScope.local);
-              
-              navigatorKey.currentState?.pushAndRemoveUntil(
-                MaterialPageRoute(builder: (context) => const SignInScreen()),
-                (route) => false,
+              // Just call signOut. The onAuthStateChange listener will handle the navigation!
+              await Supabase.instance.client.auth.signOut(
+                scope: SignOutScope.local,
               );
             }
           }
@@ -225,11 +272,8 @@ Future<bool> _checkSingleDeviceSession(BuildContext? navContext) async {
         builder: (context) => _buildSingleDeviceDialog(context),
       );
       if (shouldContinue != true) {
+        // Just sign out. The onAuthStateChange listener will handle navigation to prevent double blink.
         await AuthHelper.signOutEverywhere();
-        navigatorKey.currentState?.pushAndRemoveUntil(
-          MaterialPageRoute(builder: (context) => const SignInScreen()),
-          (route) => false,
-        );
         return false;
       }
       await Supabase.instance.client.auth.signOut(scope: SignOutScope.others);
@@ -254,21 +298,17 @@ Future<bool> _checkSingleDeviceSession(BuildContext? navContext) async {
 Future<bool> _needsSetDailyLimit() async {
   final prefs = await SharedPreferences.getInstance();
 
-  // Flow 1 signal — questionnaire was just completed locally, this
-  // session, and hasn't synced to the cloud yet. This is authoritative:
-  // never show Set Daily Limit here, regardless of what the cloud
-  // currently has (it hasn't been written yet, by design).
   final questionnairePending =
       prefs.getBool('questionnaire_sync_pending') ?? false;
   if (questionnairePending) return false;
 
-  // No pending local questionnaire — safe to check the cloud now.
   final fields = await AuthHelper.fetchDecryptedUserFields();
   final hasCloudLimit = fields != null && fields['daily_limit'] != null;
   if (hasCloudLimit) return false;
 
   final user = Supabase.instance.client.auth.currentUser;
-  if (user == null) return true;
+  if (user == null) return false;
+
   final answeredLocally =
       prefs.getBool('questionnaire_answered_${user.id}') ?? false;
   return !answeredLocally;

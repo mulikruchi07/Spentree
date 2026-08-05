@@ -857,6 +857,7 @@ class _AccountScreenState extends State<AccountScreen>
                           confirmText: "Yes, Deactivate",
                           icon: PhosphorIconsRegular.lockKey,
                           onConfirm: () async {
+                            // ONLY handle database logic inside the dialog
                             final user =
                                 Supabase.instance.client.auth.currentUser;
                             if (user == null) throw Exception("Not signed in");
@@ -870,17 +871,17 @@ class _AccountScreenState extends State<AccountScreen>
                                 })
                                 .eq('id', user.id)
                                 .timeout(const Duration(seconds: 10));
-                            await AuthHelper.signOutEverywhere();
                           },
                         );
+
+                        // Trigger sign-out AFTER the dialog safely closes
                         if (confirmed == true && mounted) {
-                          Navigator.pushAndRemoveUntil(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const AuthLandingScreen(),
-                            ),
-                            (route) => false,
-                          );
+                          final prefs = await SharedPreferences.getInstance();
+                          await prefs.setBool(
+                            'is_account_deactivated',
+                            true,
+                          ); // Flag for main.dart
+                          await AuthHelper.signOutEverywhere();
                         }
                       },
                     ),
@@ -895,6 +896,7 @@ class _AccountScreenState extends State<AccountScreen>
                           confirmText: "Yes, Delete",
                           icon: PhosphorIconsRegular.trash,
                           onConfirm: () async {
+                            // ONLY handle database logic inside the dialog
                             final response = await Supabase
                                 .instance
                                 .client
@@ -911,21 +913,19 @@ class _AccountScreenState extends State<AccountScreen>
                                     "Account deletion failed. Please try again.",
                               );
                             }
-
-                            await AuthHelper.signOutEverywhere();
-                            final prefs = await SharedPreferences.getInstance();
-                            await prefs.clear();
                           },
                         );
+
+                        // Trigger sign-out AFTER the dialog safely closes
                         if (confirmed == true && mounted) {
-                          Navigator.pushAndRemoveUntil(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  const PostDeleteNoteScreen(),
-                            ),
-                            (route) => false,
-                          );
+                          final prefs = await SharedPreferences.getInstance();
+                          await prefs.clear();
+                          await prefs.setBool(
+                            'is_account_deleted',
+                            true,
+                          ); // Flag for main.dart
+
+                          await AuthHelper.signOutEverywhere();
                         }
                       },
                     ),

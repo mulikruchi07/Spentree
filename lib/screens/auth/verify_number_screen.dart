@@ -94,14 +94,9 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
       );
 
       if (widget.isEmailChange && mounted) {
-        Navigator.pop(
-          context,
-          true,
-        ); // only email-change needs to return a result
+        Navigator.pop(context, true);
+        return;
       }
-      // signup/recovery: no pop — the global auth listener owns navigation exclusively
-
-      if (mounted) Navigator.pop(context, true);
     } on AuthException catch (e) {
       setState(() {
         _statusMessage = "Invalid code. Please try again.";

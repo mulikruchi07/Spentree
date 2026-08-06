@@ -15,30 +15,37 @@ class AuthHelper {
 
   /// Triggers the native OS account picker — no browser involved at all.
   static Future<String?> signInWithGoogle() async {
-  final hasInternet = await checkInternetConnection();
-  if (!hasInternet) {
-    return "No internet connection. Please check your network and try again.";
-  }
-  try {
-    final googleUser = await _googleSignIn.signIn();
-    if (googleUser == null) return null; // user dismissed the picker — not an error
+    final hasInternet = await checkInternetConnection();
+    if (!hasInternet) {
+      return "No internet connection. Please check your network and try again.";
+    }
+    try {
+      // NEW ADDITION: Clears any cached Google account before signing in.
+      // This forces the OS to always show the account selection popup.
+      if (await _googleSignIn.isSignedIn()) {
+        await _googleSignIn.signOut();
+      }
 
-    final googleAuth = await googleUser.authentication;
-    final idToken = googleAuth.idToken;
-    if (idToken == null) {
+      final googleUser = await _googleSignIn.signIn();
+      if (googleUser == null)
+        return null; // user dismissed the picker — not an error
+
+      final googleAuth = await googleUser.authentication;
+      final idToken = googleAuth.idToken;
+      if (idToken == null) {
+        return "Something went wrong signing in with Google. Please try again.";
+      }
+      await Supabase.instance.client.auth.signInWithIdToken(
+        provider: OAuthProvider.google,
+        idToken: idToken,
+        accessToken: googleAuth.accessToken,
+      );
+      return null;
+    } catch (e) {
+      debugPrint("Native Google Sign-In error: $e");
       return "Something went wrong signing in with Google. Please try again.";
     }
-    await Supabase.instance.client.auth.signInWithIdToken(
-      provider: OAuthProvider.google,
-      idToken: idToken,
-      accessToken: googleAuth.accessToken,
-    );
-    return null;
-  } catch (e) {
-    debugPrint("Native Google Sign-In error: $e");
-    return "Something went wrong signing in with Google. Please try again.";
   }
-}
 
   /// Use this everywhere instead of calling Supabase's signOut() directly.
   /// Without clearing the native Google session too, a Google-linked
@@ -70,25 +77,27 @@ class AuthHelper {
     await Supabase.instance.client.auth.signOut(scope: scope);
   }
 
-  static Future<void> syncEncryptedUserFields(Map<String, dynamic> fields) async {
-  try {
-    await Supabase.instance.client.functions
-        .invoke('encrypt-user-fields', body: fields)
-        .timeout(const Duration(seconds: 10));
-  } catch (e) {
-    debugPrint("Encrypted user field sync deferred (offline?): $e");
+  static Future<void> syncEncryptedUserFields(
+    Map<String, dynamic> fields,
+  ) async {
+    try {
+      await Supabase.instance.client.functions
+          .invoke('encrypt-user-fields', body: fields)
+          .timeout(const Duration(seconds: 10));
+    } catch (e) {
+      debugPrint("Encrypted user field sync deferred (offline?): $e");
+    }
   }
-}
 
-static Future<Map<String, dynamic>?> fetchDecryptedUserFields() async {
-  try {
-    final response = await Supabase.instance.client.functions
-        .invoke('decrypt-user-fields', body: {})
-        .timeout(const Duration(seconds: 10));
-    if (response.status == 200) return response.data as Map<String, dynamic>;
-  } catch (e) {
-    debugPrint("Couldn't fetch decrypted user fields: $e");
+  static Future<Map<String, dynamic>?> fetchDecryptedUserFields() async {
+    try {
+      final response = await Supabase.instance.client.functions
+          .invoke('decrypt-user-fields', body: {})
+          .timeout(const Duration(seconds: 10));
+      if (response.status == 200) return response.data as Map<String, dynamic>;
+    } catch (e) {
+      debugPrint("Couldn't fetch decrypted user fields: $e");
+    }
+    return null;
   }
-  return null;
-}
 }

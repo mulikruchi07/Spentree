@@ -89,29 +89,37 @@ void main() async {
 
       final prefs = await SharedPreferences.getInstance();
 
-      // Check the flags set by AccountScreen
-      final isAccountDeleted = prefs.getBool('is_account_deleted') ?? false;
-      final isAccountDeactivated =
-          prefs.getBool('is_account_deactivated') ?? false;
-      final hasCompletedOnboarding =
-          prefs.getBool('has_completed_onboarding') ?? false;
+      final isLocalAccountDeleted = prefs.getBool('is_account_deleted') ?? false;
+      final isRemoteAccountDeleted = prefs.getBool('is_remote_account_deleted') ?? false;
+      final isAccountDeactivated = prefs.getBool('is_account_deactivated') ?? false;
+      
+      // Fetch fresh value in case it was just overwritten
+      final hasCompletedOnboarding = prefs.getBool('has_completed_onboarding') ?? false;
 
-      // Determine the correct destination screen
       Widget nextScreen;
-      if (isAccountDeleted) {
-        await prefs.remove('is_account_deleted'); // Clear the flag
+      
+      if (isRemoteAccountDeleted) {
+        // 🌐 DELETED FROM WEB: Skip feedback, go straight to Splash
+        await prefs.remove('is_remote_account_deleted');
+        await prefs.setBool('has_completed_onboarding', false);
+        nextScreen = const SplashOnboardingScreen();
+        
+      } else if (isLocalAccountDeleted) {
+        // 📱 DELETED FROM APP: Show the Feedback Screen
+        await prefs.remove('is_account_deleted');
+        await prefs.setBool('has_completed_onboarding', false);
         nextScreen = const PostDeleteNoteScreen();
+        
       } else if (isAccountDeactivated) {
-        await prefs.remove('is_account_deactivated'); // Clear the flag
+        await prefs.remove('is_account_deactivated');
         nextScreen = const AuthLandingScreen();
+        
       } else {
-        // Normal logout
         nextScreen = hasCompletedOnboarding
             ? const SignInScreen()
             : const SplashOnboardingScreen();
       }
 
-      // Navigate instantly
       navigatorKey.currentState?.pushAndRemoveUntil(
         PageRouteBuilder(
           pageBuilder: (context, animation, secondaryAnimation) => nextScreen,
@@ -155,7 +163,9 @@ void main() async {
 
   final session = Supabase.instance.client.auth.currentSession;
   final prefs = await SharedPreferences.getInstance();
-  final hasCompletedOnboarding =
+
+  // 1. Change from 'final' to 'bool' so we can modify it if the token is dead
+  bool hasCompletedOnboarding =
       prefs.getBool('has_completed_onboarding') ?? false;
 
   Widget startScreen;
@@ -163,17 +173,28 @@ void main() async {
 
   if (session != null) {
     try {
-      // Catch bad tokens explicitly on app start (like after a password change)
+      // Catch bad tokens explicitly on app start
       await Supabase.instance.client.auth.getUser().timeout(
         const Duration(seconds: 4),
       );
       isSessionValid = true;
-    } on AuthException catch (_) {
-      // Token is invalid/revoked. We sign out immediately so they bypass the Daily Limit check.
+    } on AuthException catch (e) {
       isSessionValid = false;
+
+      // FIX: Only trigger deletion logic if the error specifically says the user is missing.
+      // Otherwise, it's just a revoked token (like a password reset), so we keep onboarding intact.
+      final isDeleted =
+          e.statusCode == '404' ||
+          e.message.toLowerCase().contains('not found');
+
+      if (isDeleted) {
+        hasCompletedOnboarding = false;
+        await prefs.setBool('has_completed_onboarding', false);
+        await prefs.setBool('is_remote_account_deleted', true);
+      }
+
       await Supabase.instance.client.auth.signOut(scope: SignOutScope.local);
     } catch (_) {
-      // General network timeout, assume session is valid for offline mode
       isSessionValid = true;
     }
   }
@@ -227,7 +248,7 @@ void _watchForRemoteLogout(String userId, String myDeviceId) {
           if (payload.eventType == PostgresChangeEvent.delete) {
             final prefs = await SharedPreferences.getInstance();
             await prefs.setBool('has_completed_onboarding', false);
-            // Just call signOut. The onAuthStateChange listener will handle the navigation!
+            await prefs.setBool('is_remote_account_deleted', true); // Add this line
             await Supabase.instance.client.auth.signOut(
               scope: SignOutScope.local,
             );
@@ -415,9 +436,63 @@ Widget _buildSingleDeviceDialog(BuildContext context) {
   );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   final Widget startScreen;
   const MyApp({super.key, required this.startScreen});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    // Start listening to app lifecycle changes (Background/Foreground)
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    // Stop listening when app closes
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Triggered the exact moment the user opens the app from the background
+    if (state == AppLifecycleState.resumed) {
+      _verifyUserSessionOnResume();
+    }
+  }
+
+  Future<void> _verifyUserSessionOnResume() async {
+    final session = Supabase.instance.client.auth.currentSession;
+    if (session != null) {
+      try {
+        // Silently ping the server to see if they were deleted while away
+        await Supabase.instance.client.auth.getUser();
+      } on AuthException catch (e) {
+        // FIX: Check if it's a deletion vs a password reset
+        final isDeleted =
+            e.statusCode == '404' ||
+            e.message.toLowerCase().contains('not found');
+
+        if (isDeleted) {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setBool('has_completed_onboarding', false);
+          await prefs.setBool('is_remote_account_deleted', true);
+        }
+
+        // Instantly triggers onAuthStateChange listener.
+        // If it was just a password reset, they go to SignIn. If deleted, Splash.
+        await Supabase.instance.client.auth.signOut(scope: SignOutScope.local);
+      } catch (_) {
+        // Ignore normal network timeouts
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -445,10 +520,10 @@ class MyApp extends StatelessWidget {
             useMaterial3: true,
             scaffoldBackgroundColor: const Color(0xFF121212),
           ),
-          home: startScreen,
+          home: widget.startScreen, // Note: updated to widget.startScreen
           onGenerateRoute: (settings) => null,
           onUnknownRoute: (settings) =>
-              MaterialPageRoute(builder: (_) => startScreen),
+              MaterialPageRoute(builder: (_) => widget.startScreen),
           builder: (context, child) {
             return AppLockWrapper(child: child ?? const SizedBox.shrink());
           },

@@ -37,29 +37,44 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     )
 
-    const { error: txError } = await adminClient.from('transactions').delete().eq('user_id', user.id)
-    if (txError) throw new Error(`transactions: ${txError.message}`)
+    // Re-check server-side — never trust the client's claim that this is
+    // an orphan. Only delete when there is genuinely no Spentree profile.
+    const { data: profile, error: profileError } = await adminClient
+      .from('users')
+      .select('id')
+      .eq('id', user.id)
+      .maybeSingle()
 
-    const { error: wrapError } = await adminClient.from('monthly_wraps').delete().eq('user_id', user.id)
-    if (wrapError) throw new Error(`monthly_wraps: ${wrapError.message}`)
-
-    const { error: storageError } = await adminClient.storage.from('avatar').remove([`${user.id}/profile.jpg`])
-    if (storageError && !storageError.message.includes('not found')) {
-      console.error('Storage delete warning:', storageError.message)
+    if (profileError) {
+      return new Response(JSON.stringify({ error: profileError.message }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
     }
 
-    const { error: rowError } = await adminClient.from('users').delete().eq('id', user.id)
-    if (rowError) throw new Error(`users: ${rowError.message}`)
+    if (profile) {
+      // A real account exists — refuse to touch it, no matter what the
+      // caller intended.
+      return new Response(JSON.stringify({ error: 'Account exists, refusing to delete' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
 
     const { error: authError } = await adminClient.auth.admin.deleteUser(user.id)
-    if (authError) throw new Error(`auth.deleteUser: ${authError.message}`)
+    if (authError) {
+      return new Response(JSON.stringify({ error: authError.message }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   } catch (e) {
-    console.error('delete-account failed:', e)
+    console.error('cleanup-orphan-oauth-user failed:', e)
     return new Response(JSON.stringify({ error: e.message ?? 'Unknown error' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

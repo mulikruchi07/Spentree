@@ -6,9 +6,11 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:spentree/core/transaction_service.dart';
+import 'package:spentree/screens/buckets/slide_route.dart';
 import '../../core/app_style.dart';
 import '../../core/transaction_service.dart'; // Make sure this path points to your new service
 import 'package:spentree/core/database/local_transaction.dart';
+import '../buckets/buckets_screen.dart';
 
 class AnalyticsScreen extends StatefulWidget {
   static final ValueNotifier<bool> triggerOpenForm = ValueNotifier(false);
@@ -560,36 +562,68 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
   }
 
   // --- SUB WIDGETS ---
-  Widget _buildHeader() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              "My",
-              style: GoogleFonts.montserrat(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: AppColors.colblack,
-              ),
+  // --- HEADER ---
+Widget _buildHeader() {
+  return Row(
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: [
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "My",
+            style: GoogleFonts.montserrat(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: AppColors.colblack,
             ),
-            Text(
-              "Analytics",
-              style: GoogleFonts.montserrat(
-                fontSize: 36,
-                fontWeight: FontWeight.w600,
-                height: 1.0,
-                color: AppColors.colblack,
+          ),
+          Text(
+            "Analytics",
+            style: GoogleFonts.montserrat(
+              fontSize: 36,
+              fontWeight: FontWeight.w600,
+              height: 1.0,
+              color: AppColors.colblack,
+            ),
+          ),
+        ],
+      ),
+      // Wrap the trophy icon with GestureDetector to open BucketsScreen
+      GestureDetector(
+        onTap: () {
+          Navigator.push(
+            context,
+            slideRoute(const BucketsScreen()),
+          );
+        },
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Icon(
+              PhosphorIconsRegular.archive,
+              size: 32,
+              color: AppColors.colblack,
+            ),
+            Positioned(
+              top: 0,
+              right: 0,
+              child: Container(
+                width: 10,
+                height: 10,
+                decoration: BoxDecoration(
+                  color: Colors.red,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.bgWhite, width: 1.5),
+                ),
               ),
             ),
           ],
         ),
-        // Icon(PhosphorIconsRegular.trophy, size: 32, color: AppColors.colblack),
-      ],
-    );
-  }
+      ),
+    ],
+  );
+}
 
   Widget _buildCalendarBox() {
     return Container(
@@ -1467,7 +1501,7 @@ class _ExpenseFormState extends State<ExpenseForm> {
                   child: ElevatedButton(
                     onPressed: widget.onCancel,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFE0E0E0),
+                      backgroundColor: const Color(0xFFD7D8D6),
                       elevation: 0,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),

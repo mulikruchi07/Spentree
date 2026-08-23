@@ -2,82 +2,184 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:spentree/core/user_data.dart';
 import '../../core/app_style.dart';
-import '../../core/user_data.dart';
-import 'deals_screen.dart';
 import '../../core/user_profile.dart';
-// import 'achievements_model.dart'; 
+import '../../core/transaction_service.dart';
+// import 'deals_screen.dart';
 
-class Achievement {
-  final String id;
+// ==========================================
+// LEVEL & PHASE SYSTEM DEFINITIONS
+// ==========================================
+class LevelInfo {
+  final int level;
   final String title;
-  final String subtitle;
-  final int seeds;
-  final String category;
-  final String imagePath; // Fallback to generic if specific doesn't exist
+  final int requiredTrees;
 
-  const Achievement({
-    required this.id,
-    required this.title,
-    required this.subtitle,
-    required this.seeds,
-    required this.category,
-    required this.imagePath,
+  const LevelInfo(this.level, this.title, this.requiredTrees);
+}
+
+class MilestoneProgress {
+  final int
+  completedLevelIndex; // index into masterLevels of the highest fully-completed level
+  final int
+  activeLevelIndex; // index into masterLevels of the level currently being filled
+  final int
+  activeProgress; // trees earned toward the active level's OWN requirement, reset per level
+  final bool allLevelsCompleted;
+
+  const MilestoneProgress({
+    required this.completedLevelIndex,
+    required this.activeLevelIndex,
+    required this.activeProgress,
+    required this.allLevelsCompleted,
   });
 }
 
-// Memory-light Master List of all 38 Achievements
-const List<Achievement> masterAchievements = [
-  // --- Onboarding ---
-  Achievement(id: 'first_tree', title: "First Tree", subtitle: "Grow your first tree", seeds: 10, category: "Onboarding", imagePath: "keep_planting.png"),
-  Achievement(id: 'first_control', title: "First Control Day", subtitle: "Stay under budget once", seeds: 5, category: "Onboarding", imagePath: "keep_planting.png"),
-  
-  // --- Streaks ---
-  Achievement(id: 'streak_3', title: "3-Day Control", subtitle: "3-day streak", seeds: 10, category: "Streak", imagePath: "3_days.png"),
-  Achievement(id: 'streak_5', title: "5-Day Momentum", subtitle: "5-day streak", seeds: 15, category: "Streak", imagePath: "3_days.png"),
-  Achievement(id: 'streak_7', title: "7-Day Streak", subtitle: "7-day streak", seeds: 20, category: "Streak", imagePath: "one_week.png"),
-  Achievement(id: 'streak_10', title: "10-Day Discipline", subtitle: "10-day streak", seeds: 25, category: "Streak", imagePath: "one_week.png"),
-  Achievement(id: 'streak_15', title: "15-Day Streak", subtitle: "15-day streak", seeds: 30, category: "Streak", imagePath: "one_week.png"),
-  Achievement(id: 'streak_21', title: "21-Day Habit", subtitle: "21-day streak", seeds: 40, category: "Streak", imagePath: "one_week.png"),
-  Achievement(id: 'streak_30', title: "30-Day Master", subtitle: "30-day streak", seeds: 50, category: "Streak", imagePath: "one_week.png"),
-  Achievement(id: 'streak_45', title: "45-Day Warrior", subtitle: "45-day streak", seeds: 60, category: "Streak", imagePath: "one_week.png"),
-  Achievement(id: 'streak_60', title: "60-Day Champion", subtitle: "60-day streak", seeds: 75, category: "Streak", imagePath: "one_week.png"),
-  Achievement(id: 'streak_90', title: "90-Day Legend", subtitle: "90-day streak", seeds: 100, category: "Streak", imagePath: "one_week.png"),
+// Pure, stateless, sequential-consumption calculation. Re-run this from
+// scratch on every call — never cache or mutate the daily results — so
+// editing or deleting a transaction anywhere in history correctly
+// reshuffles which trees belong to which level.
+//
+// Level 1 (requiredTrees = 0) is satisfied instantly, so the active level
+// starts at index 1 (Level 2) before any trees exist. Each day's earned
+// trees are added ONLY to the currently active level; once that level's
+// own requirement is met, it's marked complete, the counter resets to
+// zero, and any leftover trees from that same day roll into the next
+// level (handles a day's earnings spanning two level completions).
+MilestoneProgress calculateMilestoneProgress(
+  List<int> dailyTreeResultsChronological,
+  List<LevelInfo> levels,
+) {
+  if (levels.isEmpty) {
+    return const MilestoneProgress(
+      completedLevelIndex: 0,
+      activeLevelIndex: 0,
+      activeProgress: 0,
+      allLevelsCompleted: true,
+    );
+  }
 
-  // --- Tree Growth ---
-  Achievement(id: 'trees_5', title: "5 Trees Grown", subtitle: "Grow 5 trees", seeds: 5, category: "Growth", imagePath: "growing_forest.png"),
-  Achievement(id: 'trees_10', title: "10 Trees Grown", subtitle: "Grow 10 trees", seeds: 10, category: "Growth", imagePath: "growing_forest.png"),
-  Achievement(id: 'trees_20', title: "20 Trees Grown", subtitle: "Grow 20 trees", seeds: 15, category: "Growth", imagePath: "growing_forest.png"),
-  Achievement(id: 'trees_30', title: "30 Trees Grown", subtitle: "Grow 30 trees", seeds: 25, category: "Growth", imagePath: "growing_forest.png"),
-  Achievement(id: 'trees_50', title: "50 Trees Grown", subtitle: "Grow 50 trees", seeds: 40, category: "Growth", imagePath: "growing_forest.png"),
-  Achievement(id: 'trees_75', title: "75 Trees Grown", subtitle: "Grow 75 trees", seeds: 50, category: "Growth", imagePath: "growing_forest.png"),
-  Achievement(id: 'trees_100', title: "100 Trees Grown", subtitle: "Grow 100 trees", seeds: 75, category: "Growth", imagePath: "growing_forest.png"),
-  Achievement(id: 'trees_150', title: "150 Trees Grown", subtitle: "Grow 150 trees", seeds: 100, category: "Growth", imagePath: "growing_forest.png"),
-  Achievement(id: 'trees_200', title: "200 Trees Grown", subtitle: "Grow 200 trees", seeds: 150, category: "Growth", imagePath: "growing_forest.png"),
-  Achievement(id: 'trees_500', title: "500 Trees Grown", subtitle: "Grow 500 trees", seeds: 300, category: "Growth", imagePath: "growing_forest.png"),
+  int completedIndex = 0;
+  int activeIndex = levels.length > 1 ? 1 : 0;
+  int activeProgress = 0;
 
-  // --- Budget Mastery ---
-  Achievement(id: 'budget_masterful', title: "Masterful Control", subtitle: "Perfect budget month", seeds: 50, category: "Mastery", imagePath: "masterful_control.png"),
-  Achievement(id: 'budget_clean', title: "Clean Month", subtitle: "30 days under total budget", seeds: 60, category: "Mastery", imagePath: "masterful_control.png"),
-  Achievement(id: 'budget_precision', title: "Precision Planner", subtitle: "Stay within 95% of budget", seeds: 30, category: "Mastery", imagePath: "masterful_control.png"),
-  Achievement(id: 'budget_weekend', title: "Weekend Warrior", subtitle: "No overspending for 4 weekends", seeds: 25, category: "Mastery", imagePath: "masterful_control.png"),
-  Achievement(id: 'budget_focused', title: "Financial Focused", subtitle: "No impulse category overspend", seeds: 35, category: "Mastery", imagePath: "masterful_control.png"),
+  if (activeIndex >= levels.length) {
+    return MilestoneProgress(
+      completedLevelIndex: completedIndex,
+      activeLevelIndex: completedIndex,
+      activeProgress: 0,
+      allLevelsCompleted: true,
+    );
+  }
 
-  // --- Recovery & Resilience ---
-  Achievement(id: 'recovery_comeback', title: "Comeback Day", subtitle: "Control after streak break", seeds: 5, category: "Recovery", imagePath: "back_on_track.png"),
-  Achievement(id: 'recovery_rookie', title: "Restart Rookie", subtitle: "Start new streak after failure", seeds: 10, category: "Recovery", imagePath: "back_on_track.png"),
-  Achievement(id: 'recovery_redemption', title: "Redemption Run", subtitle: "5-day streak after overspending", seeds: 20, category: "Recovery", imagePath: "back_on_track.png"),
+  for (final earnedToday in dailyTreeResultsChronological) {
+    int remaining = earnedToday;
+    while (remaining > 0 && activeIndex < levels.length) {
+      final requirement = levels[activeIndex].requiredTrees;
+      final stillNeeded = requirement - activeProgress;
+      final used = remaining < stillNeeded ? remaining : stillNeeded;
 
-  // --- Long-Term & Legendary ---
-  Achievement(id: 'long_100', title: "100 Control Days", subtitle: "100 total days under limit", seeds: 75, category: "Legendary", imagePath: "growing_forest.png"),
-  Achievement(id: 'long_200', title: "200 Control Days", subtitle: "200 total days under limit", seeds: 150, category: "Legendary", imagePath: "growing_forest.png"),
-  Achievement(id: 'long_365', title: "365 Control Days", subtitle: "1 year of control", seeds: 300, category: "Legendary", imagePath: "growing_forest.png"),
-  Achievement(id: 'long_month', title: "Monthly Dominator", subtitle: "Complete 3 clean months", seeds: 75, category: "Legendary", imagePath: "masterful_control.png"),
-  Achievement(id: 'long_quarter', title: "Quarterly Champion", subtitle: "3 clean months", seeds: 150, category: "Legendary", imagePath: "masterful_control.png"),
-  Achievement(id: 'long_half', title: "Half-Year Hero", subtitle: "6 months active", seeds: 200, category: "Legendary", imagePath: "masterful_control.png"),
-  Achievement(id: 'long_annual', title: "Annual Achiever", subtitle: "12 months active", seeds: 400, category: "Legendary", imagePath: "masterful_control.png"),
-  Achievement(id: 'long_legacy', title: "Forest Legacy", subtitle: "Reach 1000 trees grown", seeds: 500, category: "Legendary", imagePath: "growing_forest.png"),
+      activeProgress += used;
+      remaining -= used;
+
+      if (activeProgress >= requirement) {
+        completedIndex = activeIndex;
+        activeIndex += 1;
+        activeProgress = 0;
+      }
+    }
+    if (activeIndex >= levels.length) break;
+  }
+
+  if (activeIndex >= levels.length) {
+    return MilestoneProgress(
+      completedLevelIndex: completedIndex,
+      activeLevelIndex: completedIndex,
+      activeProgress: 0,
+      allLevelsCompleted: true,
+    );
+  }
+
+  return MilestoneProgress(
+    completedLevelIndex: completedIndex,
+    activeLevelIndex: activeIndex,
+    activeProgress: activeProgress,
+    allLevelsCompleted: false,
+  );
+}
+
+final List<LevelInfo> masterLevels = [
+  // Levels 1–10 (Onboarding Phase)
+  const LevelInfo(1, "Seed Starter", 0),
+  const LevelInfo(2, "Sprout Keeper", 5),
+  const LevelInfo(3, "Bud Guardian", 10),
+  const LevelInfo(4, "Tree Nurturer", 15),
+  const LevelInfo(5, "Green Grower", 20),
+  const LevelInfo(6, "Forest Friend", 25),
+  const LevelInfo(7, "Leaf Leader", 30),
+  const LevelInfo(8, "Root Builder", 40),
+  const LevelInfo(9, "Eco Planner", 50),
+  const LevelInfo(10, "Forest Builder", 60),
+
+  // Levels 11–20 (Habit Phase)
+  const LevelInfo(11, "Growth Keeper", 75),
+  const LevelInfo(12, "Woodland Ranger", 90),
+  const LevelInfo(13, "Tree Steward", 110),
+  const LevelInfo(14, "Nature Shaper", 130),
+  const LevelInfo(15, "Green Architect", 150),
+  const LevelInfo(16, "Eco Guardian", 180),
+  const LevelInfo(17, "Sustainability Star", 210),
+  const LevelInfo(18, "Climate Champion", 250),
+  const LevelInfo(19, "Planet Ally", 300),
+  const LevelInfo(20, "Earth Defender", 350),
+
+  // Levels 21–30 (Advanced Phase)
+  const LevelInfo(21, "Forest Commander", 420),
+  const LevelInfo(22, "Eco Strategist", 500),
+  const LevelInfo(23, "Nature Architect", 600),
+  const LevelInfo(24, "Green Master", 720),
+  const LevelInfo(25, "Habitat Hero", 850),
+  const LevelInfo(26, "Carbon Cutter", 1000),
+  const LevelInfo(27, "Planet Guardian", 1200),
+  const LevelInfo(28, "Evergreen Leader", 1450),
+  const LevelInfo(29, "Eco Visionary", 1750),
+  const LevelInfo(30, "Climate Warrior", 2100),
+
+  // Levels 31–40 (Elite Phase)
+  const LevelInfo(31, "Earth Champion", 2500),
+  const LevelInfo(32, "Green Titan", 3000),
+  const LevelInfo(33, "Nature Protector", 3600),
+  const LevelInfo(34, "Sustainability Lord", 4300),
+  const LevelInfo(35, "Global Gardener", 5100),
+  const LevelInfo(36, "Climate King", 6000),
+  const LevelInfo(37, "Planet Pioneer", 7000),
+  const LevelInfo(38, "Eco Supreme", 8200),
+  const LevelInfo(39, "Forest Legend", 9500),
+  const LevelInfo(40, "Earth Emperor", 11000),
+
+  // Levels 41–50 (Prestige Phase)
+  const LevelInfo(41, "Green Overlord", 13000),
+  const LevelInfo(42, "Nature Icon", 15000),
+  const LevelInfo(43, "Carbon Slayer", 17500),
+  const LevelInfo(44, "Planet Hero", 20000),
+  const LevelInfo(45, "Eco Elite", 23000),
+  const LevelInfo(46, "Forest Immortal", 26000),
+  const LevelInfo(47, "Climate Supreme", 30000),
+  const LevelInfo(48, "Earth Visionary", 35000),
+  const LevelInfo(49, "Planet Legend", 40000),
+  const LevelInfo(50, "🌍 World Restorer", 50000),
 ];
+
+// Helper to get phase-wise image asset path based on level number
+String getPhaseAssetForLevel(int level) {
+  if (level <= 10) return "assets/images/achievements/keep_planting.png";
+  if (level <= 20) return "assets/images/achievements/3_days.png";
+  if (level <= 30) return "assets/images/achievements/one_week.png";
+  if (level <= 40) return "assets/images/achievements/growing_forest.png";
+  return "assets/images/achievements/masterful_control.png";
+}
 
 class AchievementsScreen extends StatefulWidget {
   const AchievementsScreen({super.key});
@@ -87,85 +189,145 @@ class AchievementsScreen extends StatefulWidget {
 }
 
 class _AchievementsScreenState extends State<AchievementsScreen> {
-  // --- DYNAMIC STATE ---
-  // In a real app, load this List of IDs from SharedPreferences or Isar
-  final Set<String> _unlockedIds = {
-    'first_tree',
-    'first_control',
-    'streak_3',
-    'trees_5',
-    'recovery_comeback',
-  };
+  int _totalTrees = 0;
+  bool _isLoadingData = true;
+  int _dailyLimit = 500;
 
-  int _totalSeeds = 0;
-  int _currentLevel = 1;
-  int _currentLevelThreshold = 50;
-  int _nextLevelThreshold = 150;
-  String _levelTitle = "The Sprout Keeper";
+  // Sequential, no-carryover level state — always recomputed from
+  // scratch, never cached/mutated in place.
+  int _completedLevelIndex = 0;
+  int _activeLevelIndex = 0;
+  int _activeProgress = 0;
+  bool _allLevelsCompleted = false;
 
   @override
   void initState() {
     super.initState();
-    _calculateUserProgress();
+    TransactionService().addListener(_loadUserMetrics);
+    _loadUserMetrics();
   }
 
-  // Zero-Latency Calculation Engine
-  void _calculateUserProgress() {
-    int seeds = 0;
+  @override
+  void dispose() {
+    TransactionService().removeListener(_loadUserMetrics);
+    super.dispose();
+  }
 
-    // 1. Calculate Total Seeds from Unlocked Achievements
-    for (var achievement in masterAchievements) {
-      if (_unlockedIds.contains(achievement.id)) {
-        seeds += achievement.seeds;
+  Future<void> _loadUserMetrics() async {
+    final prefs = await SharedPreferences.getInstance();
+    int? savedLimit = prefs.getInt('daily_expense_limit');
+    if (savedLimit != null) {
+      _dailyLimit = savedLimit;
+    } else {
+      int? parsedLimit = int.tryParse(
+        UserData.dailyLimit.replaceAll(RegExp(r'[^0-9]'), ''),
+      );
+      _dailyLimit = parsedLimit ?? 500;
+    }
+
+    // Retrieve or initialize user signup date (anchors tracking strictly to post-signup)
+    String? signupIso = prefs.getString('user_signup_date');
+    if (signupIso == null) {
+      signupIso = DateTime.now().toIso8601String();
+      await prefs.setString('user_signup_date', signupIso);
+    }
+    DateTime signupDate = DateTime.parse(signupIso);
+    DateTime today = DateTime.now();
+
+    // Compute accumulated trees from signup date to today based on dashboard metrics
+    int accumulatedTrees = 0;
+    // Walk signup date → today building the CHRONOLOGICAL per-day tree
+    // stream (never a running total) — order matters, since this is
+    // consumed sequentially below.
+    List<int> dailyTreeResults = [];
+    DateTime iterator = DateTime(
+      signupDate.year,
+      signupDate.month,
+      signupDate.day,
+    );
+    DateTime endDay = DateTime(today.year, today.month, today.day);
+
+    while (!iterator.isAfter(endDay)) {
+      final dailyTx = TransactionService().getTransactionsForDay(iterator);
+      double dayExpense = dailyTx.fold(0.0, (sum, item) => sum + item.amount);
+      double pendingLimit = (_dailyLimit - dayExpense).clamp(
+        0.0,
+        _dailyLimit.toDouble(),
+      );
+      double percentage = _dailyLimit > 0
+          ? (pendingLimit / _dailyLimit).clamp(0.0, 1.0)
+          : 0.0;
+
+      int treesToday = 0;
+      if (percentage >= 0.83) {
+        treesToday = 5;
+      } else if (percentage >= 0.66) {
+        treesToday = 3;
+      } else if (percentage >= 0.50) {
+        treesToday = 2;
+      } else if (percentage >= 0.33) {
+        treesToday = 1;
       }
+      dailyTreeResults.add(treesToday);
+
+      iterator = iterator.add(const Duration(days: 1));
     }
 
-    // 2. Determine Level (Fast logic tree)
-    int level = 1;
-    String title = "The Sprout Keeper";
-    int currentFloor = 0;
-    int nextCeil = 50;
+    final milestone = calculateMilestoneProgress(
+      dailyTreeResults,
+      masterLevels,
+    );
 
-    if (seeds >= 500) {
-      level = 5;
-      title = "Forest Legend";
-      currentFloor = 500;
-      nextCeil = 1000;
-    } else if (seeds >= 300) {
-      level = 4;
-      title = "Master Botanist";
-      currentFloor = 300;
-      nextCeil = 500;
-    } else if (seeds >= 150) {
-      level = 3;
-      title = "Tree Nurturer";
-      currentFloor = 150;
-      nextCeil = 300;
-    } else if (seeds >= 50) {
-      level = 2;
-      title = "Sapling Guardian";
-      currentFloor = 50;
-      nextCeil = 150;
+    if (mounted) {
+      setState(() {
+        _totalTrees = dailyTreeResults.fold(0, (sum, t) => sum + t);
+        _completedLevelIndex = milestone.completedLevelIndex;
+        _activeLevelIndex = milestone.activeLevelIndex;
+        _activeProgress = milestone.activeProgress;
+        _allLevelsCompleted = milestone.allLevelsCompleted;
+        _isLoadingData = false;
+      });
     }
-
-    setState(() {
-      _totalSeeds = seeds;
-      _currentLevel = level;
-      _levelTitle = title;
-      _currentLevelThreshold = currentFloor;
-      _nextLevelThreshold = nextCeil;
-    });
-  }
-
-  List<Achievement> get _unlockedAchievements {
-    return masterAchievements
-        .where((a) => _unlockedIds.contains(a.id))
-        .toList();
   }
 
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
+
+    if (_isLoadingData) {
+      return Scaffold(
+        backgroundColor: AppColors.bgWhite,
+        body: const Center(
+          child: CircularProgressIndicator(color: AppColors.primaryGreen),
+        ),
+      );
+    }
+
+    // currentLevelInfo = highest fully-completed level (the badge).
+    // nextLevelInfo = the level currently being actively filled — its
+    // progress resets to 0 the instant the previous level completes.
+    final currentLevelInfo = masterLevels[_completedLevelIndex];
+    final nextLevelInfo = masterLevels[_activeLevelIndex];
+
+    int treesNeededForOngoing = nextLevelInfo.requiredTrees;
+    int treesCollectedForOngoing = _allLevelsCompleted
+        ? treesNeededForOngoing
+        : _activeProgress;
+
+    double progress = treesNeededForOngoing > 0
+        ? (treesCollectedForOngoing / treesNeededForOngoing).clamp(0.0, 1.0)
+        : 1.0;
+
+    // Build next 7 upcoming level cards starting strictly AFTER the ongoing filling level
+    List<LevelInfo> upcomingLevelsList = [];
+    for (int i = 1; i <= 7; i++) {
+      int targetLvl = nextLevelInfo.level + i;
+      if (targetLvl <= 50) {
+        upcomingLevelsList.add(
+          masterLevels.firstWhere((lvl) => lvl.level == targetLvl),
+        );
+      }
+    }
 
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: themeNotifier,
@@ -186,14 +348,20 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                   const SizedBox(height: 32),
 
                   // 2. Profile & Level Section
-                  _buildProfileSection(screenWidth),
+                  _buildProfileSection(
+                    screenWidth,
+                    currentLevelInfo,
+                    nextLevelInfo,
+                    progress,
+                    treesCollectedForOngoing,
+                    treesNeededForOngoing,
+                  ),
 
-                  // Explicit gap
                   const SizedBox(height: 22),
 
-                  // 3. Upcoming Level Card
+                  // 3. Upcoming Levels Header
                   Text(
-                    "Upcoming Level",
+                    "Upcoming Levels",
                     style: GoogleFonts.poppins(
                       fontSize: 16,
                       fontWeight: FontWeight.w500,
@@ -201,55 +369,38 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                     ),
                   ),
                   const SizedBox(height: 18),
-                  _buildUpcomingLevelCard(screenWidth),
 
-                  // Explicit gap
-                  const SizedBox(height: 30),
-
-                  // 4. Milestone Collection Header
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        "Milestone Collection",
-                        style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.colblack,
-                        ),
-                      ),
-                      Text(
-                        "${_unlockedAchievements.length.toString().padLeft(2, '0')}/${masterAchievements.length}",
-                        style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.colblack,
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  // Explicit gap
-                  const SizedBox(height: 18),
-
-                  // 5. Milestone List (Dynamically Built)
+                  // 4. Upcoming Level Cards (Next 7)
                   ListView.builder(
                     shrinkWrap: true,
                     padding: EdgeInsets.zero,
                     physics: const NeverScrollableScrollPhysics(),
-                    itemCount: _unlockedAchievements.length,
+                    itemCount: upcomingLevelsList.length,
                     itemBuilder: (context, index) {
-                      return _buildMilestoneCard(
-                        _unlockedAchievements[index],
+                      return _buildUpcomingLevelCard(
+                        upcomingLevelsList[index],
                         screenWidth,
                       );
                     },
                   ),
 
-                  // Explicit gap
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
 
-                  // 6. Footer
+                  // Non-clickable 'more to go' note
+                  Center(
+                    child: Text(
+                      "More to go",
+                      style: GoogleFonts.montserrat(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.white500,
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 30),
+
+                  // 5. Footer Tip & Info
                   _buildTipSection(),
                   const SizedBox(height: 20),
                   Divider(color: AppColors.divider, thickness: 1),
@@ -264,7 +415,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 120), // Bottom padding for navbar
+                  const SizedBox(height: 120),
                 ],
               ),
             ),
@@ -302,54 +453,23 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
             ),
           ],
         ),
-        GestureDetector(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const DealsScreen()),
-            );
-          },
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Icon(
-                PhosphorIconsRegular.gift,
-                size: 36,
-                color: AppColors.colblack,
-              ),
-              Positioned(
-                top: 0,
-                right: 0,
-                child: Container(
-                  width: 10,
-                  height: 10,
-                  decoration: BoxDecoration(
-                    color: Colors.red,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.bgWhite, width: 1.5),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
       ],
     );
   }
 
-  Widget _buildProfileSection(double screenWidth) {
-    // Prevent division by zero and calculate progress bounded within the tier
-    double levelProgress =
-        (_totalSeeds - _currentLevelThreshold) /
-        (_nextLevelThreshold - _currentLevelThreshold);
-    levelProgress = levelProgress.clamp(0.0, 1.0);
-
+  Widget _buildProfileSection(
+    double screenWidth,
+    LevelInfo currentLevelInfo,
+    LevelInfo nextLevelInfo,
+    double progress,
+    int treesCollected,
+    int treesNeeded,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            // Avatar with Badge
             SizedBox(
               width: 90,
               height: 90,
@@ -402,6 +522,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                       ),
                     ),
                   ),
+                  // Completed level badge displayed around the PFP
                   Positioned(
                     top: 5,
                     right: 0,
@@ -418,7 +539,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                       ),
                       child: Center(
                         child: Text(
-                          _currentLevel.toString(),
+                          "${currentLevelInfo.level}",
                           style: GoogleFonts.montserrat(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
@@ -432,8 +553,6 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
               ),
             ),
             const SizedBox(width: 16),
-
-            // Name & Title
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -463,7 +582,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        _levelTitle,
+                        "Level ${currentLevelInfo.level} - ${currentLevelInfo.title}",
                         style: GoogleFonts.montserrat(
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
@@ -477,15 +596,12 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
             ),
           ],
         ),
-
         const SizedBox(height: 16),
-
-        // Progress Bar Info
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              "Level $_currentLevel - $_levelTitle",
+              "Level ${nextLevelInfo.level} - ${nextLevelInfo.title}",
               style: GoogleFonts.montserrat(
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
@@ -493,7 +609,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
               ),
             ),
             Text(
-              "$_totalSeeds / $_nextLevelThreshold",
+              "$treesCollected / $treesNeeded",
               style: GoogleFonts.montserrat(
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
@@ -503,8 +619,6 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
           ],
         ),
         const SizedBox(height: 8),
-
-        // Custom Pill Progress Bar
         Container(
           height: 17.32,
           width: double.infinity,
@@ -515,7 +629,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
           child: Align(
             alignment: Alignment.centerLeft,
             child: FractionallySizedBox(
-              widthFactor: levelProgress,
+              widthFactor: progress,
               child: Container(
                 decoration: BoxDecoration(
                   color: AppColors.primaryGreen,
@@ -529,92 +643,9 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
     );
   }
 
-  Widget _buildUpcomingLevelCard(double screenWidth) {
-    return Container(
-      width: double.infinity,
-      height: 78.0,
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      decoration: BoxDecoration(
-        color: AppColors.inputFill,
-        borderRadius: BorderRadius.circular(15.0),
-      ),
-      child: Row(
-        children: [
-          // Icon Box with Light Blurred Image & Lock
-          Container(
-            width: 60,
-            height: 60,
-            decoration: BoxDecoration(
-              color: AppColors.iconbox,
-              borderRadius: BorderRadius.circular(9.63),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.colblack.withOpacity(0.05),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                Opacity(
-                  opacity: 0.3,
-                  child: Image.asset(
-                    'assets/images/forest/forest_great.png', // Fallback light image
-                    fit: BoxFit.cover,
-                  ),
-                ),
-                Icon(
-                  PhosphorIconsRegular.lockKey,
-                  size: 30,
-                  color: AppColors.colblack,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 16),
+  Widget _buildUpcomingLevelCard(LevelInfo levelInfo, double screenWidth) {
+    String phaseImage = getPhaseAssetForLevel(levelInfo.level);
 
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  "Level ${_currentLevel + 1} Target",
-                  style: GoogleFonts.montserrat(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.colblack,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  "$_nextLevelThreshold Seeds Required",
-                  style: GoogleFonts.montserrat(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.white500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          Text(
-            "Level ${_currentLevel + 1}",
-            style: GoogleFonts.montserrat(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: AppColors.colblack,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMilestoneCard(Achievement achievement, double screenWidth) {
     return Container(
       margin: const EdgeInsets.only(bottom: 18),
       width: double.infinity,
@@ -640,35 +671,43 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                 ),
               ],
             ),
-            child: Center(
-              child: Image.asset(
-                "assets/images/achievements/${achievement.imagePath}",
-                width: 42,
-                height: 42,
-              ),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Opacity(
+                  opacity: 0.2,
+                  child: Image.asset(
+                    phaseImage,
+                    width: 42,
+                    height: 42,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                Icon(
+                  PhosphorIconsRegular.lockKey,
+                  size: 30,
+                  color: AppColors.colblack,
+                ),
+              ],
             ),
           ),
           const SizedBox(width: 16),
-
-          // Titles
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  achievement.title,
+                  levelInfo.title,
                   style: GoogleFonts.montserrat(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: AppColors.colblack,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  achievement.subtitle,
+                  "${levelInfo.requiredTrees} Trees Required",
                   style: GoogleFonts.montserrat(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
@@ -678,30 +717,13 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
               ],
             ),
           ),
-
-          // Stats
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                "+${achievement.seeds} Seeds",
-                style: GoogleFonts.montserrat(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.colblack,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                "Earned", // You can replace this with a dynamic Date format later
-                style: GoogleFonts.montserrat(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.white500,
-                ),
-              ),
-            ],
+          Text(
+            "Level ${levelInfo.level}",
+            style: GoogleFonts.montserrat(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: AppColors.colblack,
+            ),
           ),
         ],
       ),
@@ -732,5 +754,18 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
         ),
       ],
     );
+  }
+
+  // Turns each level's `requiredTrees` into a genuine independent quota:
+  // the running SUM of every level's own requirement, not the raw table
+  // value (which was being read as an already-cumulative threshold —
+  // that's what let a level clear after only its delta, not its full count).
+  int _cumulativeFloorForLevel(int level) {
+    int sum = 0;
+    for (final info in masterLevels) {
+      if (info.level >= level) break;
+      sum += info.requiredTrees;
+    }
+    return sum;
   }
 }

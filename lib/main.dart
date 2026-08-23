@@ -25,6 +25,8 @@ import 'app_lock.dart';
 import 'core/user_profile.dart';
 import 'core/app_style.dart';
 import 'package:spentree/screens/onboarding/sms_permission_screen.dart';
+import 'package:spentree/screens/buckets/bucket_models.dart';
+import 'core/database/local_bucket.dart';
 
 @pragma('vm:entry-point')
 Future<void> backgroundCallback(Uri? uri) async {
@@ -57,6 +59,7 @@ void main() async {
     final session = data.session;
 
     if (event == AuthChangeEvent.signedIn && session != null) {
+      await BucketService().resetForNewSession();
       final canProceed = await _checkSingleDeviceSession(null);
       if (!canProceed) return;
 
@@ -84,36 +87,38 @@ void main() async {
       );
     } else if (event == AuthChangeEvent.signedOut ||
         event == AuthChangeEvent.userDeleted) {
+      BucketService().resetForNewSession();
       _deviceWatchChannel?.unsubscribe();
       _deviceWatchChannel = null;
 
       final prefs = await SharedPreferences.getInstance();
 
-      final isLocalAccountDeleted = prefs.getBool('is_account_deleted') ?? false;
-      final isRemoteAccountDeleted = prefs.getBool('is_remote_account_deleted') ?? false;
-      final isAccountDeactivated = prefs.getBool('is_account_deactivated') ?? false;
-      
+      final isLocalAccountDeleted =
+          prefs.getBool('is_account_deleted') ?? false;
+      final isRemoteAccountDeleted =
+          prefs.getBool('is_remote_account_deleted') ?? false;
+      final isAccountDeactivated =
+          prefs.getBool('is_account_deactivated') ?? false;
+
       // Fetch fresh value in case it was just overwritten
-      final hasCompletedOnboarding = prefs.getBool('has_completed_onboarding') ?? false;
+      final hasCompletedOnboarding =
+          prefs.getBool('has_completed_onboarding') ?? false;
 
       Widget nextScreen;
-      
+
       if (isRemoteAccountDeleted) {
         // 🌐 DELETED FROM WEB: Skip feedback, go straight to Splash
         await prefs.remove('is_remote_account_deleted');
         await prefs.setBool('has_completed_onboarding', false);
         nextScreen = const SplashOnboardingScreen();
-        
       } else if (isLocalAccountDeleted) {
         // 📱 DELETED FROM APP: Show the Feedback Screen
         await prefs.remove('is_account_deleted');
         await prefs.setBool('has_completed_onboarding', false);
         nextScreen = const PostDeleteNoteScreen();
-        
       } else if (isAccountDeactivated) {
         await prefs.remove('is_account_deactivated');
         nextScreen = const AuthLandingScreen();
-        
       } else {
         nextScreen = hasCompletedOnboarding
             ? const SignInScreen()
@@ -153,6 +158,7 @@ void main() async {
   if (!kIsWeb) {
     HomeWidget.registerInteractivityCallback(backgroundCallback);
     await TransactionService().initService();
+    await BucketService().initService();
     const platform = MethodChannel('spentree_widget_channel');
     platform.setMethodCallHandler((call) async {
       if (call.method == "themeChanged") {
@@ -248,7 +254,10 @@ void _watchForRemoteLogout(String userId, String myDeviceId) {
           if (payload.eventType == PostgresChangeEvent.delete) {
             final prefs = await SharedPreferences.getInstance();
             await prefs.setBool('has_completed_onboarding', false);
-            await prefs.setBool('is_remote_account_deleted', true); // Add this line
+            await prefs.setBool(
+              'is_remote_account_deleted',
+              true,
+            ); // Add this line
             await Supabase.instance.client.auth.signOut(
               scope: SignOutScope.local,
             );

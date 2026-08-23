@@ -40,6 +40,9 @@ Deno.serve(async (req) => {
     const { error: txError } = await adminClient.from('transactions').delete().eq('user_id', user.id)
     if (txError) throw new Error(`transactions: ${txError.message}`)
 
+    const { error: bucketsError } = await adminClient.from('buckets').delete().eq('user_id', user.id)
+    if (bucketsError) throw new Error(`buckets: ${bucketsError.message}`)
+
     const { error: wrapError } = await adminClient.from('monthly_wraps').delete().eq('user_id', user.id)
     if (wrapError) throw new Error(`monthly_wraps: ${wrapError.message}`)
 

@@ -1,6 +1,7 @@
 import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
 import 'local_transaction.dart';
+import 'local_bucket.dart';
 
 class LocalDatabaseService {
   static late Isar isar;
@@ -8,17 +9,17 @@ class LocalDatabaseService {
 
   static Future<void> initialize() async {
     if (_isInitialized) return;
-    
+
     // Finds a safe folder on the Android/iOS device to store the database
     final dir = await getApplicationDocumentsDirectory();
-    
+
     // Opens the database
     isar = await Isar.open(
-      [LocalTransactionSchema],
+      [LocalTransactionSchema, LocalBucketSchema],
       directory: dir.path,
       inspector: false,
     );
-    
+
     _isInitialized = true;
   }
 }

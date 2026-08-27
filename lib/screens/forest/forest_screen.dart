@@ -7,6 +7,8 @@ import 'package:spentree/core/app_style.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:spentree/core/database/local_transaction.dart';
 import 'package:spentree/core/monthly_insights_service.dart';
+import 'package:spentree/core/entitlement_service.dart';
+import 'package:spentree/core/pro_upgrade_sheet.dart';
 import '../../core/transaction_service.dart';
 import '../../core/user_data.dart';
 import 'spentwrap_intro_screen.dart';
@@ -155,7 +157,36 @@ class _ForestScreenState extends State<ForestScreen> {
   WrapStatus _wrapStatus = WrapStatus(isAvailable: false, showDot: false);
   bool _isWrapDismissed = false; // Tracks if the user hit the 'X'
 
+  // Pro-only: dismissing the wrap banner is SESSION-scoped, not persisted
+  // to disk — it reappears the next time the app is opened, regardless of
+  // whether that's still the same month. This is intentionally a plain
+  // in-memory static set (not SharedPreferences): it has no durable
+  // storage to survive an app restart, which is exactly the "temporary
+  // until the app is reopened" behavior asked for, with zero extra code
+  // needed to "expire" it — restarting the process already clears it.
+  // Free users keep the original persistent (SharedPreferences) dismissal
+  // behavior, unchanged.
+  static final Set<String> _proSessionDismissedWraps = {};
+
   final MonthlyInsightsService _insights = MonthlyInsightsService();
+
+  // ── Pro/Free month-viewing window ──────────────────────────────────────
+  // Free: current month + previous month only (2 months total).
+  // Pro: current month + 11 previous months (12 months total, 1 year).
+  // This is re-derived on every check rather than cached, since it must
+  // always reflect the CURRENT server-verified entitlement — never a
+  // stale local flag — and EntitlementService itself is fail-closed
+  // (defaults to Free/false on any doubt).
+  DateTime _earliestAllowedMonth() {
+    final now = DateTime.now();
+    final monthsBack = EntitlementService().isProForCurrentUser ? 11 : 1;
+    return DateTime(now.year, now.month - monthsBack, 1);
+  }
+
+  bool _isMonthWithinPlan(DateTime month) {
+    final normalized = DateTime(month.year, month.month, 1);
+    return !normalized.isBefore(_earliestAllowedMonth());
+  }
 
   @override
   void initState() {
@@ -168,16 +199,22 @@ class _ForestScreenState extends State<ForestScreen> {
 
   // Check Wrap Status & Dismissal State
   Future<void> _checkWrapEligibility() async {
-    final status = await _insights.checkWrapStatus();
+    // Pro users get a wrap per the month they're actually looking at on
+    // this screen ("monthly specific as per they select in calendar");
+    // Free users are unaffected by this parameter — the service ignores it
+    // for Free accounts and always uses its own auto-computed eligible
+    // month instead.
+    final status = await _insights.checkWrapStatus(forMonth: _focusedDate);
     bool isDismissed = false;
 
     if (status.targetMonth != null) {
-      final prefs = await SharedPreferences.getInstance();
-      isDismissed =
-          prefs.getBool(
-            'wrap_dismissed_${status.targetMonth!.year}_${status.targetMonth!.month}',
-          ) ??
-          false;
+      final key = '${status.targetMonth!.year}_${status.targetMonth!.month}';
+      if (status.isPro) {
+        isDismissed = _proSessionDismissedWraps.contains(key);
+      } else {
+        final prefs = await SharedPreferences.getInstance();
+        isDismissed = prefs.getBool('wrap_dismissed_$key') ?? false;
+      }
     }
 
     if (mounted) {
@@ -188,18 +225,25 @@ class _ForestScreenState extends State<ForestScreen> {
     }
   }
 
-  // Permanently hides the banner for the current target month
+  // Free: permanently hides the banner for the target month (until the
+  // day-of-month window naturally moves to a new one) — unchanged.
+  // Pro: hides it only for the rest of THIS app session — reappears next
+  // launch, per-month state is never written to disk.
   Future<void> _dismissWrap() async {
-    if (_wrapStatus.targetMonth != null) {
+    if (_wrapStatus.targetMonth == null) return;
+    final key =
+        '${_wrapStatus.targetMonth!.year}_${_wrapStatus.targetMonth!.month}';
+
+    if (_wrapStatus.isPro) {
+      _proSessionDismissedWraps.add(key);
+    } else {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool(
-        'wrap_dismissed_${_wrapStatus.targetMonth!.year}_${_wrapStatus.targetMonth!.month}',
-        true,
-      );
-      setState(() {
-        _isWrapDismissed = true;
-      });
+      await prefs.setBool('wrap_dismissed_$key', true);
     }
+
+    setState(() {
+      _isWrapDismissed = true;
+    });
   }
 
   @override
@@ -432,30 +476,76 @@ class _ForestScreenState extends State<ForestScreen> {
   }
 
   void _onMonthChanged(int index) {
-    setState(() {
-      _focusedDate = DateTime(_focusedDate.year, index + 1, 1);
-    });
+    final candidate = DateTime(_focusedDate.year, index + 1, 1);
+    if (!_isMonthWithinPlan(candidate)) {
+      setState(() => _isPickerOpen = false);
+      showProUpgradeSheet(context).then((_) {
+        if (!mounted) return;
+        setState(() => _focusedDate = _earliestAllowedMonth());
+        _checkWrapEligibility();
+      });
+      return;
+    }
+    setState(() => _focusedDate = candidate);
+    _checkWrapEligibility();
   }
 
   void _onYearChanged(int index) {
-    setState(() {
-      _focusedDate = DateTime(2025 + index, _focusedDate.month, 1);
-    });
+    final candidate = DateTime(2025 + index, _focusedDate.month, 1);
+    if (!_isMonthWithinPlan(candidate)) {
+      setState(() => _isPickerOpen = false);
+      showProUpgradeSheet(context).then((_) {
+        if (!mounted) return;
+        setState(() => _focusedDate = _earliestAllowedMonth());
+        _checkWrapEligibility();
+      });
+      return;
+    }
+    setState(() => _focusedDate = candidate);
+    _checkWrapEligibility();
   }
 
   void _moveMonth(int months) {
+    final target = DateTime(_focusedDate.year, _focusedDate.month + months, 1);
+    if (!_isMonthWithinPlan(target)) {
+      // Blocked — slide up the Pro sheet instead of navigating. Whenever it
+      // closes (drag-down, tapping the backdrop, or finishing an action
+      // inside it — "like it does on all pages"), land on the nearest
+      // month the current plan actually allows (previous month for Free).
+      showProUpgradeSheet(context).then((_) {
+        if (!mounted) return;
+        setState(() => _focusedDate = _earliestAllowedMonth());
+        _checkWrapEligibility();
+      });
+      return;
+    }
     setState(() {
-      _focusedDate = DateTime(
-        _focusedDate.year,
-        _focusedDate.month + months,
-        1,
-      );
+      _focusedDate = target;
     });
+    _checkWrapEligibility();
   }
 
   @override
   Widget build(BuildContext context) {
     MediaQuery.platformBrightnessOf(context);
+
+    // Defense in depth: entitlement can change underneath an already-
+    // focused month (a trial lapsing while a 5-months-back month is
+    // focused, for example). Rather than ever computing/rendering real
+    // financial data for a month the CURRENT plan doesn't allow, silently
+    // snap back to the nearest allowed month. Navigation-time checks in
+    // _moveMonth/_onMonthChanged/_onYearChanged are the primary guard;
+    // this is the backstop for cases those can't see (entitlement changing
+    // on its own, with no navigation action involved).
+    if (!_isMonthWithinPlan(_focusedDate)) {
+      final corrected = _earliestAllowedMonth();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          setState(() => _focusedDate = corrected);
+          _checkWrapEligibility();
+        }
+      });
+    }
 
     final forestStats = _insights.computeForestStats(_focusedDate, _dailyLimit);
     final monthlyExpense = _insights.getTotalMonthlyExpense(_focusedDate);
@@ -487,11 +577,35 @@ class _ForestScreenState extends State<ForestScreen> {
                       _buildHeader(),
                       const SizedBox(height: 20),
 
-                      // NEW: Wrap Banner (Shows if available, not completed, and not dismissed via 'X')
-                      if (_wrapStatus.isAvailable &&
-                          _wrapStatus.showDot &&
-                          !_isWrapDismissed)
-                        _buildWrapBanner(),
+                      // Wrap Banner — same widget/design as before, just no
+                      // longer pops in abruptly once the async status check
+                      // resolves. It stays a normal part of this scrolling
+                      // screen (not an overlay/dialog), it just fades and
+                      // grows in smoothly instead of snapping into place.
+                      AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 350),
+                        transitionBuilder: (child, animation) => FadeTransition(
+                          opacity: animation,
+                          child: SizeTransition(
+                            sizeFactor: animation,
+                            axisAlignment: -1,
+                            child: child,
+                          ),
+                        ),
+                        child:
+                            (_wrapStatus.isAvailable &&
+                                _wrapStatus.showDot &&
+                                !_isWrapDismissed)
+                            ? KeyedSubtree(
+                                key: ValueKey(
+                                  'wrap-banner-${_wrapStatus.targetMonth?.year}-${_wrapStatus.targetMonth?.month}',
+                                ),
+                                child: _buildWrapBanner(),
+                              )
+                            : const SizedBox.shrink(
+                                key: ValueKey('no-wrap-banner'),
+                              ),
+                      ),
 
                       // 2. Monthly Calendar Box (Compact)
                       _buildMonthlyCalendar(),
@@ -754,6 +868,7 @@ class _ForestScreenState extends State<ForestScreen> {
   }
 
   Widget _buildScrollPickers() {
+    final earliest = _earliestAllowedMonth();
     return SizedBox(
       height: 120,
       child: Row(
@@ -765,18 +880,29 @@ class _ForestScreenState extends State<ForestScreen> {
               ),
               itemExtent: 32,
               onSelectedItemChanged: _onMonthChanged,
-              children: List.generate(
-                12,
-                (i) => Center(
+              children: List.generate(12, (i) {
+                // Dulled purely as a visual cue for months outside the
+                // current plan's range, evaluated against whichever year is
+                // currently focused — the actual block/redirect happens in
+                // _onMonthChanged, this is just so it doesn't look
+                // selectable when it isn't.
+                final isAllowed = !DateTime(
+                  _focusedDate.year,
+                  i + 1,
+                  1,
+                ).isBefore(earliest);
+                return Center(
                   child: Text(
                     DateFormat('MMMM').format(DateTime(2025, i + 1)),
                     style: GoogleFonts.montserrat(
                       fontSize: 16,
-                      color: AppColors.colblack,
+                      color: isAllowed
+                          ? AppColors.colblack
+                          : const Color(0xFFCCCCCC),
                     ),
                   ),
-                ),
-              ),
+                );
+              }),
             ),
           ),
           Expanded(
@@ -786,18 +912,27 @@ class _ForestScreenState extends State<ForestScreen> {
               ),
               itemExtent: 32,
               onSelectedItemChanged: _onYearChanged,
-              children: List.generate(
-                10,
-                (i) => Center(
+              children: List.generate(10, (i) {
+                final year = 2025 + i;
+                // A year is only fully dulled if EVERY month in it is
+                // before the allowed range — the boundary year itself
+                // (e.g. 2025 when today is Aug 2026) stays normal-colored
+                // since part of it (Aug–Dec) is still selectable; the
+                // month picker above is what dulls the specific
+                // out-of-range months within it.
+                final isYearAllowed = !DateTime(year, 12, 1).isBefore(earliest);
+                return Center(
                   child: Text(
-                    "${2025 + i}",
+                    "$year",
                     style: GoogleFonts.montserrat(
                       fontSize: 16,
-                      color: AppColors.colblack,
+                      color: isYearAllowed
+                          ? AppColors.colblack
+                          : const Color(0xFFCCCCCC),
                     ),
                   ),
-                ),
-              ),
+                );
+              }),
             ),
           ),
         ],

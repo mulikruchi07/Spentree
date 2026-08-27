@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 // import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:spentree/core/transaction_service.dart';
 import 'package:spentree/screens/forest/forest_screen.dart';
@@ -13,11 +14,15 @@ class WrapStatus {
   final bool isAvailable;
   final DateTime? targetMonth;
   final bool showDot;
+  // True once the SERVER confirms this account is Pro. Free users get
+  // showDot/hasViewed gating; Pro users can always reopen the wrap.
+  final bool isPro;
 
   WrapStatus({
     required this.isAvailable,
     this.targetMonth,
     required this.showDot,
+    this.isPro = false,
   });
 }
 
@@ -49,45 +54,156 @@ class MonthlyInsightsService {
   // WRAP AVAILABILITY & PERSISTENCE
   // ==========================================
 
-  Future<WrapStatus> checkWrapStatus() async {
-    final now = DateTime.now();
-
-    DateTime? eligibleMonth;
-
-    // Rule: Wrap becomes available on the 1st day of the month AFTER 00:59 AM
-    // and stays available until the 25th of that same month.
-    if (now.day == 1) {
-      if (now.hour > 0 || (now.hour == 0 && now.minute >= 59)) {
-        // It is 00:59 AM or later on the 1st of the month.
-        // The wrap is for the PREVIOUS completed month.
-        eligibleMonth = DateTime(now.year, now.month - 1, 1);
-      }
-    } else if (now.day > 1 && now.day <= 7) {
-      // It is between the 2nd and 7th of the month.
-      // The wrap is for the PREVIOUS completed month.
-      eligibleMonth = DateTime(now.year, now.month - 1, 1);
-    }
-
-    // If we aren't in the valid window, the wrap is not available.
-    if (eligibleMonth == null) {
+  Future<WrapStatus> checkWrapStatus({DateTime? forMonth}) async {
+    final supabase = Supabase.instance.client;
+    if (supabase.auth.currentUser == null) {
       return WrapStatus(isAvailable: false, showDot: false);
     }
 
-    final prefs = await SharedPreferences.getInstance();
-    // Check if user has already watched it all the way through
-    final key = "wrap_viewed_${eligibleMonth.year}_${eligibleMonth.month}";
-    final hasViewed = prefs.getBool(key) ?? false;
+    final now = DateTime.now();
 
-    return WrapStatus(
-      isAvailable: true,
-      targetMonth: eligibleMonth,
-      showDot: !hasViewed, // Only show red dot if they haven't completed it
-    );
+    // Free-plan eligibility window, computed exactly as before — used both
+    // as the free-plan target month AND as the fallback default month when
+    // no specific month is requested (e.g. Pro on first load, before the
+    // person has navigated Forest's calendar to a specific past month).
+    //
+    // Rule: Wrap becomes available on the 1st day of the month AFTER 00:59
+    // AM and stays available until the 25th of that same month.
+    DateTime? freeEligibleMonth;
+    if (now.day == 1) {
+      if (now.hour > 0 || (now.hour == 0 && now.minute >= 59)) {
+        freeEligibleMonth = DateTime(now.year, now.month - 1, 1);
+      }
+    } else if (now.day > 1 && now.day <= 29) {
+      freeEligibleMonth = DateTime(now.year, now.month - 1, 1);
+    }
+
+    final DateTime candidateMonth = forMonth != null
+        ? DateTime(forMonth.year, forMonth.month, 1)
+        : (freeEligibleMonth ?? DateTime(now.year, now.month - 1, 1));
+    final candidateKey = "${candidateMonth.year}-${candidateMonth.month}";
+
+    // AUTHORITATIVE SOURCE for both view-completion state AND Pro status:
+    // the server (get_wrap_view_state RPC), never local state. If the RPC
+    // can't be reached, this fails CLOSED: treat as already-viewed / not
+    // Pro (no dot, feature not re-openable) rather than granting anything.
+    try {
+      final response = await supabase
+          .rpc(
+            'get_wrap_view_state',
+            params: {'target_month_year': candidateKey},
+          )
+          .timeout(const Duration(seconds: 10));
+
+      final rows = response as List?;
+      if (rows == null || rows.isEmpty) {
+        return WrapStatus(isAvailable: false, showDot: false, isPro: false);
+      }
+
+      final row = rows.first as Map<String, dynamic>;
+      final isPro = row['is_pro'] as bool? ?? false; // fail closed
+      final hasViewed = row['has_viewed'] as bool? ?? true; // fail closed
+
+      if (isPro) {
+        // PRO: no day-of-month release window at all — available every day
+        // of every month, for ANY completed month within the same 12-month
+        // range Forest allows Pro users to browse, and never gated on
+        // "already viewed" (unlimited re-opens until next month's wrap
+        // exists).
+        final currentMonthStart = DateTime(now.year, now.month, 1);
+        final earliestAllowed = DateTime(now.year, now.month - 11, 1);
+        final monthIsCompleted = candidateMonth.isBefore(currentMonthStart);
+        final monthIsWithinRange = !candidateMonth.isBefore(earliestAllowed);
+
+        if (!monthIsCompleted || !monthIsWithinRange) {
+          return WrapStatus(isAvailable: false, showDot: false, isPro: true);
+        }
+        return WrapStatus(
+          isAvailable: true,
+          targetMonth: candidateMonth,
+          showDot: true,
+          isPro: true,
+        );
+      }
+
+      // FREE: unchanged from before — single auto-computed eligible month,
+      // narrow day-of-month release window, exactly one completed view.
+      if (freeEligibleMonth == null) {
+        return WrapStatus(isAvailable: false, showDot: false, isPro: false);
+      }
+
+      // The candidate we queried IS the free-eligible month in the normal
+      // Forest flow (free users can't navigate elsewhere — blocked at the
+      // month-navigation level). If some other caller ever passes a
+      // different forMonth for a free account, re-check the ACTUAL
+      // eligible month's view-state instead of trusting the query above,
+      // so a free account can never be shown availability for an
+      // arbitrary month it asked for.
+      if (freeEligibleMonth.year != candidateMonth.year ||
+          freeEligibleMonth.month != candidateMonth.month) {
+        final eligibleKey =
+            "${freeEligibleMonth.year}-${freeEligibleMonth.month}";
+        final response2 = await supabase
+            .rpc(
+              'get_wrap_view_state',
+              params: {'target_month_year': eligibleKey},
+            )
+            .timeout(const Duration(seconds: 10));
+        final rows2 = response2 as List?;
+        if (rows2 == null || rows2.isEmpty) {
+          return WrapStatus(
+            isAvailable: true,
+            targetMonth: freeEligibleMonth,
+            showDot: false,
+            isPro: false,
+          );
+        }
+        final row2 = rows2.first as Map<String, dynamic>;
+        final hasViewed2 = row2['has_viewed'] as bool? ?? true;
+        return WrapStatus(
+          isAvailable: true,
+          targetMonth: freeEligibleMonth,
+          showDot: !hasViewed2,
+          isPro: false,
+        );
+      }
+
+      return WrapStatus(
+        isAvailable: true,
+        targetMonth: freeEligibleMonth,
+        showDot: !hasViewed,
+        isPro: false,
+      );
+    } catch (e) {
+      debugPrint("Wrap status check failed, failing closed: $e");
+      return WrapStatus(
+        isAvailable: freeEligibleMonth != null,
+        targetMonth: freeEligibleMonth,
+        showDot: false,
+        isPro: false,
+      );
+    }
   }
 
+  /// Records completion of a wrap view. This is fire-and-forget from the
+  /// UI's point of view for responsiveness, but the actual gating decision
+  /// on next launch always re-reads server state via checkWrapStatus()
+  /// above — a failed/offline write here just means the next
+  /// checkWrapStatus() call will (correctly, fail-closed) still show it as
+  /// not-yet-completed, so the user simply gets to finish watching it next
+  /// time rather than being incorrectly locked out or incorrectly granted
+  /// an extra view.
   Future<void> markWrapAsViewed(DateTime month) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool("wrap_viewed_${month.year}_${month.month}", true);
+    final supabase = Supabase.instance.client;
+    if (supabase.auth.currentUser == null) return;
+    final monthKey = "${month.year}-${month.month}";
+    try {
+      await supabase
+          .rpc('mark_wrap_viewed', params: {'target_month_year': monthKey})
+          .timeout(const Duration(seconds: 10));
+    } catch (e) {
+      debugPrint("mark_wrap_viewed failed (will retry via next check): $e");
+    }
   }
 
   // ==========================================

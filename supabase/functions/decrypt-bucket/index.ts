@@ -43,6 +43,29 @@ Deno.serve(async (req) => {
     // caller's own id, so nobody can pass someone else's id to read their data.
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
+    // ------------------------------------------------------------------
+    // PRO GATE — Buckets is a fully Pro feature. A downgraded former-Pro
+    // user (or a Free user who somehow still has stale local bucket rows
+    // on-device) must never have this pull function hand bucket data back
+    // down. ANY failure to positively confirm Pro is treated as "not Pro."
+    // Returning an empty array (not an error) here is deliberate: this
+    // function runs during the normal startup sync sweep, and "you have no
+    // buckets" is the correct, quiet outcome for a Free user rather than a
+    // surfaced error.
+    // ------------------------------------------------------------------
+    const { data: isProRaw, error: entitlementError } = await adminClient.rpc(
+      "is_user_pro",
+      { uid: user.id },
+    );
+    const isPro = entitlementError ? false : isProRaw === true;
+
+    if (!isPro) {
+      return new Response(JSON.stringify([]), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const { data: rows, error: fetchError } = await adminClient
       .from("buckets")
       .select("id, name, transaction_ids, created_at, updated_at")

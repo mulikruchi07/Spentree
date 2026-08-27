@@ -40,6 +40,32 @@ Deno.serve(async (req) => {
       });
     }
 
+    // Admin client — bypasses RLS deliberately. Safe here because we already
+    // verified `user` above, and every write below is scoped to user.id.
+    const adminClient = createClient(supabaseUrl, serviceRoleKey);
+
+    // ------------------------------------------------------------------
+    // PRO GATE — Buckets is a fully Pro feature. This is the actual
+    // security boundary; the app's UI hiding the Buckets icon/screen for
+    // Free users is convenience only. ANY failure to positively confirm
+    // Pro (RPC error, missing row) is treated as "not Pro" — fail closed.
+    // ------------------------------------------------------------------
+    const { data: isProRaw, error: entitlementError } = await adminClient.rpc(
+      "is_user_pro",
+      { uid: user.id },
+    );
+    const isPro = entitlementError ? false : isProRaw === true;
+
+    if (!isPro) {
+      return new Response(
+        JSON.stringify({ error: "pro_required" }),
+        {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
+    }
+
     const body = await req.json();
     const { action, cloud_id, name, transaction_ids } = body;
 
@@ -56,10 +82,6 @@ Deno.serve(async (req) => {
         }
       );
     }
-
-    // Admin client — bypasses RLS deliberately. Safe here because we already
-    // verified `user` above, and every write below is scoped to user.id.
-    const adminClient = createClient(supabaseUrl, serviceRoleKey);
 
     // DELETE
     // Delete does not require name or transaction_ids.

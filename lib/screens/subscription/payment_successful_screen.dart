@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:spentree/core/app_style.dart';
+import 'package:spentree/core/entitlement_service.dart';
+import 'package:spentree/core/pro_upgrade_sheet.dart';
+import 'package:spentree/core/user_profile.dart';
 import 'welcome_screen.dart';
 import '../../core/system_ui_service.dart'; // FIX: opaque nav bar on this screen
 
@@ -16,7 +19,9 @@ class _PaymentSuccessfulScreenState extends State<PaymentSuccessfulScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    SystemUIService.applyNavBarStyle(context); // FIX: fires on first build & theme changes
+    SystemUIService.applyNavBarStyle(
+      context,
+    ); // FIX: fires on first build & theme changes
   }
 
   @override
@@ -43,6 +48,15 @@ class _PaymentSuccessfulScreenState extends State<PaymentSuccessfulScreen> {
   @override
   Widget build(BuildContext context) {
     MediaQuery.platformBrightnessOf(context);
+
+    final entitlement = EntitlementService();
+    final trialDays = entitlement.trialPlan == 'annual' ? 30 : 7;
+    final trialEndsText = entitlement.trialEndsAt != null
+        ? formatTrialDate(entitlement.trialEndsAt!)
+        : null;
+    final nextBillingText = entitlement.nextBillingAt != null
+        ? formatTrialDate(entitlement.nextBillingAt!)
+        : null;
 
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: themeNotifier,
@@ -127,7 +141,9 @@ class _PaymentSuccessfulScreenState extends State<PaymentSuccessfulScreen> {
                       ),
                       const SizedBox(height: 9),
                       Text(
-                        "Your 7-day Pro trial has started successfully\nCancel anytime from settings",
+                        // Cancellation-policy line removed — Spentree has no
+                        // cancellation flow yet, so we don't claim one exists.
+                        "Your $trialDays-day Pro trial has started successfully",
                         textAlign: TextAlign.center,
                         style: GoogleFonts.montserrat(
                           fontSize: 12,
@@ -137,14 +153,26 @@ class _PaymentSuccessfulScreenState extends State<PaymentSuccessfulScreen> {
                         ),
                       ),
                       const SizedBox(height: 20),
-                      Text(
-                        "Next billing date: 06 Mar 2026",
-                        style: GoogleFonts.montserrat(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: const Color(0xFF787878),
+                      if (trialEndsText != null)
+                        Text(
+                          "Trial ends: $trialEndsText",
+                          style: GoogleFonts.montserrat(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: const Color(0xFF787878),
+                          ),
                         ),
-                      ),
+                      if (nextBillingText != null) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          "Next billing date: $nextBillingText",
+                          style: GoogleFonts.montserrat(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: const Color(0xFF787878),
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -166,7 +194,7 @@ class _PaymentSuccessfulScreenState extends State<PaymentSuccessfulScreen> {
                         child: Material(
                           type: MaterialType.transparency,
                           child: Text(
-                            "Welcome Pranav",
+                            "Welcome ${userProfileNotifier.value.firstName}",
                             textAlign: TextAlign.center,
                             style: GoogleFonts.poppins(
                               fontSize: 28,

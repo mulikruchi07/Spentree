@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:spentree/core/app_style.dart';
-import '../dashboard/dashboard_screen.dart';
+import 'package:spentree/core/user_profile.dart';
+import '../main_wrapper.dart';
 import '../../core/system_ui_service.dart'; // FIX: opaque nav bar on this screen
 
 class FeaturesUnlockedScreen extends StatelessWidget {
@@ -250,7 +251,16 @@ class FeaturesUnlockedScreen extends StatelessWidget {
                               Navigator.pushReplacement(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const DashboardScreen(),
+                                  // FIX: DashboardScreen alone has no bottom
+                                  // nav bar — that only exists on MainWrapper,
+                                  // which wraps Dashboard/Analytics/Forest/
+                                  // Achievements/Profile in one PageView with
+                                  // the shared navbar. Pushing DashboardScreen
+                                  // directly was why the app looked like a
+                                  // freshly-opened, nav-less screen after
+                                  // reaching this point (onboarding OR the Pro
+                                  // trial success flow).
+                                  builder: (context) => const MainWrapper(),
                                 ),
                               );
                             },
@@ -339,7 +349,7 @@ class FeaturesUnlockedScreen extends StatelessWidget {
                                             child: Material(
                                               type: MaterialType.transparency,
                                               child: Text(
-                                                "Welcome Pranav",
+                                                "Welcome ${userProfileNotifier.value.firstName}",
                                                 textAlign: TextAlign.center,
                                                 style: GoogleFonts.poppins(
                                                   fontSize: 28,
@@ -356,7 +366,7 @@ class FeaturesUnlockedScreen extends StatelessWidget {
                                             child: Material(
                                               type: MaterialType.transparency,
                                               child: Text(
-                                                "Welcome Pranav",
+                                                "Welcome ${userProfileNotifier.value.firstName}",
                                                 textAlign: TextAlign.center,
                                                 style: GoogleFonts.poppins(
                                                   fontSize: 28,
@@ -374,7 +384,7 @@ class FeaturesUnlockedScreen extends StatelessWidget {
                             child: Material(
                               type: MaterialType.transparency,
                               child: Text(
-                                "Welcome Pranav",
+                                "Welcome ${userProfileNotifier.value.firstName}",
                                 textAlign: TextAlign.center,
                                 style: GoogleFonts.poppins(
                                   fontSize: 28,

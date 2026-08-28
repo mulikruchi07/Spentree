@@ -2,6 +2,7 @@ import 'package:isar/isar.dart';
 import 'package:path_provider/path_provider.dart';
 import 'local_transaction.dart';
 import 'local_bucket.dart';
+import 'local_budget.dart';
 
 class LocalDatabaseService {
   static late Isar isar;
@@ -15,7 +16,7 @@ class LocalDatabaseService {
 
     // Opens the database
     isar = await Isar.open(
-      [LocalTransactionSchema, LocalBucketSchema],
+      [LocalTransactionSchema, LocalBucketSchema, LocalBudgetSchema],
       directory: dir.path,
       inspector: false,
     );

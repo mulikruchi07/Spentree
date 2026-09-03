@@ -10,6 +10,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart' show DateUtils;
 import 'package:spentree/core/notification_service.dart';
 import 'package:spentree/core/user_profile.dart';
+import 'package:spentree/screens/private/private_transaction_models.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:isar/isar.dart';
 
@@ -26,7 +27,6 @@ class TransactionService extends ChangeNotifier {
   final _supabase = Supabase.instance.client;
   static const MethodChannel _channel = MethodChannel('sms_channel');
 
-  // In-memory list for UI rendering (excludes deleted items)
   List<LocalTransaction> _transactions = [];
   List<LocalTransaction> get allTransactions => _transactions;
 
@@ -50,8 +50,6 @@ class TransactionService extends ChangeNotifier {
 
     _isInitialized = true;
 
-    // Await this one — it's the thing LoadingScreen needs to have finished
-    // before Dashboard renders, for both new-device restoration and correctness.
     await _pullFromSupabase()
         .timeout(
           const Duration(seconds: 15),
@@ -62,12 +60,9 @@ class TransactionService extends ChangeNotifier {
         .catchError((e) => debugPrint("Pull failed: $e"));
     await _loadFromLocal();
 
-    // This one can stay fire-and-forget — it's uploading local changes,
-    // not something the UI needs to block on to display correctly.
     _syncOfflineTransactions();
   }
 
-  // Add to transaction_service.dart
   Future<void> _migrateOrphanedLocalRows() async {
     final user = _supabase.auth.currentUser;
     if (user == null) return;
@@ -79,8 +74,7 @@ class TransactionService extends ChangeNotifier {
     if (orphaned.isEmpty) return;
     for (final tx in orphaned) {
       tx.userId = user.id;
-      tx.isSynced =
-          false; // force re-push so cloud has them under the right user
+      tx.isSynced = false;
     }
     await isar.writeTxn(() async {
       await isar.localTransactions.putAll(orphaned);
@@ -110,11 +104,11 @@ class TransactionService extends ChangeNotifier {
 
     final prefs = await SharedPreferences.getInstance();
     final consent = prefs.getString('sms_permission_decision_${user.id}');
-    if (consent != 'granted')
-      return; // this account never consented — never fetch, regardless of OS state
+    if (consent != 'granted') return;
 
     final status = await Permission.sms.status;
     if (!status.isGranted) return;
+
     try {
       final List<dynamic> result = await _channel.invokeMethod('getAllSms');
       final isar = LocalDatabaseService.isar;
@@ -126,8 +120,7 @@ class TransactionService extends ChangeNotifier {
       }
 
       List<LocalTransaction> newTransactionsToSave = [];
-      Set<String> processedHashesThisRun =
-          {}; // Prevents duplicate crashes in the same batch
+      Set<String> processedHashesThisRun = {};
 
       for (var sms in result) {
         try {
@@ -136,25 +129,36 @@ class TransactionService extends ChangeNotifier {
           String address = sms['address'] ?? 'Unknown';
           int timestamp = sms['date'] ?? 0;
 
-          // --- FILTER 1: BLOCKLIST ---
-          const blocklist = [
-            'mandate',
-            'autopay',
-            'standing instruction',
-            'si registered',
-            'e-mandate',
-            'si debit',
-          ];
-          if (blocklist.any((kw) => body.contains(kw))) continue;
+          // --- FILTER 1: EXCLUDE INTENT, REQUESTS, PROMOTIONS, & OTPS ---
+          bool isIntentOrRequest =
+              body.contains('will be debited') ||
+              body.contains('has requested money') ||
+              body.contains('requested money') ||
+              body.contains('scheduled for') ||
+              body.contains('is due on') ||
+              body.contains('due by');
 
-          // --- FILTER 2: CREDIT / INFLOW ---
+          const otpKeywords = [
+            'otp',
+            'verification code',
+            'is your secret',
+            'do not share',
+            'valid for',
+            'auth code',
+            'one time password',
+          ];
+          bool isOtp = otpKeywords.any((kw) => body.contains(kw));
+
+          if (isIntentOrRequest || isOtp) continue;
+
+          // --- FILTER 2: CREDIT / INFLOW / REVERSALS ---
           const creditKeywords = [
             'credited',
             'received',
             'refund',
             'reversal',
+            'reversed',
             'deposited',
-            'cr',
             'added',
           ];
           bool isCredit = creditKeywords.any((kw) {
@@ -177,71 +181,30 @@ class TransactionService extends ChangeNotifier {
             'block',
             'limit is less',
             'non compliant',
-            'bounces',
             'unauthorized',
             'declines',
             'rejection',
           ];
           if (failureKeywords.any((kw) => body.contains(kw))) continue;
 
-          // --- FILTER 4: OTP & AUTH ---
-          const otpKeywords = [
-            'otp',
-            'verification code',
-            'is your secret',
-            'do not share',
-            'valid for',
-            'auth code',
-            'one time password',
-          ];
-          if (otpKeywords.any((kw) => body.contains(kw))) continue;
+          // --- FILTER 4: COMPREHENSIVE DEBIT DETECTION ---
+          // Includes standard verbs + "Dr." / "Dr " shorthands + POS + Transfers
+          RegExp debitPattern = RegExp(
+            r'(?:debited|spent|paid|withdrawn|withdrawal|deducted|deduction|sent to|transfer|transferred|purchase|pos txn|pos|\bdr\.?\b|imps|neft|rtgs|charged|txn of|emi of|bill payment)',
+            caseSensitive: false,
+          );
 
-          // --- FILTER 5: PREDICTIVE/UPCOMING ---
-          const predictiveKeywords = [
-            'is due on',
-            'will be processed',
-            'scheduled for',
-            'upcoming',
-            'due by',
-          ];
-          if (predictiveKeywords.any((kw) => body.contains(kw))) continue;
+          bool isDebit = debitPattern.hasMatch(originalBody);
+          bool hasAmount =
+              body.contains('rs') || body.contains('inr') || body.contains('₹');
 
-          // --- FILTER 6: DEBIT CONFIRMATION ---
-          const debitKeywords = [
-            'debited',
-            'debit',
-            'withdrawn',
-            'withdrawal',
-            'spent',
-            'purchase',
-            'paid',
-            'sent',
-            'transfer',
-            'transferred',
-            'imps',
-            'neft',
-            'rtgs',
-            'pos',
-            'merchant',
-            'atm',
-            'deducted',
-            'deduction',
-            'wdl',
-            'charged',
-            'payment of',
-            'payment made',
-            'txn of',
-            'transaction of',
-            'emi of',
-            'bill payment',
-            'remitted',
-          ];
-          if (!debitKeywords.any((kw) => body.contains(kw))) continue;
+          if (!isDebit || !hasAmount) continue;
 
-          // --- FILTER 7: EXTRACT AMOUNT ---
+          // --- FILTER 5: ROBUST AMOUNT EXTRACTION ---
+          // Captures Rs, INR, ₹, and double symbols like "Rs. INR 500.00"
           double amount = 0.0;
           RegExp primaryAmountRegex = RegExp(
-            r'(?:rs\.?|inr|₹)\s*([\d,]+\.?\d*)',
+            r'(?:rs\.?|inr|₹)\s*(?:inr|rs\.?)?\s*([\d,]+(?:\.\d+)?)',
             caseSensitive: false,
           );
           var amountMatch = primaryAmountRegex.firstMatch(originalBody);
@@ -252,7 +215,7 @@ class TransactionService extends ChangeNotifier {
                 0.0;
           } else {
             RegExp fallbackAmountRegex = RegExp(
-              r'(?:wdl|cash|prch|txn|dr)\s+(?:[a-z0-9\-]+\s+)?([\d,]+\.\d{2})',
+              r'(?:wdl|cash|prch|txn|\bdr\.?\b)\s+(?:[a-z0-9\-]+\s+)?([\d,]+(?:\.\d+)?)',
               caseSensitive: false,
             );
             var fallbackMatch = fallbackAmountRegex.firstMatch(originalBody);
@@ -264,46 +227,70 @@ class TransactionService extends ChangeNotifier {
                   0.0;
             }
           }
+
           if (amount <= 0.0) continue;
 
-          // --- FILTER 8: EXTRACT RECEIVER ---
+          // --- FILTER 6: MANDATE SETUP PING FILTER ---
+          // Exclude ONLY setup/registration messages with Rs 1.00 or Rs 2.00 pings.
+          // Real recurring AutoPay deductions (Rs 69, 199, etc.) pass right through!
+          bool isMandateSetup =
+              body.contains('mandate registered') ||
+              body.contains('mandate setup') ||
+              body.contains('e-mandate authorized') ||
+              body.contains('autopay setup') ||
+              body.contains('standing instruction registered');
+
+          if (isMandateSetup && (amount == 1.0 || amount == 2.0)) {
+            continue;
+          }
+
+          // --- FILTER 7: ADVANCED RECEIVER/PAYEE EXTRACTION ---
           String merchant = address;
+
           RegExp merchantRegex = RegExp(
-            r'(?:to|towards|at|info|vpa|merchnt:|merchant:|spent on card xx\d+ at)\s+([a-zA-Z0-9\.\s@\-]+?)(?:\s+(?:ref|on|from|via|upi|okk|bal|avl|limit|seq|card|a/c|ending|statement|dr|cr|\.))',
+            r'(?:to|towards|at|vpa|info|merchnt:|merchant:|for upi payment to|spent on card xx\d+ at)\s+([a-zA-Z0-9.\s@-]+?)(?:\s*(?:;|\.|,|\s+(?:ref|rrn|on|from|via|upi|okk|bal|avl|limit|seq|card|a/c|ending|statement|dr|cr|is|if|dial|-)))',
             caseSensitive: false,
           );
+
           var merchantMatch = merchantRegex.firstMatch(originalBody);
 
           if (merchantMatch != null && merchantMatch.group(1) != null) {
             merchant = merchantMatch.group(1)!.trim();
           } else {
-            RegExp coopBranchRegex = RegExp(
-              r'([a-zA-Z\s\-]+(?:\sbranch|\satm|\spos))',
-              caseSensitive: false,
-            );
-            var coopMatch = coopBranchRegex.firstMatch(originalBody);
-            if (coopMatch != null && coopMatch.group(1) != null) {
-              merchant = coopMatch.group(1)!.trim();
+            if (body.contains('pos')) {
+              merchant = "POS Transaction";
+            } else if (body.contains('td payin')) {
+              merchant = "Term Deposit Pay-In";
+            } else {
+              RegExp coopBranchRegex = RegExp(
+                r'([a-zA-Z\s\-]+(?:\sbranch|\satm|\spos))',
+                caseSensitive: false,
+              );
+              var coopMatch = coopBranchRegex.firstMatch(originalBody);
+              if (coopMatch != null && coopMatch.group(1) != null) {
+                merchant = coopMatch.group(1)!.trim();
+              }
             }
           }
 
-          merchant = merchant.replaceAll(RegExp(r'\s+'), ' ').trim();
-          if (merchant.length > 20)
-            merchant = merchant.substring(0, 20) + "...";
+          merchant = merchant
+              .replaceAll(RegExp(r'[\s;.]+$'), '')
+              .replaceAll(RegExp(r'\s+'), ' ')
+              .trim();
+          if (merchant.length > 25) {
+            merchant = merchant.substring(0, 25) + "...";
+          }
 
-          // --- CREATE SMS HASH TO PREVENT DUPLICATES ---
+          // --- CREATE UNIQUE HASH FOR DEDUPLICATION ---
           String category = _determineCategory(body, merchant);
           DateTime date = DateTime.fromMillisecondsSinceEpoch(timestamp);
 
-          // Bulletproof hash combining time, amount, and the exact message string logic
           String uniqueSmsHash =
               "${timestamp}_${amount.toStringAsFixed(2)}_${originalBody.hashCode}";
 
-          // Prevent exact duplicates in the same SMS batch from crashing the database
           if (processedHashesThisRun.contains(uniqueSmsHash)) continue;
           processedHashesThisRun.add(uniqueSmsHash);
 
-          // Check if this specific SMS is already in our Isar database from a previous run
           final existing = await isar.localTransactions
               .filter()
               .smsHashEqualTo(uniqueSmsHash)
@@ -326,14 +313,10 @@ class TransactionService extends ChangeNotifier {
             newTransactionsToSave.add(newTx);
           }
         } catch (e) {
-          // If a single SMS fails to parse, it won't crash the entire loop
           debugPrint("Failed to parse individual SMS: $e");
         }
       }
 
-      // Batch insert all new transactions at once (Lightning fast)
-      // Safely insert transactions one by one.
-      // If one is a duplicate, it skips it without crashing the rest!
       if (newTransactionsToSave.isNotEmpty) {
         for (var tx in newTransactionsToSave) {
           try {
@@ -344,7 +327,7 @@ class TransactionService extends ChangeNotifier {
             debugPrint("Skipped a duplicate/conflicting SMS: $e");
           }
         }
-        await _loadFromLocal(); // Refresh UI
+        await _loadFromLocal();
         await _checkAndNotifyOverspend();
       }
     } catch (e) {
@@ -384,7 +367,7 @@ class TransactionService extends ChangeNotifier {
     });
 
     await _loadFromLocal();
-    _pushToSupabase(newTx); // Background sync
+    _pushToSupabase(newTx);
     await _checkAndNotifyOverspend();
   }
 
@@ -414,7 +397,7 @@ class TransactionService extends ChangeNotifier {
       );
     }
 
-    tx.isSynced = false; // Mark for re-sync
+    tx.isSynced = false;
 
     await isar.writeTxn(() async {
       await isar.localTransactions.put(tx);
@@ -439,7 +422,6 @@ class TransactionService extends ChangeNotifier {
 
     await _loadFromLocal();
 
-    // Sync the deletion to Supabase
     if (tx.cloudId != null) {
       _deleteFromSupabase(tx);
     }
@@ -452,6 +434,23 @@ class TransactionService extends ChangeNotifier {
     if (tx == null) return;
 
     tx.isHidden = hide;
+    tx.isSynced = false;
+
+    await isar.writeTxn(() async {
+      await isar.localTransactions.put(tx);
+    });
+
+    await _loadFromLocal();
+    _pushToSupabase(tx);
+  }
+
+  /// 8. MOVE IN / OUT OF PERSONAL VAULT
+  Future<void> togglePersonalVisibility(int localId, bool isPersonal) async {
+    final isar = LocalDatabaseService.isar;
+    final tx = await isar.localTransactions.get(localId);
+    if (tx == null) return;
+
+    tx.isPersonal = isPersonal;
     tx.isSynced = false;
 
     await isar.writeTxn(() async {
@@ -475,15 +474,11 @@ class TransactionService extends ChangeNotifier {
         .isDeletedEqualTo(false)
         .findAll();
 
-    // Bounded concurrency — fast, but doesn't open unlimited simultaneous
-    // Edge Function calls. Each item's isSynced flag is durably written to
-    // Isar the moment IT succeeds — so if the app is killed mid-batch,
-    // whatever already succeeded stays synced, and next launch only retries
-    // what's left. This is what makes it resumable without extra bookkeeping.
-    const batchSize = 5;
-    for (var i = 0; i < pendingUpdates.length; i += batchSize) {
-      final batch = pendingUpdates.skip(i).take(batchSize);
-      await Future.wait(batch.map((tx) => _pushToSupabase(tx)));
+    // FIX: Process sequentially instead of using Future.wait concurrency
+    for (var tx in pendingUpdates) {
+      await _pushToSupabase(tx);
+      // Add a 150ms delay to prevent Postgres connection exhaustion
+      await Future.delayed(const Duration(milliseconds: 150));
     }
 
     final pendingDeletes = await isar.localTransactions
@@ -491,9 +486,10 @@ class TransactionService extends ChangeNotifier {
         .isSyncedEqualTo(false)
         .isDeletedEqualTo(true)
         .findAll();
-    for (var i = 0; i < pendingDeletes.length; i += batchSize) {
-      final batch = pendingDeletes.skip(i).take(batchSize);
-      await Future.wait(batch.map((tx) => _deleteFromSupabase(tx)));
+
+    for (var tx in pendingDeletes) {
+      await _deleteFromSupabase(tx);
+      await Future.delayed(const Duration(milliseconds: 150));
     }
   }
 
@@ -539,6 +535,7 @@ class TransactionService extends ChangeNotifier {
           ..dateTime = DateTime.parse(row['date_time'] as String).toLocal()
           ..type = row['type'] as String
           ..isHidden = row['is_hidden'] as bool? ?? false
+          ..isPersonal = row['is_personal'] as bool? ?? false
           ..isDeleted = false
           ..isSynced = true
           ..smsHash = smsHash;
@@ -567,6 +564,7 @@ class TransactionService extends ChangeNotifier {
         'type': tx.type,
         'date_time': tx.dateTime.toIso8601String(),
         'is_hidden': tx.isHidden,
+        'is_personal': tx.isPersonal,
         'sms_hash': tx.smsHash,
       };
 
@@ -649,11 +647,17 @@ class TransactionService extends ChangeNotifier {
   // HELPERS & GETTERS FOR UI
   // ==========================================
 
+  List<LocalTransaction> get personalTransactions => _transactions
+      .where((tx) => !tx.isHidden && !tx.isDeleted && tx.isPersonal)
+      .toList();
+
+  // UPDATED: Exclude personal transactions from daily dashboard
   List<LocalTransaction> getTransactionsForDay(DateTime date) {
     return _transactions
         .where(
           (tx) =>
               !tx.isHidden &&
+              !tx.isPersonal &&
               tx.dateTime.year == date.year &&
               tx.dateTime.month == date.month &&
               tx.dateTime.day == date.day,
@@ -672,8 +676,14 @@ class TransactionService extends ChangeNotifier {
         .toList();
   }
 
-  List<LocalTransaction> get visibleTransactions =>
-      _transactions.where((tx) => !tx.isHidden).toList();
+  List<LocalTransaction> get visibleTransactions => _transactions
+      .where(
+        (tx) =>
+            !tx.isHidden &&
+            !tx.isDeleted &&
+            !PrivateTransactionService().isPrivate(tx.id),
+      )
+      .toList();
 
   String _determineCategory(String body, String merchant) {
     String lowerBody = body.toLowerCase();
@@ -684,31 +694,37 @@ class TransactionService extends ChangeNotifier {
         lowerBody.contains('mcdonald') ||
         lowerBody.contains('domino') ||
         lowerMerchant.contains('restaurant') ||
-        lowerBody.contains('starbucks'))
+        lowerBody.contains('starbucks') ||
+        lowerBody.contains('zepto')) {
       return "Food & Beverages";
+    }
     if (lowerBody.contains('amazon') ||
         lowerBody.contains('flipkart') ||
         lowerBody.contains('myntra') ||
         lowerMerchant.contains('mart') ||
-        lowerBody.contains('shopping'))
+        lowerBody.contains('shopping')) {
       return "Shopping";
+    }
     if (lowerBody.contains('petrol') ||
         lowerBody.contains('fuel') ||
         lowerBody.contains('indian oil') ||
-        lowerBody.contains('bpcl'))
+        lowerBody.contains('bpcl')) {
       return "Fuel";
+    }
     if (lowerBody.contains('jio') ||
         lowerBody.contains('airtel') ||
         lowerBody.contains('recharge') ||
         lowerBody.contains('bill') ||
         lowerBody.contains('netflix') ||
-        lowerBody.contains('spotify'))
+        lowerBody.contains('spotify')) {
       return "Bills & Subscriptions";
+    }
     if (lowerBody.contains('upi') ||
         lowerBody.contains('vpa') ||
         lowerBody.contains('sent to') ||
-        lowerBody.contains('transfer to'))
+        lowerBody.contains('transfer to')) {
       return "To People";
+    }
     return "Other";
   }
 

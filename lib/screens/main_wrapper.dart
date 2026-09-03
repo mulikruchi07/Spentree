@@ -1,27 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
+import 'package:quick_actions/quick_actions.dart';
 import 'package:spentree/screens/forest/forest_screen.dart';
 import '../core/app_style.dart';
 import 'analytics/analytics_screen.dart';
 import 'dashboard/dashboard_screen.dart';
 import 'profile/profile_screen.dart';
 import 'achievements/achievements_screen.dart';
-import 'package:supabase_flutter/supabase_flutter.dart'; // Import Supabase
+import 'write_to_founder_screen.dart'; // Import the new screen
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:spentree/core/auth_landing_screen.dart';
-
-// ─────────────────────────────────────────────────────────────────────────────
-// MainWrapper
-//
-// Responsibilities: tab navigation + widget deep-link handling ONLY.
-//
-// ALL lock logic has been intentionally removed from this file.
-// The lock now lives in AppLockWrapper (lib/app_lock.dart) which is placed
-// in MaterialApp's `builder` parameter in main.dart. That layer sits above
-// the entire Navigator stack, so it covers every route, every dialog,
-// every bottom sheet, and every popup — without MainWrapper needing to
-// know anything about locking.
-// ─────────────────────────────────────────────────────────────────────────────
 
 class MainWrapper extends StatefulWidget {
   final int initialIndex;
@@ -40,6 +29,7 @@ class MainWrapper extends StatefulWidget {
 class _MainWrapperState extends State<MainWrapper> with WidgetsBindingObserver {
   late final PageController _pageController;
   late int _selectedIndex;
+  final QuickActions quickActions = const QuickActions();
 
   @override
   void initState() {
@@ -47,6 +37,7 @@ class _MainWrapperState extends State<MainWrapper> with WidgetsBindingObserver {
     _selectedIndex = widget.initialIndex;
     _pageController = PageController(initialPage: _selectedIndex);
     WidgetsBinding.instance.addObserver(this);
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final user = Supabase.instance.client.auth.currentUser;
       if (user == null) {
@@ -54,8 +45,47 @@ class _MainWrapperState extends State<MainWrapper> with WidgetsBindingObserver {
           context,
           MaterialPageRoute(builder: (context) => const AuthLandingScreen()),
         );
+      } else {
+        _setupQuickActions();
       }
     });
+  }
+
+  void _setupQuickActions() {
+    quickActions.initialize((String shortcutType) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+
+        if (shortcutType == 'action_add_expense') {
+          setState(() => _selectedIndex = 1);
+          _pageController.jumpToPage(1);
+          AnalyticsScreen.triggerOpenForm.value = true;
+        } else if (shortcutType == 'action_dashboard') {
+          setState(() => _selectedIndex = 0);
+          _pageController.jumpToPage(0);
+        } else if (shortcutType == 'action_write_founder') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const WriteFounderScreen(),
+            ),
+          );
+        }
+      });
+    });
+
+    quickActions.setShortcutItems(<ShortcutItem>[
+      const ShortcutItem(
+        type: 'action_add_expense',
+        localizedTitle: 'Add Expense',
+        icon: 'ic_shortcut_add',
+      ),
+      const ShortcutItem(
+        type: 'action_write_founder',
+        localizedTitle: 'Write to Founders',
+        icon: 'ic_shortcut_mail',
+      ),
+    ]);
   }
 
   @override
@@ -65,18 +95,12 @@ class _MainWrapperState extends State<MainWrapper> with WidgetsBindingObserver {
     super.dispose();
   }
 
-  // ── Lifecycle ────────────────────────────────────────────────────────────
-
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // Only handle widget deep-link actions on resume.
-    // All lock lifecycle handling is done by AppLockWrapper's observer.
     if (state == AppLifecycleState.resumed) {
       _handleWidgetActions();
     }
   }
-
-  // ── Widget deep links ────────────────────────────────────────────────────
 
   Future<void> _handleWidgetActions() async {
     const platform = MethodChannel('spentree_widget_channel');
@@ -95,8 +119,6 @@ class _MainWrapperState extends State<MainWrapper> with WidgetsBindingObserver {
     }
   }
 
-  // ── UI helpers ───────────────────────────────────────────────────────────
-
   void _updateSystemUI(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final navColor = isDark ? const Color(0xFF252525) : Colors.white;
@@ -108,21 +130,12 @@ class _MainWrapperState extends State<MainWrapper> with WidgetsBindingObserver {
             ? Brightness.light
             : Brightness.dark,
         systemNavigationBarContrastEnforced: false,
-        // Status Bar (This fixes your visibility issue)
-        statusBarColor:
-            Colors.transparent, // Keeps status bar background transparent
-        statusBarIconBrightness: isDark
-            ? Brightness.light
-            : Brightness
-                  .dark, // Light icons for dark mode, dark icons for light mode
-        statusBarBrightness: isDark
-            ? Brightness.dark
-            : Brightness.light, // For iOS
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+        statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
       ),
     );
   }
-
-  // ── Pages ────────────────────────────────────────────────────────────────
 
   List<Widget> get _pages => [
     const DashboardScreen(),
@@ -131,8 +144,6 @@ class _MainWrapperState extends State<MainWrapper> with WidgetsBindingObserver {
     const AchievementsScreen(),
     const ProfileScreen(),
   ];
-
-  // ── Build ────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -150,12 +161,9 @@ class _MainWrapperState extends State<MainWrapper> with WidgetsBindingObserver {
           },
           child: Scaffold(
             backgroundColor: AppColors.bgWhite,
-            // In _MainWrapperState.build(), change the PageView:
             body: PageView(
               controller: _pageController,
-              physics:
-                  // const _ClampingPagePhysics(), // ← fixes overscroll; swiping disabled
-                  const ClampingScrollPhysics(),
+              physics: const ClampingScrollPhysics(),
               onPageChanged: (i) => setState(() => _selectedIndex = i),
               children: _pages,
             ),
@@ -165,8 +173,6 @@ class _MainWrapperState extends State<MainWrapper> with WidgetsBindingObserver {
       },
     );
   }
-
-  // ── Navbar ───────────────────────────────────────────────────────────────
 
   Widget _buildNavbar() {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -236,12 +242,3 @@ class _MainWrapperState extends State<MainWrapper> with WidgetsBindingObserver {
     );
   }
 }
-
-// class _ClampingPagePhysics extends PageScrollPhysics {
-//   const _ClampingPagePhysics() : super(parent: const ClampingScrollPhysics());
-
-//   @override
-//   _ClampingPagePhysics applyTo(ScrollPhysics? ancestor) {
-//     return const _ClampingPagePhysics();
-//   }
-// }

@@ -1,11 +1,13 @@
 import 'dart:ui';
 import 'dart:async';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:spentree/app_lock.dart';
 import 'package:spentree/core/auth_helper.dart';
 import 'package:spentree/core/error_helper.dart';
 import 'package:spentree/core/transaction_service.dart';
@@ -15,14 +17,18 @@ import 'package:spentree/screens/profile/legal_documents_screen.dart';
 import 'delete_transactions_screen.dart';
 import 'privacy_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:spentree/core/entitlement_service.dart';
+import 'package:spentree/core/pro_upgrade_sheet.dart';
 import '../../core/app_style.dart';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:spentree/core/entitlement_service.dart';
+import 'package:local_auth/local_auth.dart';
 
-enum _ExportResult { success, empty, failed }
+enum _ExportResult { success, empty, failed, notEntitled }
 
 class DataPrivacyScreen extends StatefulWidget {
   const DataPrivacyScreen({super.key});
@@ -285,6 +291,11 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
   }
 
   void _showCalendarPopup() {
+    // Captured before showDialog — used to open the Pro sheet against the
+    // Data Privacy screen itself, not the calendar dialog's own (about to
+    // be popped) context.
+    final screenContext = context;
+
     showDialog(
       context: context,
       builder: (context) => BackdropFilter(
@@ -297,6 +308,7 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
               Navigator.pop(context);
               _showFinalExportPopup(start, end);
             },
+            onUpgradeTapped: () => showProUpgradeSheet(screenContext),
           ),
         ),
       ),
@@ -405,6 +417,13 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
                                       errorMsg =
                                           "No data available within selected dates.";
                                     });
+                                  } else if (result ==
+                                      _ExportResult.notEntitled) {
+                                    setDialogState(() {
+                                      isExporting = false;
+                                      errorMsg =
+                                          "Free accounts can export the last 15 days only. Upgrade to Pro for unlimited export.";
+                                    });
                                   } else if (result == _ExportResult.failed) {
                                     setDialogState(() {
                                       isExporting = false;
@@ -475,33 +494,67 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
     );
   }
 
+  // SECURITY NOTE: this method no longer builds the CSV from
+  // TransactionService().allTransactions. That in-memory/local-Isar list is
+  // client state — it can be edited, replayed, or produced by a modified
+  // build, and trusting it here would mean "disable the calendar button"
+  // really was the only thing standing between a Free user and unlimited
+  // export. Instead, the actual row set is fetched fresh from the
+  // `export-transactions` Edge Function, which:
+  //   - resolves the caller's identity from their auth token (not anything
+  //     the client sends),
+  //   - looks up is_pro server-side via is_user_pro(),
+  //   - for Free users, clamps the effective window to the last 15 days
+  //     (including today) regardless of what start/end the client asked
+  //     for, and rejects entirely if the requested start is older than that,
+  //   - decrypts and returns only the rows inside that resolved window.
+  // A modified client can ask for anything; it still only gets back what
+  // the server decides it's entitled to.
   Future<_ExportResult> _performExport(DateTime start, DateTime? endRaw) async {
     final end = endRaw ?? start;
     final startDay = DateTime(start.year, start.month, start.day);
     final endDay = DateTime(end.year, end.month, end.day, 23, 59, 59);
 
-    final rows =
-        TransactionService().allTransactions
-            .where(
-              (tx) =>
-                  !tx.isHidden &&
-                  !tx.isDeleted &&
-                  !tx.dateTime.isBefore(startDay) &&
-                  !tx.dateTime.isAfter(endDay),
-            )
-            .toList()
-          ..sort((a, b) => a.dateTime.compareTo(b.dateTime));
+    List<dynamic> rows;
+    try {
+      final response = await Supabase.instance.client.functions
+          .invoke(
+            'export-transactions',
+            body: {
+              'start_date': startDay.toIso8601String(),
+              'end_date': endDay.toIso8601String(),
+            },
+          )
+          .timeout(const Duration(seconds: 20));
+
+      if (response.status == 403) {
+        return _ExportResult.notEntitled;
+      }
+      if (response.status != 200) {
+        debugPrint("Export function failed: status ${response.status}");
+        return _ExportResult.failed;
+      }
+
+      rows = (response.data as Map)['rows'] as List;
+    } catch (e) {
+      debugPrint("Export error: $e");
+      return _ExportResult.failed;
+    }
 
     if (rows.isEmpty) return _ExportResult.empty;
 
     final buffer = StringBuffer();
     buffer.writeln('Sr. No.,Receiver Name,Category,Amount,Date,Time');
     int i = 1;
-    for (final tx in rows) {
-      final date = DateFormat('dd-MM-yyyy').format(tx.dateTime);
-      final time = DateFormat('hh:mm a').format(tx.dateTime);
-      final name = tx.receiverName.replaceAll(',', ' ');
-      buffer.writeln('$i,$name,${tx.category},${tx.amount},$date,$time');
+    for (final row in rows) {
+      final tx = row as Map<String, dynamic>;
+      final dateTime = DateTime.parse(tx['date_time'] as String).toLocal();
+      final date = DateFormat('dd-MM-yyyy').format(dateTime);
+      final time = DateFormat('hh:mm a').format(dateTime);
+      final name = (tx['receiver_name'] as String).replaceAll(',', ' ');
+      final amount = tx['amount'];
+      final category = tx['category'];
+      buffer.writeln('$i,$name,$category,$amount,$date,$time');
       i++;
     }
 
@@ -567,30 +620,56 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
                     PhosphorIconsRegular.eyeSlash,
                     "Hide Transactions",
                     "Exclude from active transactions",
-                    () {
-                      // SHOW CUSTOM LOGOUT DIALOG
-                      // _showConfirmationDialog(
-                      //   title: "Hide Transactions",
-                      //   message:
-                      //       "Are you sure you want to hide all transactions?",
-                      //   confirmText: "Yes, Hide",
-                      //   icon: PhosphorIconsRegular.trash,
-                      //   onConfirm: () {
-                      //     Navigator.push(
-                      //       context,
-                      //       MaterialPageRoute(
-                      //         builder: (context) =>
-                      //             const HideTransactionsScreen(),
-                      //       ),
-                      //     );
-                      //   },
-                      // );
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const HideTransactionsScreen(),
-                        ),
-                      );
+                    () async {
+                      final LocalAuthentication auth = LocalAuthentication();
+                      bool authenticated = false;
+
+                      try {
+                        final bool canAuthenticate =
+                            await auth.canCheckBiometrics ||
+                            await auth.isDeviceSupported();
+
+                        if (!canAuthenticate) {
+                          if (!context.mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Please set up a device screen lock to access hidden transactions.',
+                              ),
+                              backgroundColor: AppColors.destructiveRed,
+                            ),
+                          );
+                          return;
+                        }
+
+                        // 1. Suspend the main app lock listener
+                        AppLockController.isSystemAuthInProgress = true;
+
+                        authenticated = await auth.authenticate(
+                          localizedReason:
+                              'Authenticate to view hidden transactions',
+                          options: const AuthenticationOptions(
+                            stickyAuth: true,
+                            biometricOnly: false,
+                          ),
+                        );
+                      } catch (e) {
+                        debugPrint("Authentication error: $e");
+                        return;
+                      } finally {
+                        // 2. Re-enable the main app lock listener
+                        AppLockController.isSystemAuthInProgress = false;
+                      }
+
+                      if (authenticated) {
+                        if (!context.mounted) return;
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const HideTransactionsScreen(),
+                          ),
+                        );
+                      }
                     },
                   ),
                   _buildTile(
@@ -837,7 +916,11 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
 
 class _CustomRangeCalendar extends StatefulWidget {
   final Function(DateTime, DateTime?) onConfirm;
-  const _CustomRangeCalendar({required this.onConfirm});
+  final VoidCallback onUpgradeTapped;
+  const _CustomRangeCalendar({
+    required this.onConfirm,
+    required this.onUpgradeTapped,
+  });
 
   @override
   State<_CustomRangeCalendar> createState() => _CustomRangeCalendarState();
@@ -848,6 +931,10 @@ class _CustomRangeCalendarState extends State<_CustomRangeCalendar> {
   DateTime? _start;
   DateTime? _end;
   bool _showPicker = false;
+  // Only appears when the person actually taps a date beyond their plan's
+  // export window — never shown by default, and never for future dates
+  // (those are just disabled, no message needed, that's common sense).
+  bool _showLimitMessage = false;
 
   @override
   Widget build(BuildContext context) {
@@ -859,8 +946,13 @@ class _CustomRangeCalendarState extends State<_CustomRangeCalendar> {
         final days = DateUtils.getDaysInMonth(_viewDate.year, _viewDate.month);
         final offset = DateTime(_viewDate.year, _viewDate.month, 1).weekday - 1;
 
+        // The dialog is otherwise a fixed height; only grow it by exactly
+        // the amount the limit message needs, and only while it's showing,
+        // so nothing else about this popup's sizing changes.
+        final double dialogMaxHeight = _showLimitMessage ? 460 + 46 : 460;
+
         return Container(
-          constraints: const BoxConstraints(maxHeight: 460),
+          constraints: BoxConstraints(maxHeight: dialogMaxHeight),
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             color: AppColors.colwhite,
@@ -946,6 +1038,40 @@ class _CustomRangeCalendarState extends State<_CustomRangeCalendar> {
                   ),
                 ],
               ),
+              if (_showLimitMessage) ...[
+                const SizedBox(height: 12),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: RichText(
+                    textAlign: TextAlign.left,
+                    text: TextSpan(
+                      style: GoogleFonts.montserrat(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.desctext,
+                      ),
+                      children: [
+                        const TextSpan(
+                          text: "Unlock unlimited data export with ",
+                        ),
+                        TextSpan(
+                          text: "Pro",
+                          style: const TextStyle(
+                            color: AppColors.primaryGreen,
+                            fontWeight: FontWeight.w700,
+                            decoration: TextDecoration.underline,
+                          ),
+                          recognizer: TapGestureRecognizer()
+                            ..onTap = () {
+                              Navigator.of(context).pop(); // close calendar
+                              widget.onUpgradeTapped(); // then slide up Pro
+                            },
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         );
@@ -1041,6 +1167,27 @@ class _CustomRangeCalendarState extends State<_CustomRangeCalendar> {
               _viewDate.month,
               i - offset + 1,
             );
+
+            final today = DateTime.now();
+            final todayAtMidnight = DateTime(
+              today.year,
+              today.month,
+              today.day,
+            );
+            // Common sense, for every user regardless of plan: you can't
+            // export data from a day that hasn't happened yet.
+            final bool isFutureDate = date.isAfter(todayAtMidnight);
+
+            // Free-plan export window: last 15 days INCLUDING today.
+            final bool isPro = EntitlementService().isProForCurrentUser;
+            final earliestAllowedForFree = todayAtMidnight.subtract(
+              const Duration(days: 14),
+            );
+            final bool isBeyondFreeWindow =
+                !isPro && date.isBefore(earliestAllowedForFree);
+
+            final bool isDisabled = isFutureDate || isBeyondFreeWindow;
+
             bool isSelected = (date == _start || date == _end);
             bool inRange =
                 _start != null &&
@@ -1049,19 +1196,24 @@ class _CustomRangeCalendarState extends State<_CustomRangeCalendar> {
                 date.isBefore(_end!);
 
             return GestureDetector(
-              onTap: () => setState(() {
-                if (_start == null || _end != null) {
-                  _start = date;
-                  _end = null;
-                } else {
-                  if (date.isBefore(_start!)) {
-                    _end = _start;
-                    _start = date;
-                  } else {
-                    _end = date;
-                  }
-                }
-              }),
+              onTap: isDisabled
+                  ? (isBeyondFreeWindow
+                        ? () => setState(() => _showLimitMessage = true)
+                        : null) // future dates: dulled, no message — common sense
+                  : () => setState(() {
+                      _showLimitMessage = false;
+                      if (_start == null || _end != null) {
+                        _start = date;
+                        _end = null;
+                      } else {
+                        if (date.isBefore(_start!)) {
+                          _end = _start;
+                          _start = date;
+                        } else {
+                          _end = date;
+                        }
+                      }
+                    }),
               child: Container(
                 decoration: BoxDecoration(
                   color: (isSelected || inRange)
@@ -1079,9 +1231,11 @@ class _CustomRangeCalendarState extends State<_CustomRangeCalendar> {
                   child: Text(
                     "${date.day}",
                     style: GoogleFonts.montserrat(
-                      color: (isSelected || inRange)
-                          ? AppColors.colblack
-                          : const Color(0xFF666666),
+                      color: isDisabled
+                          ? const Color(0xFFCCCCCC)
+                          : ((isSelected || inRange)
+                                ? AppColors.colblack
+                                : const Color(0xFF666666)),
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                     ),

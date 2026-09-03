@@ -68,6 +68,8 @@ class _AccountScreenState extends State<AccountScreen>
   bool _isCheckingEmail = false;
 
   String _plantingSince = "";
+  Timer? _cooldownTimer;
+  int _cooldownSeconds = 0;
 
   @override
   void initState() {
@@ -88,6 +90,7 @@ class _AccountScreenState extends State<AccountScreen>
 
   @override
   void dispose() {
+    _cooldownTimer?.cancel(); // Cancel active timer on screen exit
     WidgetsBinding.instance.removeObserver(this);
     _nameController.dispose();
     _emailController.dispose();
@@ -111,6 +114,32 @@ class _AccountScreenState extends State<AccountScreen>
     setState(() {
       _plantingSince =
           "Planting since ${_monthName(created.month)} ${created.year}";
+    });
+  }
+
+  void _startCooldownTimer(int seconds) {
+    _cooldownTimer?.cancel();
+    setState(() {
+      _cooldownSeconds = seconds;
+      _emailError =
+          "Too many attempts. Please try again in $_cooldownSeconds s";
+    });
+
+    _cooldownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) return;
+      if (_cooldownSeconds <= 1) {
+        timer.cancel();
+        setState(() {
+          _cooldownSeconds = 0;
+          _emailError = null;
+        });
+      } else {
+        setState(() {
+          _cooldownSeconds--;
+          _emailError =
+              "Too many attempts. Please try again in $_cooldownSeconds s";
+        });
+      }
     });
   }
 
@@ -170,6 +199,10 @@ class _AccountScreenState extends State<AccountScreen>
 
   void _toggleEmailEdit() async {
     if (_isEditingEmail) {
+      // Prevent making requests if active cooldown timer is running
+      if (_cooldownSeconds > 0) return;
+
+      // Always clear previous error state so only one error shows at a time
       setState(() => _emailError = null);
       final newEmail = _emailController.text.trim();
       final emailRegex = RegExp(r'^[\w\.\-]+@([\w\-]+\.)+[\w\-]{2,}$');
@@ -218,20 +251,26 @@ class _AccountScreenState extends State<AccountScreen>
           });
         }
       } on AuthException catch (e) {
-        final msg = e.message.toLowerCase();
         setState(() {
-          _isCheckingEmail = false;
+          _isCheckingEmail = false; // Always stop loading indicator first
+        });
+
+        if (isRateLimitError(e)) {
+          final waitSecs = extractRateLimitWaitSeconds(e.message);
+          _startCooldownTimer(waitSecs);
+        } else {
+          final msg = e.message.toLowerCase();
           if (msg.contains('already') ||
               msg.contains('registered') ||
               msg.contains('exists')) {
-            _emailError = "This email already exists.";
+            setState(() => _emailError = "This email already exists.");
           } else if (msg.contains('invalid') ||
               msg.contains('unable to validate')) {
-            _emailError = "This email address is invalid.";
+            setState(() => _emailError = "This email address is invalid.");
           } else {
-            _emailError = mapAuthError(e);
+            setState(() => _emailError = mapAuthError(e));
           }
-        });
+        }
       } on TimeoutException {
         setState(() {
           _isCheckingEmail = false;
@@ -723,49 +762,58 @@ class _AccountScreenState extends State<AccountScreen>
                             label: "Email",
                             controller: _emailController,
                             isEditing: _isEditingEmail,
+                            isSaveDisabled: _cooldownSeconds > 0,
                             onToggle: _toggleEmailEdit,
                             errorMsg: _emailError,
                           ),
                           if (_isCheckingEmail)
-                            Padding(
-                              padding: const EdgeInsets.only(
-                                top: 6.0,
-                                left: 4.0,
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  SizedBox(
-                                    height: 12,
-                                    width: 12,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: AppColors.grey600,
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: Padding(
+                                padding: const EdgeInsets.only(
+                                  top: 6.0,
+                                  left: 4.0,
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    SizedBox(
+                                      height: 12,
+                                      width: 12,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: AppColors.grey600,
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    "Checking if the email is valid...",
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 12,
-                                      color: AppColors.grey600,
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      "Checking if the email is valid...",
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 12,
+                                        color: AppColors.grey600,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             )
                           else if (_emailError != null)
-                            Padding(
-                              padding: const EdgeInsets.only(
-                                top: 6.0,
-                                left: 4.0,
-                              ),
-                              child: Text(
-                                _emailError!,
-                                style: GoogleFonts.poppins(
-                                  fontSize: 12,
-                                  color: AppColors.destructiveRed,
-                                  fontWeight: FontWeight.w500,
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: Padding(
+                                padding: const EdgeInsets.only(
+                                  top: 6.0,
+                                  left: 4.0,
+                                ),
+                                child: Text(
+                                  _emailError!,
+                                  textAlign: TextAlign.left,
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 12,
+                                    color: AppColors.destructiveRed,
+                                    fontWeight: FontWeight.w500,
+                                  ),
                                 ),
                               ),
                             ),
@@ -845,6 +893,46 @@ class _AccountScreenState extends State<AccountScreen>
 
                     const SizedBox(height: 32),
                     _buildSectionHeader("Account Control"),
+                    _buildSettingsItem(
+                        PhosphorIconsRegular.signOut,
+                        "Log out",
+                        "Further secure your account for safety",
+                        () {
+                          _showConfirmationDialog(
+                            title: "Logout",
+                            message: "Are you sure you want to logout?",
+                            confirmText: "Yes, Logout",
+                            icon: PhosphorIconsRegular.signOut,
+                            onConfirm: () async {
+                              await AuthHelper.signOutEverywhere();
+                              final prefs =
+                                  await SharedPreferences.getInstance();
+                              final keepOnboardingFlag =
+                                  prefs.getBool('has_completed_onboarding') ??
+                                  true;
+                              final deviceId = prefs.getString(
+                                'device_id',
+                              ); // preserve before wipe
+                              await prefs.clear();
+                              await prefs.setBool(
+                                'has_completed_onboarding',
+                                keepOnboardingFlag,
+                              );
+                              if (deviceId != null)
+                                await prefs.setString('device_id', deviceId);
+                              if (mounted) {
+                                Navigator.pushAndRemoveUntil(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const SignInScreen(),
+                                  ),
+                                  (route) => false,
+                                );
+                              }
+                            },
+                          );
+                        },
+                      ),
                     _buildActionTile(
                       PhosphorIconsRegular.lockKey,
                       "Deactivate Account",
@@ -944,6 +1032,63 @@ class _AccountScreenState extends State<AccountScreen>
   }
 
   // ── UI Components ────────────────────────────────────────────────────────
+
+  Widget _buildSettingsItem(
+    IconData icon,
+    String t,
+    String s,
+    VoidCallback tap,
+  ) => Container(
+    margin: const EdgeInsets.only(bottom: 12),
+    decoration: BoxDecoration(
+      color: AppColors.inputFill,
+      borderRadius: BorderRadius.circular(15),
+    ),
+    child: InkWell(
+      onTap: tap,
+      borderRadius: BorderRadius.circular(15),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AppColors.colIconBg,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, size: 24, color: AppColors.colblack),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    t,
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.colblack,
+                    ),
+                  ),
+                  // const SizedBox(height: 4),
+                  Text(
+                    s,
+                    style: GoogleFonts.poppins(
+                      fontSize: 10,
+                      color: AppColors.desctext,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, color: AppColors.desctext),
+          ],
+        ),
+      ),
+    ),
+  );
 
   Widget _buildProfileHeader() {
     // Wraps in ValueListenableBuilder so name + image update instantly
@@ -1112,6 +1257,7 @@ class _AccountScreenState extends State<AccountScreen>
     required String label,
     required TextEditingController controller,
     required bool isEditing,
+    bool isSaveDisabled = false,
     required VoidCallback onToggle,
     String? errorMsg,
   }) {
@@ -1186,31 +1332,21 @@ class _AccountScreenState extends State<AccountScreen>
                       ),
               ),
               TextButton(
-                onPressed: onToggle,
+                onPressed: isSaveDisabled ? null : onToggle,
                 child: Text(
                   isEditing ? "Save" : "Edit",
                   style: GoogleFonts.poppins(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
-                    color: AppColors.white500,
+                    color: isSaveDisabled
+                        ? AppColors.grey600.withOpacity(0.4)
+                        : AppColors.white500,
                   ),
                 ),
               ),
             ],
           ),
         ),
-        if (errorMsg != null)
-          Padding(
-            padding: const EdgeInsets.only(top: 6.0, left: 4.0),
-            child: Text(
-              errorMsg,
-              style: GoogleFonts.poppins(
-                fontSize: 12,
-                color: AppColors.destructiveRed,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
       ],
     );
   }

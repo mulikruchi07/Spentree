@@ -17,6 +17,7 @@ import 'package:spentree/screens/onboarding/set_daily_limit_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:spentree/core/database/local_database_service.dart';
 import 'package:spentree/core/transaction_service.dart';
+import 'package:spentree/core/entitlement_service.dart';
 import 'package:spentree/screens/main_wrapper.dart';
 import 'package:spentree/screens/onboarding/loading_screen.dart';
 import 'package:spentree/screens/onboarding/splash_onboarding_screen.dart';
@@ -60,6 +61,12 @@ void main() async {
 
     if (event == AuthChangeEvent.signedIn && session != null) {
       await BucketService().resetForNewSession();
+      // Must run on every sign-in, including a DIFFERENT account signing in
+      // on this same device right after another account signed out — this
+      // is what stops User B ever inheriting User A's Pro status. It wipes
+      // any in-memory state first, then re-verifies fresh against Postgres
+      // for whoever is signed in now.
+      await EntitlementService().resetForNewSession();
       final canProceed = await _checkSingleDeviceSession(null);
       if (!canProceed) return;
 
@@ -88,6 +95,7 @@ void main() async {
     } else if (event == AuthChangeEvent.signedOut ||
         event == AuthChangeEvent.userDeleted) {
       BucketService().resetForNewSession();
+      EntitlementService().resetForNewSession();
       _deviceWatchChannel?.unsubscribe();
       _deviceWatchChannel = null;
 
@@ -159,6 +167,7 @@ void main() async {
     HomeWidget.registerInteractivityCallback(backgroundCallback);
     await TransactionService().initService();
     await BucketService().initService();
+    await EntitlementService().refresh();
     const platform = MethodChannel('spentree_widget_channel');
     platform.setMethodCallHandler((call) async {
       if (call.method == "themeChanged") {

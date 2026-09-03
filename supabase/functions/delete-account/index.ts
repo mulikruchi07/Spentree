@@ -43,8 +43,14 @@ Deno.serve(async (req) => {
     const { error: bucketsError } = await adminClient.from('buckets').delete().eq('user_id', user.id)
     if (bucketsError) throw new Error(`buckets: ${bucketsError.message}`)
 
+    const { error: budgetsError } = await adminClient.from('budgets').delete().eq('user_id', user.id)
+    if (budgetsError) throw new Error(`budgets: ${budgetsError.message}`)
+
     const { error: wrapError } = await adminClient.from('monthly_wraps').delete().eq('user_id', user.id)
     if (wrapError) throw new Error(`monthly_wraps: ${wrapError.message}`)
+
+    const { error: milestonesError } = await adminClient.from('milestones').delete().eq('user_id', user.id)
+    if (milestonesError) throw new Error(`milestones: ${milestonesError.message}`)
 
     const { error: storageError } = await adminClient.storage.from('avatar').remove([`${user.id}/profile.jpg`])
     if (storageError && !storageError.message.includes('not found')) {

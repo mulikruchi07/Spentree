@@ -6,6 +6,8 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:spentree/core/transaction_service.dart';
+import 'package:spentree/core/entitlement_service.dart';
+import 'package:spentree/core/pro_upgrade_sheet.dart';
 import 'package:spentree/screens/buckets/slide_route.dart';
 import '../../core/app_style.dart';
 import '../../core/transaction_service.dart'; // Make sure this path points to your new service
@@ -161,6 +163,9 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
   ) {
     if (title.isEmpty || amountStr.isEmpty) return;
     double amount = double.tryParse(amountStr) ?? 0.0;
+
+    // Safety check: block saving zero amounts
+    if (amount <= 0) return;
 
     TransactionService().addExpense(
       title,
@@ -563,67 +568,68 @@ class _AnalyticsScreenState extends State<AnalyticsScreen>
 
   // --- SUB WIDGETS ---
   // --- HEADER ---
-Widget _buildHeader() {
-  return Row(
-    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-    children: [
-      Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "My",
-            style: GoogleFonts.montserrat(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-              color: AppColors.colblack,
-            ),
-          ),
-          Text(
-            "Analytics",
-            style: GoogleFonts.montserrat(
-              fontSize: 36,
-              fontWeight: FontWeight.w600,
-              height: 1.0,
-              color: AppColors.colblack,
-            ),
-          ),
-        ],
-      ),
-      // Wrap the trophy icon with GestureDetector to open BucketsScreen
-      GestureDetector(
-        onTap: () {
-          Navigator.push(
-            context,
-            slideRoute(const BucketsScreen()),
-          );
-        },
-        child: Stack(
-          clipBehavior: Clip.none,
+  Widget _buildHeader() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(
-              PhosphorIconsRegular.archive,
-              size: 32,
-              color: AppColors.colblack,
+            Text(
+              "My",
+              style: GoogleFonts.montserrat(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: AppColors.colblack,
+              ),
             ),
-            Positioned(
-              top: 0,
-              right: 0,
-              child: Container(
-                width: 10,
-                height: 10,
-                decoration: BoxDecoration(
-                  color: Colors.red,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.bgWhite, width: 1.5),
-                ),
+            Text(
+              "Analytics",
+              style: GoogleFonts.montserrat(
+                fontSize: 36,
+                fontWeight: FontWeight.w600,
+                height: 1.0,
+                color: AppColors.colblack,
               ),
             ),
           ],
         ),
-      ),
-    ],
-  );
-}
+        // Wrap the trophy icon with GestureDetector to open BucketsScreen
+        // GestureDetector(
+        //   onTap: () {
+        //     if (EntitlementService().isProForCurrentUser) {
+        //       Navigator.push(context, slideRoute(const BucketsScreen()));
+        //     } else {
+        //       showProUpgradeSheet(context);
+        //     }
+        //   },
+        //   child: Stack(
+        //     clipBehavior: Clip.none,
+        //     children: [
+        //       Icon(
+        //         PhosphorIconsRegular.archive,
+        //         size: 32,
+        //         color: AppColors.colblack,
+        //       ),
+        //       Positioned(
+        //         top: 0,
+        //         right: 0,
+        //         child: Container(
+        //           width: 10,
+        //           height: 10,
+        //           decoration: BoxDecoration(
+        //             color: Colors.red,
+        //             shape: BoxShape.circle,
+        //             border: Border.all(color: AppColors.bgWhite, width: 1.5),
+        //           ),
+        //         ),
+        //       ),
+        //     ],
+        //   ),
+        // ),
+      ],
+    );
+  }
 
   Widget _buildCalendarBox() {
     return Container(
@@ -1081,8 +1087,13 @@ class _ExpenseFormState extends State<ExpenseForm> {
     _selectedTime = widget.initialTime ?? TimeOfDay.now();
     if (widget.initialAmount != null) _liveAmount = widget.initialAmount!;
     _amountCtrl.addListener(() {
-      if (_amountCtrl.text == '0') {
-        _amountCtrl.clear();
+      String text = _amountCtrl.text;
+      if (text.startsWith('0')) {
+        String cleaned = text.replaceAll(RegExp(r'^0+'), '');
+        _amountCtrl.value = TextEditingValue(
+          text: cleaned,
+          selection: TextSelection.collapsed(offset: cleaned.length),
+        );
       }
       setState(() {
         _liveAmount = _amountCtrl.text.isEmpty ? "000" : _amountCtrl.text;
@@ -1136,14 +1147,19 @@ class _ExpenseFormState extends State<ExpenseForm> {
   }
 
   void _trySave() {
+    double parsedVal = double.tryParse(_amountCtrl.text) ?? 0.0;
+
     setState(() {
-      _titleError = _titleCtrl.text.isEmpty;
-      _amountError = _amountCtrl.text.isEmpty;
+      _titleError = _titleCtrl.text.trim().isEmpty;
+      // Amount is invalid if the text is empty OR if the parsed value is <= 0
+      _amountError = _amountCtrl.text.trim().isEmpty || parsedVal <= 0;
     });
+
     if (_titleError || _amountError) return;
+
     widget.onSave(
-      _titleCtrl.text,
-      _amountCtrl.text,
+      _titleCtrl.text.trim(),
+      _amountCtrl.text.trim(),
       _selectedCategory,
       _selectedTime,
     );
@@ -1531,7 +1547,7 @@ class _ExpenseFormState extends State<ExpenseForm> {
                       ),
                     ),
                     child: Text(
-                      widget.isEditing ? "Save Expense" : "Add Expense",
+                      widget.isEditing ? "Save" : "Add",
                       style: GoogleFonts.poppins(
                         color: AppColors.colwhite,
                         fontWeight: FontWeight.w500,

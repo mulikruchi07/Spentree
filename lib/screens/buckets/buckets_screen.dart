@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 import 'package:spentree/core/app_style.dart';
 import 'package:spentree/core/transaction_service.dart';
+import 'package:spentree/core/entitlement_service.dart';
 import 'bucket_models.dart';
 import 'bucket_detail_screen.dart';
 import 'slide_route.dart';
@@ -106,6 +107,34 @@ class _BucketsScreenState extends State<BucketsScreen> {
   @override
   Widget build(BuildContext context) {
     MediaQuery.platformBrightnessOf(context);
+
+    // DEFENSE IN DEPTH ONLY — not the security boundary. The real
+    // enforcement is server-side: encrypt-bucket / decrypt-bucket reject
+    // non-Pro callers regardless of what UI got them here. Buckets access
+    // is now gated at the point of navigation (the Analytics icon opens
+    // the Pro upgrade sheet instead of pushing this route for Free users),
+    // so this screen should never normally be reached without Pro. If it
+    // somehow is (deep link, stale nav stack, restored state after a
+    // downgrade), we quietly back out rather than showing Pro-only UI —
+    // no "this feature requires Pro" text needed here, the person just
+    // never sees the screen.
+    return ListenableBuilder(
+      listenable: EntitlementService(),
+      builder: (context, _) {
+        if (!EntitlementService().isProForCurrentUser) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted && Navigator.canPop(context)) {
+              Navigator.pop(context);
+            }
+          });
+          return Scaffold(backgroundColor: AppColors.bgWhite);
+        }
+        return _buildBucketsScaffold(context);
+      },
+    );
+  }
+
+  Widget _buildBucketsScaffold(BuildContext context) {
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: themeNotifier,
       builder: (context, currentTheme, child) {

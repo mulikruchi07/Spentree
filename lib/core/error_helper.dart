@@ -6,6 +6,26 @@ Future<bool> checkInternetConnection() async {
   return result.any((r) => r != ConnectivityResult.none);
 }
 
+/// Helper to parse rate limit wait time in seconds directly from Supabase error messages
+int extractRateLimitWaitSeconds(String message) {
+  final regExp = RegExp(r'(\d+)\s*(seconds|second|s)');
+  final match = regExp.firstMatch(message);
+  if (match != null) {
+    return int.tryParse(match.group(1) ?? '') ?? 60;
+  }
+  return 60;
+}
+
+/// Checks if an AuthException is a 429 or rate-limit exception
+bool isRateLimitError(AuthException e) {
+  final msg = e.message.toLowerCase();
+  return e.statusCode == '429' ||
+      msg.contains('rate limit') ||
+      msg.contains('too many requests') ||
+      msg.contains('over_email_send_rate_limit') ||
+      msg.contains('wait a moment');
+}
+
 String mapAuthError(Object e) {
   if (e is AuthException) {
     final msg = e.message.toLowerCase();

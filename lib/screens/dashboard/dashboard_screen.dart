@@ -6,12 +6,16 @@ import 'package:flutter/cupertino.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:shared_preferences/shared_preferences.dart'; // Added for weekly limit check
+import 'package:shared_preferences/shared_preferences.dart'; 
 import 'package:spentree/core/auth_helper.dart';
 import 'package:spentree/core/database/local_transaction.dart';
+import 'package:spentree/core/entitlement_service.dart';
 import 'package:spentree/core/error_helper.dart';
+import 'package:spentree/core/pro_upgrade_sheet.dart';
 import 'package:spentree/core/user_profile.dart';
 import 'package:spentree/screens/analytics/analytics_screen.dart';
+import 'package:spentree/screens/buckets/slide_route.dart';
+import 'package:spentree/screens/budget/budgets_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/app_style.dart';
 import '../../core/user_data.dart';
@@ -617,7 +621,38 @@ class _DashboardScreenState extends State<DashboardScreen> {
         const SizedBox(
           width: 12,
         ), // ADDED: guarantees breathing room before the icon, even at max truncation width
-        // Icon(PhosphorIconsRegular.trophy, size: 32, color: AppColors.colblack),
+        // GestureDetector(
+        //   onTap: () {
+        //     if (EntitlementService().isProForCurrentUser) {
+        //       Navigator.push(context, slideRoute(const BudgetsScreen()));
+        //     } else {
+        //       showProUpgradeSheet(context);
+        //     }
+        //   },
+        //   child: Stack(
+        //     clipBehavior: Clip.none,
+        //     children: [
+        //       Icon(
+        //         PhosphorIconsRegular.archive,
+        //         size: 32,
+        //         color: AppColors.colblack,
+        //       ),
+        //       Positioned(
+        //         top: 0,
+        //         right: 0,
+        //         child: Container(
+        //           width: 10,
+        //           height: 10,
+        //           decoration: BoxDecoration(
+        //             color: Colors.red,
+        //             shape: BoxShape.circle,
+        //             border: Border.all(color: AppColors.bgWhite, width: 1.5),
+        //           ),
+        //         ),
+        //       ),
+        //     ],
+        //   ),
+        // ),
       ],
     );
   }

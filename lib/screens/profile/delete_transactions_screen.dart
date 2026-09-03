@@ -489,6 +489,8 @@ class _DeleteTransactionsScreenState extends State<DeleteTransactionsScreen> {
                 children: [
                   Text(
                     tx.receiverName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.montserrat(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,

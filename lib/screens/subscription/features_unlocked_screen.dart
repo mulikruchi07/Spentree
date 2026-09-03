@@ -134,7 +134,7 @@ class FeaturesUnlockedScreen extends StatelessWidget {
                 // LAYER 2: PINNED HEADER & SCROLLABLE LIST
                 // ==========================================
                 Positioned(
-                  top: 180,
+                  top: 190,
                   bottom: 0,
                   left: 24,
                   right: 24,
@@ -240,8 +240,8 @@ class FeaturesUnlockedScreen extends StatelessWidget {
                         left: 24,
                         right: 24,
                         bottom: safePadding.bottom > 0
-                            ? safePadding.bottom + 8
-                            : 38,
+                            ? safePadding.bottom + 2
+                            : 16,
                       ),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
@@ -283,7 +283,7 @@ class FeaturesUnlockedScreen extends StatelessWidget {
                               ),
                             ),
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 6),
                           Text(
                             "Trial ends on 27 Feb 2026 • Cancel anytime from Settings",
                             style: GoogleFonts.poppins(
@@ -319,7 +319,7 @@ class FeaturesUnlockedScreen extends StatelessWidget {
                   child: Align(
                     alignment: Alignment.topCenter,
                     child: Padding(
-                      padding: const EdgeInsets.only(top: 70.0),
+                      padding: const EdgeInsets.only(top: 60.0),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
